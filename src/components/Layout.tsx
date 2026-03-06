@@ -106,7 +106,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-          <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Gelato ERP</span>
+          <Link
+            to="/"
+            className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity"
+            onClick={() => setSidebarOpen(false)}
+          >
+            Gelato ERP
+          </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden" title="Bağla">
             <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>

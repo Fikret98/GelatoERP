@@ -70,11 +70,9 @@ function MainContent() {
   return showSplash ? (
     <SplashScreen />
   ) : (
-    <Router>
-      <Layout>
-        <AnimatedRoutes />
-      </Layout>
-    </Router>
+    <Layout>
+      <AnimatedRoutes />
+    </Layout>
   );
 }
 
@@ -83,7 +81,9 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <MainContent />
+          <Router>
+            <MainContent />
+          </Router>
           <Toaster position="top-right" />
         </AuthProvider>
       </LanguageProvider>
