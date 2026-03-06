@@ -112,7 +112,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
