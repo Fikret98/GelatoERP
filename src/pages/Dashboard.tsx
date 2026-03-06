@@ -1,26 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle } from 'lucide-react';
-import { motion } from 'motion/react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Legend
+  BarChart, Bar, Cell, PieChart as RePieChart, Pie
 } from 'recharts';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 
 export default function Dashboard() {
   const { t } = useLanguage();
+  const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('7d');
   const [stats, setStats] = useState({
     revenue: 0,
     expenses: 0,
     profit: 0,
     lowStock: 0,
-    employees: 0
+    employees: 0,
+    transactions: 0,
+    inventoryValue: 0
   });
 
   const [charts, setCharts] = useState({
     salesData: [],
-    expensesByCategory: []
+    expensesByCategory: [],
+    topProducts: [],
+    revenueByCategory: [],
+    abcAnalysis: { A: [], B: [], C: [] }
   });
 
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
@@ -29,53 +35,73 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboardData();
 
-    // Subscribe to multiple tables to keep Dashboard fully live
     const channel = supabase
       .channel('dashboard-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sale_items' }, fetchDashboardData)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [dateRange]);
 
   const fetchDashboardData = async () => {
     try {
-      // 1. Fetch Stats via RPC and Chart Data via Queries
-      const [
-        { data: rpcStats, error: rpcErr },
-        { data: salesData },
-        { data: expensesData },
-        { data: inventoryData }
-      ] = await Promise.all([
-        supabase.rpc('get_dashboard_stats'),
-        supabase.from('sales').select('date, total_amount').order('date', { ascending: false }).limit(100),
-        supabase.from('expenses').select('category, amount'),
-        supabase.from('inventory').select('name, stock_quantity, critical_limit, unit')
-      ]);
-
-      if (rpcErr) throw rpcErr;
-
-      if (inventoryData) {
-        setLowStockItems(inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0)));
+      let dateFilter = '';
+      const now = new Date();
+      if (dateRange === 'today') {
+        dateFilter = now.toISOString().split('T')[0];
+      } else if (dateRange === '7d') {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        dateFilter = d.toISOString().split('T')[0];
+      } else {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        dateFilter = d.toISOString().split('T')[0];
       }
 
-      // 2. Set Stats from RPC
-      setStats({
-        revenue: rpcStats.revenue || 0,
-        expenses: rpcStats.expenses || 0,
-        profit: rpcStats.profit || 0,
-        lowStock: rpcStats.lowStock || 0,
-        employees: rpcStats.employees || 0
-      });
+      const [
+        { data: salesData },
+        { data: expensesData },
+        { data: inventoryData },
+        { data: saleItemsData }
+      ] = await Promise.all([
+        supabase.from('sales').select('date, total_amount').gte('date', dateFilter).order('date', { ascending: false }),
+        supabase.from('expenses').select('category, amount, date').gte('date', dateFilter),
+        supabase.from('inventory').select('name, stock_quantity, critical_limit, unit, unit_cost'),
+        supabase.from('sale_items').select('*, products(name, category)').gte('created_at', dateFilter)
+      ]);
 
       const sales = salesData || [];
       const expenses = expensesData || [];
+      const inventory = inventoryData || [];
+      const saleItems = saleItemsData || [];
 
-      // 3. Calculate Chart Data
+      // Calculate Stats
+      const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+      const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.stock_quantity) * Number(i.unit_cost || 0)), 0);
+      const lowStockCount = inventory.filter(i => i.stock_quantity <= (i.critical_limit || 0)).length;
+
+      setStats({
+        revenue: totalRevenue,
+        expenses: totalExpenses,
+        profit: totalRevenue - totalExpenses,
+        lowStock: lowStockCount,
+        employees: 0, // Would fetch separately if needed
+        transactions: sales.length,
+        inventoryValue: inventoryVal
+      });
+
+      if (inventoryData) {
+        setLowStockItems(inventory.filter(item => item.stock_quantity <= (item.critical_limit || 0)));
+      }
+
+      // Sales Chart Data
       const salesByDate: Record<string, number> = {};
       sales.forEach(sale => {
         const d = new Date(sale.date).toISOString().split('T')[0];
@@ -83,9 +109,54 @@ export default function Dashboard() {
       });
       const chartSales = Object.keys(salesByDate)
         .sort()
-        .map(date => ({ date, amount: salesByDate[date] }))
-        .slice(-7);
+        .map(date => ({ date, amount: salesByDate[date] }));
 
+      // Process Sales Items for Top Products, Categories and ABC
+      const productSalesCount: Record<string, number> = {};
+      const productSalesRevenue: Record<string, number> = {};
+      const revCat: Record<string, number> = {};
+
+      saleItems.forEach(item => {
+        const name = item.products?.name || 'Unknown';
+        const cat = item.products?.category || 'Other';
+        const revenue = Number(item.quantity) * Number(item.price);
+
+        productSalesCount[name] = (productSalesCount[name] || 0) + Number(item.quantity);
+        productSalesRevenue[name] = (productSalesRevenue[name] || 0) + revenue;
+        revCat[cat] = (revCat[cat] || 0) + revenue;
+      });
+
+      const chartTopProducts = Object.keys(productSalesCount)
+        .map(name => ({ name, value: productSalesCount[name] }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+
+      const chartRevCat = Object.keys(revCat).map(name => ({
+        name,
+        value: revCat[name]
+      }));
+
+      // ABC Analysis
+      const allProductRevenues = Object.entries(productSalesRevenue)
+        .map(([name, revenue]) => ({ name, revenue }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      const totalRevForABC = allProductRevenues.reduce((sum, p) => sum + p.revenue, 0);
+      let cumulativeRev = 0;
+      const abcRows: { A: any[], B: any[], C: any[] } = { A: [], B: [], C: [] };
+
+      allProductRevenues.forEach(p => {
+        cumulativeRev += p.revenue;
+        const pct = (cumulativeRev / (totalRevForABC || 1)) * 100;
+        const contribution = (p.revenue / (totalRevForABC || 1)) * 100;
+        const item = { ...p, contribution };
+
+        if (pct <= 70) abcRows.A.push(item);
+        else if (pct <= 90) abcRows.B.push(item);
+        else abcRows.C.push(item);
+      });
+
+      // Expenses by Category
       const expCat: Record<string, number> = {};
       expenses.forEach(exp => {
         expCat[exp.category] = (expCat[exp.category] || 0) + Number(exp.amount);
@@ -97,7 +168,10 @@ export default function Dashboard() {
 
       setCharts({
         salesData: chartSales as any,
-        expensesByCategory: chartExpenses as any
+        expensesByCategory: chartExpenses as any,
+        topProducts: chartTopProducts as any,
+        revenueByCategory: chartRevCat as any,
+        abcAnalysis: abcRows
       });
 
     } catch (error) {
@@ -105,99 +179,252 @@ export default function Dashboard() {
     }
   };
 
+
+
+  const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
+
   const cards = [
-    { id: 'revenue', name: t('dashboard.revenue'), value: `${stats.revenue.toFixed(2)} ₼`, icon: DollarSign, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
-    { id: 'expenses', name: t('dashboard.expenses'), value: `${stats.expenses.toFixed(2)} ₼`, icon: TrendingDown, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { id: 'profit', name: t('dashboard.profit'), value: `${stats.profit.toFixed(2)} ₼`, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { id: 'revenue', name: t('dashboard.revenue'), value: `${stats.revenue.toLocaleString()} ₼`, icon: DollarSign, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
+    { id: 'cash', name: 'Kassa (Nəğd)', value: `${stats.profit.toLocaleString()} ₼`, icon: TrendingUp, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    { id: 'aov', name: 'Orta Satış (AOV)', value: `${aov.toFixed(2)} ₼`, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'inventoryValue', name: 'Anbar Dəyəri', value: `${stats.inventoryValue.toLocaleString()} ₼`, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
     { id: 'lowStock', name: t('dashboard.lowStock'), value: stats.lowStock, icon: Package, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
-    { id: 'employees', name: t('dashboard.employees'), value: stats.employees, icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
   ];
+
+  const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="space-y-8"
     >
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.dashboard')}</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('nav.dashboard')}</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Biznesinizin cari vəziyyəti
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
+          {(['today', '7d', '30d'] as const).map((range) => (
+            <button
+              key={range}
+              onClick={() => setDateRange(range)}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${dateRange === range
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm ring-1 ring-black/5'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+            >
+              {range === 'today' ? 'Bugün' : range === '7d' ? '7 Gün' : '30 Gün'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((card, index) => (
           <motion.div
-            key={card.name}
+            key={card.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            onClick={() => card.isClickable && setShowLowStockModal(true)}
-            className={`bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition ${card.isClickable ? 'cursor-pointer hover:ring-2 hover:ring-orange-500/50' : ''}`}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => card.id === 'lowStock' && setShowLowStockModal(true)}
+            className={`group bg-white dark:bg-gray-800 overflow-hidden shadow-sm hover:shadow-xl rounded-3xl border border-gray-100 dark:border-gray-700 p-6 transition-all duration-300 ${card.isClickable ? 'cursor-pointer hover:-translate-y-1' : ''}`}
           >
-            <div className="flex items-center">
-              <div className={`flex-shrink-0 rounded-xl p-3 ${card.bg}`}>
+            <div className="flex flex-col gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
                 <card.icon className={`h-6 w-6 ${card.color}`} aria-hidden="true" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{card.name}</dt>
-                  <dd className="text-2xl font-semibold text-gray-900 dark:text-white">{card.value}</dd>
-                </dl>
-              </div>
+              <dl>
+                <dt className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{card.name}</dt>
+                <dd className="text-2xl font-black text-gray-900 dark:text-white mt-1">{card.value}</dd>
+              </dl>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Sales Trend */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
         >
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('dashboard.salesChart')}</h2>
-          <div className="h-72">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-indigo-500" />
+              Satış Trendi
+            </h2>
+          </div>
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={charts.salesData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
+                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
                     <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dx={-10} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dy={15} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dx={-15} />
                 <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`${value.toFixed(2)} ₼`, t('nav.pos')]}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                  itemStyle={{ fontWeight: 'bold' }}
                 />
-                <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorSales)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
+        {/* Revenue by Category */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
         >
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('dashboard.expenseChart')}</h2>
-          <div className="h-72">
+          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-2">
+            <PieChart className="w-5 h-5 text-pink-500" />
+            Bölmələr üzrə Gəlir
+          </h2>
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts.expensesByCategory} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#374151', fontSize: 12, fontWeight: 500 }} />
-                <Tooltip
-                  cursor={{ fill: '#f3f4f6' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`${value.toFixed(2)} ₼`, t('reports.latestExpenses')]}
-                />
-                <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={32} />
+              <RePieChart>
+                <Pie
+                  data={charts.revenueByCategory}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {charts.revenueByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RePieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 space-y-2">
+            {charts.revenueByCategory.map((item: any, index) => (
+              <div key={item.name} className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">{item.name}</span>
+                </div>
+                <span className="font-bold text-gray-900 dark:text-white">{item.value.toFixed(2)} ₼</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Top Products */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
+        >
+          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-orange-500" />
+            Populyar Məhsullar
+          </h2>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.topProducts} layout="vertical" margin={{ left: -20 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" hide />
+                <Tooltip cursor={{ fill: 'transparent' }} />
+                <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={20}>
+                  {charts.topProducts.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-4 space-y-3">
+            {charts.topProducts.map((item: any, index) => (
+              <div key={item.name} className="flex justify-between items-center">
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.name}</span>
+                <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-black text-indigo-600 dark:text-indigo-400">
+                  {item.value} ədəd
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Expenses Breakdown */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="lg:col-span-1 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
+        >
+          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-2">
+            <TrendingDown className="w-5 h-5 text-red-500" />
+            Xərclər
+          </h2>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.expensesByCategory}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                <Tooltip contentStyle={{ borderRadius: '16px' }} />
+                <Bar dataKey="value" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        {/* ABC Analysis Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
+        >
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-purple-500" />
+              ABC Analiz (Gəlirə Töhfə)
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(['A', 'B', 'C'] as const).map(group => (
+              <div key={group} className="space-y-4">
+                <div className={`p-3 rounded-2xl flex items-center justify-between ${group === 'A' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                  group === 'B' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' :
+                    'bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400'
+                  }`}>
+                  <span className="font-black text-lg">Qrup {group}</span>
+                  <span className="text-xs font-bold px-2 py-1 rounded-lg bg-white/50 dark:bg-black/20">
+                    {group === 'A' ? '70% Gəlir' : group === 'B' ? '20% Gəlir' : '10% Gəlir'}
+                  </span>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {(charts.abcAnalysis as any)[group].length === 0 ? (
+                    <p className="text-xs text-center py-4 text-gray-400 italic">Məlumat yoxdur</p>
+                  ) : (
+                    (charts.abcAnalysis as any)[group].map((item: any) => (
+                      <div key={item.name} className="flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[100px]">{item.name}</span>
+                        <span className="text-[10px] font-black">{item.contribution.toFixed(1)}%</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>
