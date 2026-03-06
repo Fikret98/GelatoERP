@@ -92,7 +92,7 @@ BEGIN
         LIMIT 5
     ) t;
 
-    -- 6. ABC Analysis (Revenue Based)
+    -- 6. ABC Analysis (Revenue and Profit Based)
     WITH product_metrics AS (
         SELECT 
             p.name, 
@@ -124,18 +124,18 @@ BEGIN
             CASE WHEN (SELECT total_prof FROM total_metrics) > 0 THEN SUM(profit) OVER (ORDER BY profit DESC) / (SELECT total_prof FROM total_metrics) ELSE 0 END as cumulative_share
         FROM product_metrics
     )
-    SELECT json_build_object(
-        'A', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', revenue, 'contribution', contribution)) FROM abc_rev_calc WHERE cumulative_share <= 0.70), '[]'::json),
-        'B', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', revenue, 'contribution', contribution)) FROM abc_rev_calc WHERE cumulative_share > 0.70 AND cumulative_share <= 0.90), '[]'::json),
-        'C', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', revenue, 'contribution', contribution)) FROM abc_rev_calc WHERE cumulative_share > 0.90), '[]'::json)
-    ) INTO v_abc_revenue;
-
-    -- ABC Analysis (Profit Based)
-    SELECT json_build_object(
-        'A', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', profit, 'contribution', contribution)) FROM abc_prof_calc WHERE cumulative_share <= 0.70), '[]'::json),
-        'B', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', profit, 'contribution', contribution)) FROM abc_prof_calc WHERE cumulative_share > 0.70 AND cumulative_share <= 0.90), '[]'::json),
-        'C', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', profit, 'contribution', contribution)) FROM abc_prof_calc WHERE cumulative_share > 0.90), '[]'::json)
-    ) INTO v_abc_profit;
+    SELECT 
+        json_build_object(
+            'A', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', revenue, 'contribution', contribution)) FROM abc_rev_calc WHERE cumulative_share <= 0.70), '[]'::json),
+            'B', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', revenue, 'contribution', contribution)) FROM abc_rev_calc WHERE cumulative_share > 0.70 AND cumulative_share <= 0.90), '[]'::json),
+            'C', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', revenue, 'contribution', contribution)) FROM abc_rev_calc WHERE cumulative_share > 0.90), '[]'::json)
+        ),
+        json_build_object(
+            'A', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', profit, 'contribution', contribution)) FROM abc_prof_calc WHERE cumulative_share <= 0.70), '[]'::json),
+            'B', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', profit, 'contribution', contribution)) FROM abc_prof_calc WHERE cumulative_share > 0.70 AND cumulative_share <= 0.90), '[]'::json),
+            'C', COALESCE((SELECT json_agg(json_build_object('name', name, 'value', profit, 'contribution', contribution)) FROM abc_prof_calc WHERE cumulative_share > 0.90), '[]'::json)
+        )
+    INTO v_abc_revenue, v_abc_profit;
 
     RETURN json_build_object(
         'stats', json_build_object(
