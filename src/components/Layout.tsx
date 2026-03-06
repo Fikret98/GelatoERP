@@ -133,23 +133,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 mt-auto">
           <div className="flex items-center space-x-3 mb-4 px-2">
-            <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase">
+            <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm uppercase shadow-sm">
               {user?.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user?.name}</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">{user?.role === 'admin' ? 'Admin' : 'İşçi'}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-black">{user?.role === 'admin' ? 'Admin' : 'İşçi'}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+            className="w-full flex items-center px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200 group"
           >
-            <LogOut className="w-5 h-5 mr-3" />
+            <LogOut className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
             Çıxış
           </button>
+          <div className="h-4" /> {/* Extra spacing at bottom */}
         </div>
       </div>
 

@@ -32,18 +32,33 @@ export default function HR() {
     try {
       const [
         { data: empData, error: empErr },
+        { data: usersData, error: userErr },
         { data: bonusData }
       ] = await Promise.all([
         supabase.from('employees').select('*').order('name'),
+        supabase.from('users').select('*').order('name'),
         supabase.from('seller_bonuses_view').select('*')
       ]);
 
       if (empErr) throw empErr;
-      setEmployees(empData || []);
+      if (userErr) throw userErr;
+
+      // Merge data: all users should be visible, with employee data if it exists
+      const merged = (usersData || []).map(u => {
+        const emp = (empData || []).find(e => e.name === u.name);
+        return {
+          ...u,
+          salary: emp?.salary || 0,
+          hire_date: emp?.hire_date || null,
+          isSystemUser: true
+        };
+      });
+
+      setEmployees(merged);
       setBonuses(bonusData || []);
     } catch (e) {
       console.error(e);
-      toast.error('İşçilər yüklənərkən xəta');
+      toast.error('Məlumatlar yüklənərkən xəta');
     }
   };
 
