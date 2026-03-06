@@ -50,129 +50,40 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      let dateFilter = '';
+      let filterDate: string;
       const now = new Date();
       if (dateRange === 'today') {
-        dateFilter = now.toISOString().split('T')[0];
+        filterDate = now.toISOString().split('T')[0];
       } else if (dateRange === '7d') {
         const d = new Date();
         d.setDate(d.getDate() - 7);
-        dateFilter = d.toISOString().split('T')[0];
+        filterDate = d.toISOString().split('T')[0];
       } else {
         const d = new Date();
         d.setDate(d.getDate() - 30);
-        dateFilter = d.toISOString().split('T')[0];
+        filterDate = d.toISOString().split('T')[0];
       }
 
-      const [
-        { data: salesData },
-        { data: expensesData },
-        { data: inventoryData },
-        { data: saleItemsData }
-      ] = await Promise.all([
-        supabase.from('sales').select('date, total_amount').gte('date', dateFilter).order('date', { ascending: false }),
-        supabase.from('expenses').select('category, amount, date').gte('date', dateFilter),
-        supabase.from('inventory').select('name, stock_quantity, critical_limit, unit, unit_cost'),
-        supabase.from('sale_items').select('*, products(name, category)').gte('created_at', dateFilter)
-      ]);
-
-      const sales = salesData || [];
-      const expenses = expensesData || [];
-      const inventory = inventoryData || [];
-      const saleItems = saleItemsData || [];
-
-      // Calculate Stats
-      const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total_amount), 0);
-      const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-      const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.stock_quantity) * Number(i.unit_cost || 0)), 0);
-      const lowStockCount = inventory.filter(i => i.stock_quantity <= (i.critical_limit || 0)).length;
-
-      setStats({
-        revenue: totalRevenue,
-        expenses: totalExpenses,
-        profit: totalRevenue - totalExpenses,
-        lowStock: lowStockCount,
-        employees: 0, // Would fetch separately if needed
-        transactions: sales.length,
-        inventoryValue: inventoryVal
+      const { data, error } = await supabase.rpc('get_advanced_analytics', {
+        p_date_filter: filterDate
       });
 
-      if (inventoryData) {
-        setLowStockItems(inventory.filter(item => item.stock_quantity <= (item.critical_limit || 0)));
+      if (error) throw error;
+
+      if (data) {
+        setStats(data.stats);
+        setCharts(data.charts);
+
+        // Fetch low stock items separately for the modal as they aren't fully in the RPC stats
+        const { data: inventory } = await supabase
+          .from('inventory')
+          .select('*')
+          .filter('stock_quantity', 'lte', 'critical_limit');
+
+        if (inventory) {
+          setLowStockItems(inventory);
+        }
       }
-
-      // Sales Chart Data
-      const salesByDate: Record<string, number> = {};
-      sales.forEach(sale => {
-        const d = new Date(sale.date).toISOString().split('T')[0];
-        salesByDate[d] = (salesByDate[d] || 0) + Number(sale.total_amount);
-      });
-      const chartSales = Object.keys(salesByDate)
-        .sort()
-        .map(date => ({ date, amount: salesByDate[date] }));
-
-      // Process Sales Items for Top Products, Categories and ABC
-      const productSalesCount: Record<string, number> = {};
-      const productSalesRevenue: Record<string, number> = {};
-      const revCat: Record<string, number> = {};
-
-      saleItems.forEach(item => {
-        const name = item.products?.name || 'Unknown';
-        const cat = item.products?.category || 'Other';
-        const revenue = Number(item.quantity) * Number(item.price);
-
-        productSalesCount[name] = (productSalesCount[name] || 0) + Number(item.quantity);
-        productSalesRevenue[name] = (productSalesRevenue[name] || 0) + revenue;
-        revCat[cat] = (revCat[cat] || 0) + revenue;
-      });
-
-      const chartTopProducts = Object.keys(productSalesCount)
-        .map(name => ({ name, value: productSalesCount[name] }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 5);
-
-      const chartRevCat = Object.keys(revCat).map(name => ({
-        name,
-        value: revCat[name]
-      }));
-
-      // ABC Analysis
-      const allProductRevenues = Object.entries(productSalesRevenue)
-        .map(([name, revenue]) => ({ name, revenue }))
-        .sort((a, b) => b.revenue - a.revenue);
-
-      const totalRevForABC = allProductRevenues.reduce((sum, p) => sum + p.revenue, 0);
-      let cumulativeRev = 0;
-      const abcRows: { A: any[], B: any[], C: any[] } = { A: [], B: [], C: [] };
-
-      allProductRevenues.forEach(p => {
-        cumulativeRev += p.revenue;
-        const pct = (cumulativeRev / (totalRevForABC || 1)) * 100;
-        const contribution = (p.revenue / (totalRevForABC || 1)) * 100;
-        const item = { ...p, contribution };
-
-        if (pct <= 70) abcRows.A.push(item);
-        else if (pct <= 90) abcRows.B.push(item);
-        else abcRows.C.push(item);
-      });
-
-      // Expenses by Category
-      const expCat: Record<string, number> = {};
-      expenses.forEach(exp => {
-        expCat[exp.category] = (expCat[exp.category] || 0) + Number(exp.amount);
-      });
-      const chartExpenses = Object.keys(expCat).map(name => ({
-        name,
-        value: expCat[name]
-      }));
-
-      setCharts({
-        salesData: chartSales as any,
-        expensesByCategory: chartExpenses as any,
-        topProducts: chartTopProducts as any,
-        revenueByCategory: chartRevCat as any,
-        abcAnalysis: abcRows
-      });
 
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
