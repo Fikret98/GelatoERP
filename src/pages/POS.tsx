@@ -21,21 +21,12 @@ export default function POS() {
 
   const fetchProducts = async () => {
     try {
-      const [{ data: prodData, error: prodErr }, { data: costData }] = await Promise.all([
-        supabase.from('products').select('*'),
-        supabase.from('product_costs_view').select('*')
-      ]);
+      const { data, error } = await supabase
+        .from('pos_products_view')
+        .select('*');
 
-      if (prodErr) throw prodErr;
-
-      const costMap = new Map((costData || []).map(c => [c.product_id, c.calculated_cost_price]));
-
-      const productsWithCost = (prodData || []).map(p => {
-        const costPrice = costMap.get(p.id) || 0;
-        return { ...p, costPrice };
-      });
-
-      setProducts(productsWithCost);
+      if (error) throw error;
+      setProducts(data || []);
     } catch (e) {
       console.error(e);
       toast.error(t('pos.error'));

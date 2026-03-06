@@ -83,12 +83,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const fetchLowStock = async () => {
     const { data } = await supabase
-      .from('inventory')
-      .select('name, stock_quantity, critical_limit, unit');
+      .from('low_stock_view')
+      .select('*');
 
     if (data) {
-      const lowStock = data.filter(item => item.stock_quantity <= (item.critical_limit || 0));
-      setLowStockItems(lowStock);
+      setLowStockItems(data);
     }
   };
 
