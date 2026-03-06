@@ -27,8 +27,10 @@ export default function Dashboard() {
     expensesByCategory: [],
     topProducts: [],
     revenueByCategory: [],
-    abcAnalysis: { A: [], B: [], C: [] }
+    abcRevenue: { A: [], B: [], C: [] },
+    abcProfit: { A: [], B: [], C: [] }
   });
+  const [abcMode, setAbcMode] = useState<'revenue' | 'profit'>('revenue');
 
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
   const [showLowStockModal, setShowLowStockModal] = useState(false);
@@ -316,8 +318,22 @@ export default function Dashboard() {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-purple-500" />
-              ABC Analiz (Gəlirə Töhfə)
+              ABC Analiz
             </h2>
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+              {(['revenue', 'profit'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setAbcMode(mode)}
+                  className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all duration-200 ${abcMode === mode
+                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  {mode === 'revenue' ? 'Gəlirə görə' : 'Mənfəətə görə'}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {(['A', 'B', 'C'] as const).map(group => (
@@ -328,17 +344,20 @@ export default function Dashboard() {
                   }`}>
                   <span className="font-black text-lg">Qrup {group}</span>
                   <span className="text-xs font-bold px-2 py-1 rounded-lg bg-white/50 dark:bg-black/20">
-                    {group === 'A' ? '70% Gəlir' : group === 'B' ? '20% Gəlir' : '10% Gəlir'}
+                    {group === 'A' ? '70% Pay' : group === 'B' ? '20% Pay' : '10% Pay'}
                   </span>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                  {(charts.abcAnalysis as any)[group].length === 0 ? (
+                  {((abcMode === 'revenue' ? charts.abcRevenue : charts.abcProfit) as any)[group].length === 0 ? (
                     <p className="text-xs text-center py-4 text-gray-400 italic">Məlumat yoxdur</p>
                   ) : (
-                    (charts.abcAnalysis as any)[group].map((item: any) => (
+                    ((abcMode === 'revenue' ? charts.abcRevenue : charts.abcProfit) as any)[group].map((item: any) => (
                       <div key={item.name} className="flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[100px]">{item.name}</span>
-                        <span className="text-[10px] font-black">{item.contribution.toFixed(1)}%</span>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black">{item.contribution.toFixed(1)}%</p>
+                          <p className="text-[8px] text-gray-400">{item.value.toFixed(2)} ₼</p>
+                        </div>
                       </div>
                     ))
                   )}
