@@ -5,6 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart as RePieChart, Pie
 } from 'recharts';
+import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 
@@ -68,20 +69,27 @@ export default function Dashboard() {
         p_date_filter: filterDate
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("RPC Error:", error);
+        toast.error("Məlumatlar gətirilərkən xəta: " + error.message);
+        return;
+      }
 
       if (data) {
         setStats(data.stats);
         setCharts(data.charts);
 
-        // Fetch low stock items separately for the modal as they aren't fully in the RPC stats
-        const { data: inventory } = await supabase
+        // Fix: Fetch low stock items properly (PostgREST filter cannot compare two columns directly)
+        // We fetch all inventory and filter in JS to compare against critical_limit
+        const { data: inventoryData, error: invError } = await supabase
           .from('inventory')
-          .select('*')
-          .filter('stock_quantity', 'lte', 'critical_limit');
+          .select('*');
 
-        if (inventory) {
-          setLowStockItems(inventory);
+        if (invError) throw invError;
+
+        if (inventoryData) {
+          const lowStock = inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0));
+          setLowStockItems(lowStock);
         }
       }
 
