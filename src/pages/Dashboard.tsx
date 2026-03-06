@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Package, Users, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -23,6 +23,9 @@ export default function Dashboard() {
     expensesByCategory: []
   });
 
+  const [lowStockItems, setLowStockItems] = useState<any[]>([]);
+  const [showLowStockModal, setShowLowStockModal] = useState(false);
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -33,14 +36,20 @@ export default function Dashboard() {
       const [
         { data: rpcStats, error: rpcErr },
         { data: salesData },
-        { data: expensesData }
+        { data: expensesData },
+        { data: inventoryData }
       ] = await Promise.all([
         supabase.rpc('get_dashboard_stats'),
         supabase.from('sales').select('date, total_amount').order('date', { ascending: false }).limit(100),
-        supabase.from('expenses').select('category, amount')
+        supabase.from('expenses').select('category, amount'),
+        supabase.from('inventory').select('name, stock_quantity, critical_limit, unit')
       ]);
 
       if (rpcErr) throw rpcErr;
+
+      if (inventoryData) {
+        setLowStockItems(inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0)));
+      }
 
       // 2. Set Stats from RPC
       setStats({
@@ -85,11 +94,11 @@ export default function Dashboard() {
   };
 
   const cards = [
-    { name: t('dashboard.revenue'), value: `${stats.revenue.toFixed(2)} ₼`, icon: DollarSign, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
-    { name: t('dashboard.expenses'), value: `${stats.expenses.toFixed(2)} ₼`, icon: TrendingDown, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { name: t('dashboard.profit'), value: `${stats.profit.toFixed(2)} ₼`, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-    { name: t('dashboard.lowStock'), value: stats.lowStock, icon: Package, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-    { name: t('dashboard.employees'), value: stats.employees, icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'revenue', name: t('dashboard.revenue'), value: `${stats.revenue.toFixed(2)} ₼`, icon: DollarSign, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
+    { id: 'expenses', name: t('dashboard.expenses'), value: `${stats.expenses.toFixed(2)} ₼`, icon: TrendingDown, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { id: 'profit', name: t('dashboard.profit'), value: `${stats.profit.toFixed(2)} ₼`, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { id: 'lowStock', name: t('dashboard.lowStock'), value: stats.lowStock, icon: Package, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
+    { id: 'employees', name: t('dashboard.employees'), value: stats.employees, icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
   ];
 
   return (
@@ -108,7 +117,8 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
+            onClick={() => card.isClickable && setShowLowStockModal(true)}
+            className={`bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition ${card.isClickable ? 'cursor-pointer hover:ring-2 hover:ring-orange-500/50' : ''}`}
           >
             <div className="flex items-center">
               <div className={`flex-shrink-0 rounded-xl p-3 ${card.bg}`}>
@@ -179,6 +189,54 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      {/* Low Stock Popup Modal */}
+      {showLowStockModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in slide-in-from-bottom-4">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Kritik Anbar Qalığı ({lowStockItems.length})
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowLowStockModal(false)}
+                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                title="Bağla"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto p-2">
+              {lowStockItems.length === 0 ? (
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  Hər şey qaydasındadır, kritik mal yoxdur.
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {lowStockItems.map((item, idx) => (
+                    <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex justify-between items-center rounded-xl">
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white">{item.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Limit: {item.critical_limit} {item.unit}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-block bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold px-3 py-1 rounded-full text-sm">
+                          {item.stock_quantity} {item.unit}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </motion.div>
   );
 }
