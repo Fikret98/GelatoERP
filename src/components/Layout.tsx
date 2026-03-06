@@ -58,6 +58,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     fetchLowStock();
+
+    // Subscribe to real-time inventory changes (e.g., from sales deductions)
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'inventory'
+        },
+        () => {
+          // Refetch low stock items whenever inventory changes
+          fetchLowStock();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchLowStock = async () => {

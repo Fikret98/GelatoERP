@@ -28,6 +28,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Subscribe to multiple tables to keep Dashboard fully live
+    const channel = supabase
+      .channel('dashboard-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchDashboardData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
