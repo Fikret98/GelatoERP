@@ -11,7 +11,18 @@ export default function HR() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [bonuses, setBonuses] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', role: '', salary: '', hire_date: '', username: '', password: '', email: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    role: '',
+    salary: '',
+    hire_date: format(new Date(), 'yyyy-MM-dd'),
+    username: '',
+    password: '',
+    email: '',
+    phone: '',
+    address: '',
+    user_role: 'user' // Default to 'user' as requested
+  });
 
   useEffect(() => {
     fetchData();
@@ -55,13 +66,25 @@ export default function HR() {
         password: formData.password,
         name: formData.name,
         email: formData.email,
-        role: 'isçi'
+        phone: formData.phone,
+        role: formData.user_role // Use selected role (admin or user)
       }]);
 
       if (userErr) throw userErr;
 
       setShowModal(false);
-      setFormData({ name: '', role: '', salary: '', hire_date: '', username: '', password: '', email: '' });
+      setFormData({
+        name: '',
+        role: '',
+        salary: '',
+        hire_date: format(new Date(), 'yyyy-MM-dd'),
+        username: '',
+        password: '',
+        email: '',
+        phone: '',
+        address: '',
+        user_role: 'user'
+      });
       toast.success(t('hr.addEmployee'));
       fetchData();
     } catch (e: any) {
@@ -163,9 +186,26 @@ export default function HR() {
                         <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="123456" />
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input required type="email" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="mammad@gelato.az" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefon</label>
+                        <input type="tel" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+994" />
+                      </div>
+                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                      <input required type="email" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="mammad@gelato.az" />
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sistem Rolu</label>
+                      <select
+                        className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2"
+                        value={formData.user_role}
+                        onChange={e => setFormData({ ...formData, user_role: e.target.value as 'admin' | 'user' })}
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
                     </div>
                   </div>
                 </div>
