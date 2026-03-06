@@ -73,13 +73,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex">
+      {/* Sidebar Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:static lg:flex-shrink-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-[70] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:static lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Gelato ERP</span>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden" title="Bağla">
             <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
@@ -128,7 +136,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden" title="Menyu">
             <Menu className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
           <div className="flex items-center space-x-4 ml-auto">

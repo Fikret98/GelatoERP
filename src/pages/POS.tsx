@@ -160,12 +160,12 @@ export default function POS() {
 
       {/* Cart Sidebar / Mobile Bottom Sheet */}
       <div className={`
-        fixed inset-0 z-50 bg-black/50 lg:hidden transition-opacity
+        fixed inset-0 z-[70] bg-black/50 lg:hidden transition-opacity
         ${showMobileCart ? 'opacity-100' : 'opacity-0 pointer-events-none'}
       `} onClick={() => setShowMobileCart(false)} />
 
       <div className={`
-        fixed bottom-0 left-0 right-0 z-50 h-[85vh] lg:h-full
+        fixed bottom-0 left-0 right-0 z-[70] h-[85vh] lg:h-full
         lg:static lg:w-96
         bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl shadow-xl lg:shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col
         transition-transform duration-300 lg:transform-none
@@ -180,7 +180,7 @@ export default function POS() {
             <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-2.5 py-0.5 rounded-full text-sm font-bold mr-2 lg:mr-0">
               {cart.reduce((sum, item) => sum + item.quantity, 0)} {t('pos.items')}
             </span>
-            <button onClick={() => setShowMobileCart(false)} className="lg:hidden p-1 bg-gray-200 dark:bg-gray-700 rounded-full">
+            <button onClick={() => setShowMobileCart(false)} className="lg:hidden p-1 bg-gray-200 dark:bg-gray-700 rounded-full" title="Bağla">
               <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
@@ -200,14 +200,14 @@ export default function POS() {
                   <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">{(item.product.price * item.quantity).toFixed(2)} ₼</div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400">
+                  <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400" title="Azalt">
                     <Minus className="w-4 h-4" />
                   </button>
                   <span className="font-bold w-6 text-center text-gray-900 dark:text-white">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400">
+                  <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400" title="Artır">
                     <Plus className="w-4 h-4" />
                   </button>
-                  <button onClick={() => removeFromCart(item.product.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-md ml-2">
+                  <button onClick={() => removeFromCart(item.product.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-md ml-2" title="Sil">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

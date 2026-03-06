@@ -184,16 +184,16 @@ export default function Reports() {
           <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('reports.latestSales')}</h2>
           </div>
-          <div className="overflow-x-auto pb-4">
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto pb-4">
             <table className="w-full text-left text-sm min-w-[400px]">
-              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
                 <tr>
                   <th className="px-6 py-3 font-medium">{t('common.date')}</th>
                   <th className="px-6 py-3 font-medium">{t('common.cost')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {sales.slice(0, 10).map((sale) => (
+                {sales.map((sale) => (
                   <tr
                     key={sale.id}
                     onClick={() => handleSaleClick(sale)}
@@ -217,9 +217,9 @@ export default function Reports() {
           <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('reports.latestExpenses')}</h2>
           </div>
-          <div className="overflow-x-auto pb-4">
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto pb-4">
             <table className="w-full text-left text-sm min-w-[500px]">
-              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
                 <tr>
                   <th className="px-6 py-3 font-medium">{t('common.date')}</th>
                   <th className="px-6 py-3 font-medium">İcraçı</th>
@@ -227,7 +227,7 @@ export default function Reports() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {expenses.slice(0, 10).map((exp) => (
+                {expenses.map((exp) => (
                   <tr key={exp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(exp.date), 'dd.MM.yyyy')}</td>
                     <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{exp.category}</td>
@@ -254,12 +254,12 @@ export default function Reports() {
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('reports.addExpenseTitle')}</h2>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
-                <input required type="date" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
+                <label htmlFor="expense-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
+                <input id="expense-date" required type="date" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.category')}</label>
-                <select required className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.category} onChange={e => setExpenseData({ ...expenseData, category: e.target.value })}>
+                <label htmlFor="expense-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.category')}</label>
+                <select id="expense-category" required title={t('reports.category')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.category} onChange={e => setExpenseData({ ...expenseData, category: e.target.value })}>
                   <option value="">{t('common.select')}</option>
                   <option value="İcarə">{t('reports.rent')}</option>
                   <option value="Kommunal">{t('reports.utilities')}</option>
@@ -268,12 +268,12 @@ export default function Reports() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
-                <input required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.amount} onChange={e => setExpenseData({ ...expenseData, amount: e.target.value })} />
+                <label htmlFor="expense-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
+                <input id="expense-amount" required title={t('common.cost')} placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.amount} onChange={e => setExpenseData({ ...expenseData, amount: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
-                <textarea className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
+                <label htmlFor="expense-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
+                <textarea id="expense-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
               </div>
               <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setShowExpenseModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
