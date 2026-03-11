@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 // VAPID Public Key - This should ideally be in an environment variable
 // If you don't have one, you can generate it using 'npx web-push generate-vapid-keys'
-const VAPID_PUBLIC_KEY = 'BDE6zU9vS6fF9j2m0vO3nP8r5sD9tG1w2x5y8zA3B6C9D2E5F8G1H4I7J0K3L6M9N2O5P8Q1R4S7T0U3V6W9X2Y5Z'; 
+const VAPID_PUBLIC_KEY = 'BPDf-m89f3e-zN7h9X4V0k9fE7Q6fG5rH4k3D2m1sL0p9k8j7h6g5f4d3s2a1q9w8e7r6t5y4u3i2o1p0L9K8J7H6M'; 
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
