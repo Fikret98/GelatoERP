@@ -8,15 +8,18 @@ import 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Reports() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [sales, setSales] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [expenseData, setExpenseData] = useState({ date: format(new Date(), 'yyyy-MM-dd'), category: '', amount: '', description: '' });
+  const [expenseData, setExpenseData] = useState({ date: format(new Date(), 'yyyy-MM-dd HH:mm'), category: '', amount: '', description: '' });
   const [selectedSale, setSelectedSale] = useState<any | null>(null);
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
+  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
 
   const handleSaleClick = async (sale: any) => {
     setSelectedSale(sale);
@@ -44,7 +47,7 @@ export default function Reports() {
         { data: expData, error: expErr }
       ] = await Promise.all([
         supabase.from('sales').select('*, users(name)').order('date', { ascending: false }),
-        supabase.from('expenses').select('*').order('date', { ascending: false })
+        supabase.from('expenses').select('*, users(name)').order('date', { ascending: false })
       ]);
 
       if (salesErr) throw salesErr;
@@ -63,7 +66,8 @@ export default function Reports() {
     try {
       const { error } = await supabase.from('expenses').insert([{
         ...expenseData,
-        amount: parseFloat(expenseData.amount)
+        amount: parseFloat(expenseData.amount),
+        user_id: user?.id ? parseInt(user.id) : null
       }]);
 
       if (error) throw error;
@@ -90,8 +94,8 @@ export default function Reports() {
 
     // Expenses Sheet
     const expData = expenses.map(e => ({
-      'Tarix': format(new Date(e.date), 'dd.MM.yyyy'),
-      'Kateqoriya': e.category,
+      'Tarix': format(new Date(e.date), 'dd.MM.yyyy HH:mm'),
+      'İcraçı': e.users?.name || e.category,
       'Məbləğ (₼)': e.amount,
       'Açıqlama': e.description || ''
     }));
@@ -128,8 +132,8 @@ export default function Reports() {
     doc.text('Xərclər', 14, finalY + 15);
 
     const expBody = expenses.map(e => [
-      format(new Date(e.date), 'dd.MM.yyyy'),
-      e.category,
+      format(new Date(e.date), 'dd.MM.yyyy HH:mm'),
+      e.users?.name || e.category,
       `${e.amount.toFixed(2)} ₼`
     ]);
 
@@ -228,9 +232,13 @@ export default function Reports() {
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                 {expenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(exp.date), 'dd.MM.yyyy')}</td>
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{exp.category}</td>
+                  <tr
+                    key={exp.id}
+                    onClick={() => setSelectedExpense(exp)}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(exp.date), 'dd.MM.yyyy HH:mm')}</td>
+                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{exp.users?.name || exp.category}</td>
                     <td className="px-6 py-3 font-bold text-red-600 dark:text-red-400">-{exp.amount.toFixed(2)} ₼</td>
                   </tr>
                 ))}
@@ -255,7 +263,7 @@ export default function Reports() {
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               <div>
                 <label htmlFor="expense-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
-                <input id="expense-date" required type="date" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
+                <input id="expense-date" required type="datetime-local" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
               </div>
               <div>
                 <label htmlFor="expense-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.category')}</label>
@@ -316,6 +324,49 @@ export default function Reports() {
               <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
                 <span className="font-bold text-gray-900 dark:text-white">Cəmi:</span>
                 <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedSale.total_amount.toFixed(2)} ₼</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {/* Expense Details Modal */}
+      {selectedExpense && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Xərc Detalları #{selectedExpense.id}</h2>
+              <button
+                onClick={() => setSelectedExpense(null)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
+                title="Bağla"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
+                  <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedExpense.date), 'dd.MM.yyyy HH:mm')}</p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
+                  <p className="font-bold text-gray-900 dark:text-white">{selectedExpense.users?.name || '-'}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedExpense.category}</p>
+              </div>
+              {selectedExpense.description && (
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
+                  <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedExpense.description}</p>
+                </div>
+              )}
+              <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
+                <span className="text-2xl font-black text-red-600 dark:text-red-400">{selectedExpense.amount.toFixed(2)} ₼</span>
               </div>
             </div>
           </motion.div>
