@@ -106,9 +106,9 @@ export default function Dashboard() {
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 
   const cards = [
+    { id: 'cash', name: 'Kassa (Nəğd)', value: `${(stats.kassa || 0).toLocaleString()} ₼`, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
     { id: 'revenue', name: t('dashboard.revenue'), value: `${stats.revenue.toLocaleString()} ₼`, icon: DollarSign, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
     { id: 'netProfit', name: 'Xalis Mənfəət', value: `${(stats.netProfit || 0).toLocaleString()} ₼`, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-    { id: 'cash', name: 'Kassa (Nəğd)', value: `${(stats.kassa || 0).toLocaleString()} ₼`, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
     { id: 'aov', name: 'Orta Satış (AOV)', value: `${aov.toFixed(2)} ₼`, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { id: 'inventoryValue', name: 'Anbar Dəyəri', value: `${stats.inventoryValue.toLocaleString()} ₼`, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
     { id: 'lowStock', name: t('dashboard.lowStock'), value: stats.lowStock, icon: Package, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },

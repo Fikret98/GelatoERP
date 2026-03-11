@@ -117,12 +117,24 @@ export default function Inventory() {
     e.preventDefault();
     try {
       const q = parseFloat(purchaseForm.quantity);
+      const unitCost = parseFloat(purchaseForm.unit_cost);
+      const totalCost = q * unitCost;
+
+      // Validate cash balance
+      const { data: balance, error: balanceErr } = await supabase.rpc('get_current_cash_balance');
+      if (balanceErr) throw balanceErr;
+
+      if (totalCost > (balance || 0)) {
+        toast.error(`Kassada kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼. Lazım olan: ${totalCost.toFixed(2)} ₼`);
+        return;
+      }
+
       // 1. Insert new purchase record into the NEW table
       // The DB triggers (tr_update_cogs, tr_log_purchase_expense) handle stock, COGS, and expenses!
       const { error: insertErr } = await supabase.from('inventory_purchases').insert([{
         inventory_id: purchaseItem.id,
         quantity: q,
-        unit_price: parseFloat(purchaseForm.unit_cost),
+        unit_price: unitCost,
         supplier_id: purchaseForm.supplier_id ? parseInt(purchaseForm.supplier_id) : null,
         created_by: userId
       }]);

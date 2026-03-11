@@ -72,9 +72,20 @@ export default function Reports() {
   const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const amount = parseFloat(expenseData.amount);
+      
+      // Validate cash balance
+      const { data: balance, error: balanceErr } = await supabase.rpc('get_current_cash_balance');
+      if (balanceErr) throw balanceErr;
+      
+      if (amount > (balance || 0)) {
+        toast.error(`Kassada kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼`);
+        return;
+      }
+
       const { error } = await supabase.from('expenses').insert([{
         ...expenseData,
-        amount: parseFloat(expenseData.amount),
+        amount: amount,
         user_id: user?.id ? parseInt(user.id) : null
       }]);
 

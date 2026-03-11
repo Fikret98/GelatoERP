@@ -1,6 +1,8 @@
 -- Fix RLS for incomes table to support custom auth system (anon role)
-DROP POLICY IF EXISTS "Users can view incomes" ON public.incomes;
-DROP POLICY IF EXISTS "Users can insert incomes" ON public.incomes;
+DROP POLICY IF EXISTS "Anon can view incomes" ON public.incomes;
+DROP POLICY IF EXISTS "Anon can insert incomes" ON public.incomes;
+DROP POLICY IF EXISTS "Anon can update incomes" ON public.incomes;
+DROP POLICY IF EXISTS "Anon can delete incomes" ON public.incomes;
 
 -- Create new policies for 'anon' role
 CREATE POLICY "Anon can view incomes" ON public.incomes FOR SELECT TO anon USING (true);
