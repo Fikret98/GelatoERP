@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 // VAPID Public Key - This should ideally be in an environment variable
 // If you don't have one, you can generate it using 'npx web-push generate-vapid-keys'
@@ -10,6 +11,7 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
@@ -52,8 +54,7 @@ export function usePushNotifications() {
       });
 
       // Save to Supabase
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('User not authenticated');
+      if (!user) throw new Error('User not authenticated');
 
       const p256dh = btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')!) as any));
       const auth = btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')!) as any));
@@ -61,7 +62,7 @@ export function usePushNotifications() {
       const { error } = await supabase
         .from('push_subscriptions')
         .upsert({
-          user_id: userData.user.id,
+          user_id: user.id,
           endpoint: sub.endpoint,
           p256dh: p256dh,
           auth: auth

@@ -1,7 +1,7 @@
 -- 1. Create push_subscriptions table
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
     endpoint TEXT NOT NULL UNIQUE,
     p256dh TEXT NOT NULL,
     auth TEXT NOT NULL,
@@ -12,13 +12,15 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
 -- 2. Enable RLS
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- 3. Policies
-CREATE POLICY "Users can manage their own subscriptions"
+-- 3. Policies 
+-- Since the project uses custom login (not Supabase Auth), auth.uid() is null.
+-- For now, we allow access to anon but ideally we'd use a different security check.
+CREATE POLICY "Enable access for everyone"
     ON public.push_subscriptions
     FOR ALL
-    TO authenticated
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);
 
 -- 4. Grant access to anon for testing (since the user likes anon access)
 GRANT ALL ON TABLE public.push_subscriptions TO anon, authenticated;
