@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Inventory() {
   const { t, language } = useLanguage();
@@ -18,6 +19,7 @@ export default function Inventory() {
   const [purchaseItem, setPurchaseItem] = useState<any>(null);
   const [purchaseForm, setPurchaseForm] = useState({ quantity: '', unit_cost: '', supplier_id: '' });
   const [userId, setUserId] = useState<number | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -80,6 +82,7 @@ export default function Inventory() {
 
   const handleItemClick = async (item: any) => {
     setSelectedItem(item);
+    setIsLoadingHistory(true);
     try {
       const { data, error } = await supabase
         .from('inventory_purchases_detailed')
@@ -100,6 +103,8 @@ export default function Inventory() {
     } catch (e) {
       console.error(e);
       toast.error('Tarixçə yüklənərkən xəta');
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 

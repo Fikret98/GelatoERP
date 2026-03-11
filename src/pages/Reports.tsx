@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Reports() {
   const { t } = useLanguage();
@@ -24,9 +25,11 @@ export default function Reports() {
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [selectedIncome, setSelectedIncome] = useState<any | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   const handleSaleClick = async (sale: any) => {
     setSelectedSale(sale);
+    setIsLoadingDetails(true);
     try {
       const { data, error } = await supabase
         .from('sale_items')
@@ -37,6 +40,8 @@ export default function Reports() {
     } catch (e) {
       console.error(e);
       toast.error('Detallar yüklənərkən xəta');
+    } finally {
+      setIsLoadingDetails(false);
     }
   };
 
@@ -506,27 +511,34 @@ export default function Reports() {
                   &times;
                 </button>
               </div>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 pb-4 border-b border-gray-100 dark:border-gray-700">
-                  <span>Tarix: {format(new Date(selectedSale.date), 'dd.MM.yyyy HH:mm')}</span>
-                  <span>Satıcı: {selectedSale.users?.name || '-'}</span>
+              
+              {isLoadingDetails ? (
+                <div className="py-12">
+                  <LoadingSpinner message="Detallar yüklənir..." />
                 </div>
-                <div className="space-y-3">
-                  {saleDetails.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
-                      <div>
-                        <div className="font-bold text-gray-900 dark:text-white">{item.products?.name}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 pb-4 border-b border-gray-100 dark:border-gray-700">
+                    <span>Tarix: {format(new Date(selectedSale.date), 'dd.MM.yyyy HH:mm')}</span>
+                    <span>Satıcı: {selectedSale.users?.name || '-'}</span>
+                  </div>
+                  <div className="space-y-3">
+                    {saleDetails.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
+                        <div>
+                          <div className="font-bold text-gray-900 dark:text-white">{item.products?.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</div>
+                        </div>
+                        <div className="font-black text-indigo-600 dark:text-indigo-400">{(item.quantity * item.price).toFixed(2)} ₼</div>
                       </div>
-                      <div className="font-black text-indigo-600 dark:text-indigo-400">{(item.quantity * item.price).toFixed(2)} ₼</div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <span className="font-bold text-gray-900 dark:text-white">Cəmi:</span>
+                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedSale.total_amount.toFixed(2)} ₼</span>
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                  <span className="font-bold text-gray-900 dark:text-white">Cəmi:</span>
-                  <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedSale.total_amount.toFixed(2)} ₼</span>
-                </div>
-              </div>
+              )}
             </motion.div>
           </div>
         )}
