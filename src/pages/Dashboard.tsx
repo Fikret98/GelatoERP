@@ -12,7 +12,12 @@ import { useCountUp } from '../hooks/useCountUp';
 
 function AnimatedStat({ value, suffix = '', decimals = 2 }: { value: number; suffix?: string; decimals?: number }) {
   const count = useCountUp(value, 1200);
-  return <>{decimals > 0 ? count.toFixed(decimals) : Math.round(count)}{suffix}</>;
+  return (
+    <span className="flex items-baseline gap-1">
+      <span>{decimals > 0 ? count.toFixed(decimals) : Math.round(count)}</span>
+      {suffix && <span className="text-[0.6em] text-gray-400 font-medium">{suffix}</span>}
+    </span>
+  );
 }
 
 export default function Dashboard() {
@@ -163,7 +168,7 @@ export default function Dashboard() {
         }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6"
+        className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-3 lg:grid-cols-6"
       >
         {cards.map((card) => (
           <motion.div
@@ -174,16 +179,16 @@ export default function Dashboard() {
             }}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
             onClick={() => card.isClickable && card.id === 'lowStock' && (window.location.hash = '#inventory')}
-            className={`p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 ${card.bg} ${card.isClickable ? 'cursor-pointer hover:shadow-md' : ''
+            className={`p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 ${card.bg} ${card.isClickable ? 'cursor-pointer hover:shadow-md' : ''
               }`}
           >
             <div className="flex flex-col gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
-                <card.icon className={`h-6 w-6 ${card.color}`} aria-hidden="true" />
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
+                <card.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.color}`} aria-hidden="true" />
               </div>
               <dl>
                 <dt className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{card.name}</dt>
-                <dd className="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                <dd className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white mt-1 leading-tight">
                   <AnimatedStat value={card.rawValue} suffix={card.suffix} decimals={card.decimals} />
                 </dd>
               </dl>
