@@ -8,6 +8,12 @@ import {
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import { useCountUp } from '../hooks/useCountUp';
+
+function AnimatedStat({ value, suffix = '', decimals = 2 }: { value: number; suffix?: string; decimals?: number }) {
+  const count = useCountUp(value, 1200);
+  return <>{decimals > 0 ? count.toFixed(decimals) : Math.round(count)}{suffix}</>;
+}
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -106,12 +112,12 @@ export default function Dashboard() {
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 
   const cards = [
-    { id: 'cash', name: 'Kassa (Nəğd)', value: `${(stats.kassa || 0).toLocaleString()} ₼`, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-    { id: 'revenue', name: t('dashboard.revenue'), value: `${stats.revenue.toLocaleString()} ₼`, icon: DollarSign, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
-    { id: 'netProfit', name: 'Xalis Mənfəət', value: `${(stats.netProfit || 0).toLocaleString()} ₼`, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-    { id: 'aov', name: 'Orta Satış (AOV)', value: `${aov.toFixed(2)} ₼`, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { id: 'inventoryValue', name: 'Anbar Dəyəri', value: `${stats.inventoryValue.toLocaleString()} ₼`, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-    { id: 'lowStock', name: t('dashboard.lowStock'), value: stats.lowStock, icon: Package, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
+    { id: 'cash',           name: 'Kassa (Nəğd)',     rawValue: stats.kassa || 0,       suffix: ' ₼', decimals: 2, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    { id: 'revenue',        name: t('dashboard.revenue'), rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: DollarSign, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
+    { id: 'netProfit',      name: 'Xalis Mənfəət',   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { id: 'aov',            name: 'Orta Satış (AOV)', rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'inventoryValue', name: 'Anbar Dəyəri',     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    { id: 'lowStock',       name: t('dashboard.lowStock'), rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: Package,    color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
   ];
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -177,7 +183,9 @@ export default function Dashboard() {
               </div>
               <dl>
                 <dt className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{card.name}</dt>
-                <dd className="text-2xl font-black text-gray-900 dark:text-white mt-1">{card.value}</dd>
+                <dd className="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                  <AnimatedStat value={card.rawValue} suffix={card.suffix} decimals={card.decimals} />
+                </dd>
               </dl>
             </div>
           </motion.div>
