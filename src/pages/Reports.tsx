@@ -63,7 +63,7 @@ export default function Reports() {
         { data: incData, error: incErr }
       ] = await Promise.all([
         supabase.from('sales').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false }),
-        supabase.from('expenses').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false }),
+        supabase.from('expenses').select('*, users(name), suppliers(name)').order('date', { ascending: false }).order('id', { ascending: false }),
         supabase.from('incomes').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false })
       ]);
 
@@ -638,6 +638,12 @@ export default function Reports() {
                   <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedExpense.category}</p>
                 </div>
+                {selectedExpense.suppliers?.name && (
+                  <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl px-4 py-3">
+                    <span className="text-xs text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide">Təchizatçı</span>
+                    <span className="text-base font-black text-indigo-700 dark:text-indigo-300">{selectedExpense.suppliers.name}</span>
+                  </div>
+                )}
                 {selectedExpense.description && (
                   <div>
                     <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
