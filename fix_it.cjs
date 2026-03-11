@@ -13,17 +13,17 @@ function generateVAPIDKeys() {
 }
 
 const pubKey = generateVAPIDKeys();
-const filePath = 'src/hooks/usePushNotifications.ts';
+const filePath = 'c:\\Users\\FikratGadimov\\OneDrive - workplace.az\\Documents\\GitHub\\GelatoERP\\src\\hooks\\usePushNotifications.ts';
 let content = fs.readFileSync(filePath, 'utf8');
 
-// Use a more specific replacement to avoid issues
+// Replace the line
 const lines = content.split('\n');
 const newLines = lines.map(line => {
   if (line.includes('const VAPID_PUBLIC_KEY =')) {
-    return `const VAPID_PUBLIC_KEY = '${pubKey}'; `;
+    return `const VAPID_PUBLIC_KEY = '${pubKey}';`;
   }
   return line;
 });
 
 fs.writeFileSync(filePath, newLines.join('\n'));
-console.log('Successfully updated VAPID_PUBLIC_KEY in', filePath);
+console.log('Successfully updated VAPID_PUBLIC_KEY to:', pubKey);

@@ -5,17 +5,26 @@ import { useAuth } from '../contexts/AuthContext';
 
 // VAPID Public Key - This should ideally be in an environment variable
 // If you don't have one, you can generate it using 'npx web-push generate-vapid-keys'
-const VAPID_PUBLIC_KEY = 'BDe6z-y_V6F8j3H-K6L5M4N3O2P1Q0R9S8T7U6V5W4X3Y2Z1A0B9C8D7E6F5G4H3I2J1K0L9M8N7O6P5Q4R3S2T1U'; 
+const VAPID_PUBLIC_KEY = 'BDrsEIWlTy1YTAZxpkN1f1C0EcuCjL15j8lxS3KaXzDE_BvlWIHEIGdmsP3hfiiG3ldbF89pWEc6foyFxSOe5es';
 
 function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+  const sanitized = base64String.trim().replace(/\s/g, '');
+  const padding = '='.repeat((4 - (sanitized.length % 4)) % 4);
+  const base64 = (sanitized + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  
+  try {
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  } catch (err) {
+    console.error('VAPID key decoding failed. String:', base64);
+    throw err;
   }
-  return outputArray;
 }
 
 export function usePushNotifications() {
