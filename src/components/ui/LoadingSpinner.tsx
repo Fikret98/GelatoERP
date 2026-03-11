@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { IceCream } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
