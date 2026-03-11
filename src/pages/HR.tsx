@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function HR() {
   const { t } = useLanguage();
@@ -24,6 +25,7 @@ export default function HR() {
     user_role: 'user',
     bonus_percentage: '0.8'
   });
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -31,6 +33,7 @@ export default function HR() {
 
   const fetchData = async () => {
     try {
+      setIsLoadingPage(true);
       const [
         { data: empData, error: empErr },
         { data: usersData, error: userErr },
@@ -60,6 +63,8 @@ export default function HR() {
     } catch (e) {
       console.error(e);
       toast.error('Məlumatlar yüklənərkən xəta');
+    } finally {
+      setIsLoadingPage(false);
     }
   };
 
@@ -118,8 +123,14 @@ export default function HR() {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.hr')}</h1>
+      {isLoadingPage ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner message="İşçi heyəti yüklənir..." />
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.hr')}</h1>
         <button
           onClick={() => setShowModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
@@ -272,6 +283,8 @@ export default function HR() {
         </div>
       )}
       </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 }

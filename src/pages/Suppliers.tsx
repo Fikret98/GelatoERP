@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Suppliers() {
   const { t } = useLanguage();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', contact: '', email: '' });
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -17,12 +19,15 @@ export default function Suppliers() {
 
   const fetchData = async () => {
     try {
+      setIsLoadingPage(true);
       const { data, error } = await supabase.from('suppliers').select('*').order('name');
       if (error) throw error;
       setSuppliers(data || []);
     } catch (e) {
       console.error(e);
       toast.error('Təchizatçılar yüklənərkən xəta');
+    } finally {
+      setIsLoadingPage(false);
     }
   };
 
@@ -49,8 +54,14 @@ export default function Suppliers() {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.suppliers')}</h1>
+      {isLoadingPage ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner message="Təchizatçılar yüklənir..." />
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.suppliers')}</h1>
         <button
           onClick={() => setShowModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
@@ -129,6 +140,8 @@ export default function Suppliers() {
         </div>
       )}
       </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 }

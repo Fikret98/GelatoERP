@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Products() {
   const { t } = useLanguage();
@@ -11,6 +12,7 @@ export default function Products() {
   const [inventory, setInventory] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const [formData, setFormData] = useState({ name: '', category: 'dondurma', price: '', margin: '' });
   const [recipeItems, setRecipeItems] = useState<{ inventory_id: string, quantity_needed: string }[]>([]);
@@ -21,6 +23,7 @@ export default function Products() {
 
   const fetchData = async () => {
     try {
+      setIsLoadingPage(true);
       const [
         { data: prodData, error: prodErr },
         { data: invData, error: invErr },
@@ -55,6 +58,8 @@ export default function Products() {
     } catch (e) {
       console.error(e);
       toast.error(t('pos.error'));
+    } finally {
+      setIsLoadingPage(false);
     }
   };
 
@@ -175,8 +180,14 @@ export default function Products() {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.products')}</h1>
+      {isLoadingPage ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner message="Məhsullar yüklənir..." />
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.products')}</h1>
         <button
           onClick={openNewProductModal}
           className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
@@ -373,13 +384,15 @@ export default function Products() {
                 </div>
               </div>
 
-              <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-8">
-                <button type="button" onClick={() => setShowModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
+                <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-8">
+                  <button type="button" onClick={() => setShowModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
+                  <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+        </>
       )}
     </motion.div>
   );

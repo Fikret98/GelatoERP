@@ -20,6 +20,7 @@ export default function Inventory() {
   const [purchaseForm, setPurchaseForm] = useState({ quantity: '', unit_cost: '', supplier_id: '' });
   const [userId, setUserId] = useState<number | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -30,6 +31,7 @@ export default function Inventory() {
 
   const fetchData = async () => {
     try {
+      setIsLoadingPage(true);
       const [
         { data: invData, error: invErr },
         { data: supData, error: supErr }
@@ -46,6 +48,8 @@ export default function Inventory() {
     } catch (e) {
       console.error(e);
       toast.error('Məlumatların yüklənməsində xəta');
+    } finally {
+      setIsLoadingPage(false);
     }
   };
 
@@ -173,8 +177,15 @@ export default function Inventory() {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('inventory.title')}</h1>
+      {isLoadingPage ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner message="Anbar məlumatları yüklənir..." />
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('inventory.title')}</h1>
+
         <button
           onClick={() => setShowModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
@@ -458,6 +469,8 @@ export default function Inventory() {
         </div>
         )}
       </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 }

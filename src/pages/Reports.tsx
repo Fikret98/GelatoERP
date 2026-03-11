@@ -26,6 +26,7 @@ export default function Reports() {
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [selectedIncome, setSelectedIncome] = useState<any | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   const handleSaleClick = async (sale: any) => {
     setSelectedSale(sale);
@@ -55,6 +56,7 @@ export default function Reports() {
 
   const fetchData = async () => {
     try {
+      setIsLoadingPage(true);
       const [
         { data: salesData, error: salesErr },
         { data: expData, error: expErr },
@@ -75,6 +77,8 @@ export default function Reports() {
     } catch (e) {
       console.error(e);
       toast.error('Məlumatların yüklənməsində xəta');
+    } finally {
+      setIsLoadingPage(false);
     }
   };
 
@@ -232,8 +236,14 @@ export default function Reports() {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.reports')}</h1>
+      {isLoadingPage ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner message="Məlumatlar yüklənir..." />
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.reports')}</h1>
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={exportToExcel}
@@ -643,6 +653,8 @@ export default function Reports() {
           </div>
         )}
       </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 }

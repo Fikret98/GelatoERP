@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -14,6 +15,7 @@ export default function POS() {
   const [cart, setCart] = useState<{ product: any, quantity: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
     fetchProducts();
@@ -21,6 +23,7 @@ export default function POS() {
 
   const fetchProducts = async () => {
     try {
+      setIsLoadingPage(true);
       const { data, error } = await supabase
         .from('pos_products_view')
         .select('*');
@@ -30,6 +33,8 @@ export default function POS() {
     } catch (e) {
       console.error(e);
       toast.error(t('pos.error'));
+    } finally {
+      setIsLoadingPage(false);
     }
   };
 
@@ -99,8 +104,14 @@ export default function POS() {
       exit={{ opacity: 0, y: -20 }}
       className="flex flex-col lg:flex-row gap-6 h-full lg:h-[calc(100vh-8rem)] pb-20 lg:pb-0 relative"
     >
-      {/* Products Grid */}
-      <div className="flex-1 overflow-y-auto w-full pr-0 lg:pr-2">
+      {isLoadingPage ? (
+        <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner message="Satış ekranı yüklənir..." />
+        </div>
+      ) : (
+        <>
+          {/* Products Grid */}
+          <div className="flex-1 overflow-y-auto w-full pr-0 lg:pr-2">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.pos')}</h1>
           <div className="flex items-center gap-2">
@@ -253,6 +264,8 @@ export default function POS() {
           </button>
         </div>
       </div>
+        </>
+      )}
     </motion.div>
   );
 }
