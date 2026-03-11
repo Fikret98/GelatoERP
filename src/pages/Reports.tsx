@@ -18,8 +18,8 @@ export default function Reports() {
   const [incomes, setIncomes] = useState<any[]>([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
-  const [expenseData, setExpenseData] = useState({ date: format(new Date(), 'yyyy-MM-dd HH:mm'), category: '', amount: '', description: '' });
-  const [incomeData, setIncomeData] = useState({ date: format(new Date(), 'yyyy-MM-dd HH:mm'), category: 'Kassa mədaxil', amount: '', description: '' });
+  const [expenseData, setExpenseData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: '', amount: '', description: '' });
+  const [incomeData, setIncomeData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: 'Kassa mədaxil', amount: '', description: '' });
   const [selectedSale, setSelectedSale] = useState<any | null>(null);
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
@@ -51,9 +51,9 @@ export default function Reports() {
         { data: expData, error: expErr },
         { data: incData, error: incErr }
       ] = await Promise.all([
-        supabase.from('sales').select('*, users(name)').order('date', { ascending: false }),
-        supabase.from('expenses').select('*, users(name)').order('date', { ascending: false }),
-        supabase.from('incomes').select('*, users(name)').order('date', { ascending: false })
+        supabase.from('sales').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false }),
+        supabase.from('expenses').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false }),
+        supabase.from('incomes').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false })
       ]);
 
       if (salesErr) throw salesErr;
@@ -85,6 +85,7 @@ export default function Reports() {
 
       const { error } = await supabase.from('expenses').insert([{
         ...expenseData,
+        date: new Date(expenseData.date).toISOString(),
         amount: amount,
         user_id: user?.id ? parseInt(user.id) : null
       }]);
@@ -105,6 +106,7 @@ export default function Reports() {
     try {
       const { error } = await supabase.from('incomes').insert([{
         ...incomeData,
+        date: new Date(incomeData.date).toISOString(),
         amount: parseFloat(incomeData.amount),
         user_id: user?.id ? parseInt(user.id) : null
       }]);
@@ -265,8 +267,9 @@ export default function Reports() {
             <table className="w-full text-left text-sm min-w-[400px]">
               <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
                 <tr>
+                  <th className="px-6 py-3 font-medium">Sifariş #</th>
                   <th className="px-6 py-3 font-medium">{t('common.date')}</th>
-                  <th className="px-6 py-3 font-medium">{t('common.cost')}</th>
+                  <th className="px-6 py-3 font-medium text-right">Məbləğ</th>
                 </tr>
               </thead>
             <motion.tbody 
