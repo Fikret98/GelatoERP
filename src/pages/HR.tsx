@@ -98,7 +98,7 @@ export default function HR() {
     setEditingEmployee(employee);
     setFormData({
       name: employee.name || '',
-      role: employee.role || '',
+      role: employee.job_title || '', // Correctly use the business job title
       salary: (employee.salary || 0).toString(),
       hire_date: employee.hire_date || format(new Date(), 'yyyy-MM-dd'),
       username: employee.username || '',
@@ -106,7 +106,7 @@ export default function HR() {
       email: employee.email || '',
       phone: employee.phone || '',
       address: employee.address || '',
-      user_role: employee.role_type || 'user',
+      user_role: employee.role || 'user', // Correctly use the system role from the users table
       bonus_percentage: (employee.bonus_percentage || 0.8).toString()
     });
     setShowModal(true);
