@@ -63,7 +63,7 @@ export default function HR() {
         { data: usersData, error: userErr },
         { data: bonusData }
       ] = await Promise.all([
-        supabase.from('users').select('*, employees(*)').order('name'),
+        supabase.from('users').select('*, employees!employees_user_id_fkey(*)').order('name'),
         supabase.from('seller_bonuses_view').select('*')
       ]);
 
