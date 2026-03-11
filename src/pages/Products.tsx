@@ -178,6 +178,13 @@ export default function Products() {
                   <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400 leading-none">
                     Satış: {Number(product.price || 0).toFixed(2)} ₼
                   </div>
+                  <div className={`text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded-md inline-block ${
+                    (product.price > 0 ? ((product.price - product.costPrice) / product.price) * 100 : 0) > 30 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                  }`}>
+                    Marja: {Number(product.price > 0 ? ((product.price - product.costPrice) / product.price) * 100 : 0).toFixed(1)}%
+                  </div>
                 </div>
                 <button onClick={() => editProduct(product)} className="text-gray-400 hover:text-indigo-600 transition" title={t('common.edit')}>
                   <Edit2 className="w-5 h-5" />

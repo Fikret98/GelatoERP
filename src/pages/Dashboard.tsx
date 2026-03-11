@@ -43,6 +43,7 @@ export default function Dashboard() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sale_items' }, fetchDashboardData)
       .subscribe();
 
