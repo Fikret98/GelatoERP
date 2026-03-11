@@ -316,11 +316,35 @@ export default function Inventory() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="inv-unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.unit')}</label>
-                  <select id="inv-unit" title={t('common.unit')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })}>
+                  <select
+                    id="inv-unit"
+                    title={t('common.unit')}
+                    className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2"
+                    value={['kq', 'litr', 'ədəd'].includes(formData.unit) ? formData.unit : 'digər'}
+                    onChange={e => {
+                      if (e.target.value !== 'digər') {
+                        setFormData({ ...formData, unit: e.target.value });
+                      } else {
+                        setFormData({ ...formData, unit: '' });
+                      }
+                    }}
+                  >
                     <option value="kq">{t('inventory.kg')}</option>
                     <option value="litr">{t('inventory.liter')}</option>
                     <option value="ədəd">{t('inventory.piece')}</option>
+                    <option value="digər">Digər...</option>
                   </select>
+                  {!['kq', 'litr', 'ədəd'].includes(formData.unit) && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Məs: top, metr, qutu"
+                      title="Xüsusi vahid"
+                      className="w-full mt-2 border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={formData.unit}
+                      onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                    />
+                  )}
                 </div>
                 <div>
                   <label htmlFor="inv-cost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
