@@ -1,19 +1,26 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import webpush from "https://esm.sh/web-push"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', {
+      status: 200,
+      headers: corsHeaders
+    })
   }
 
   try {
     const { title, body, url, icon, image, actions, user_id } = await req.json()
+
+    if (!user_id) throw new Error('user_id is required')
 
     // Initialize Supabase
     const supabase = createClient(
@@ -23,7 +30,7 @@ serve(async (req) => {
 
     // Setup VAPID
     webpush.setVapidDetails(
-      'mailto:example@yourdomain.com',
+      'mailto:admin@gelato.az',
       Deno.env.get('VAPID_PUBLIC_KEY') ?? '',
       Deno.env.get('VAPID_PRIVATE_KEY') ?? ''
     )
@@ -36,7 +43,7 @@ serve(async (req) => {
 
     if (error) throw error
 
-    const results = await Promise.all(subscriptions.map(async (sub) => {
+    const results = await Promise.all((subscriptions || []).map(async (sub) => {
       try {
         const pushConfig = {
           endpoint: sub.endpoint,
@@ -45,17 +52,18 @@ serve(async (req) => {
             p256dh: sub.p256dh
           }
         }
-        await webpush.sendNotification(pushConfig, JSON.stringify({ 
-          title, 
-          body, 
+
+        await webpush.sendNotification(pushConfig, JSON.stringify({
+          title,
+          body,
           url,
           icon: icon || '/icon-192.png',
-          image,
-          actions
+          image: image || null,
+          actions: actions || []
         }))
+
         return { success: true }
       } catch (err) {
-        console.error('Push error:', err)
         // If 404 or 410, sub is expired/invalid
         if (err.statusCode === 404 || err.statusCode === 410) {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id)
@@ -70,6 +78,7 @@ serve(async (req) => {
     })
 
   } catch (error) {
+    console.error('Function error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
