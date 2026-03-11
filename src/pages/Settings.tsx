@@ -196,17 +196,48 @@ export default function Settings() {
               </div>
             </div>
             {isSupported ? (
-              <button
-                onClick={subscription ? unsubscribeUser : subscribeUser}
-                disabled={pushLoading}
-                className={`px-6 py-2 rounded-xl font-bold transition-all ${
-                  subscription 
-                    ? 'border-2 border-red-500 text-red-500 hover:bg-red-50' 
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                } disabled:opacity-50`}
-              >
-                {pushLoading ? '...' : subscription ? 'Deaktiv et' : 'Aktiv et'}
-              </button>
+              <div className="flex flex-col items-end space-y-2">
+                <button
+                  onClick={subscription ? unsubscribeUser : subscribeUser}
+                  disabled={pushLoading}
+                  className={`px-6 py-2 rounded-xl font-bold transition-all ${
+                    subscription 
+                      ? 'border-2 border-red-500 text-red-500 hover:bg-red-50' 
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  } disabled:opacity-50`}
+                >
+                  {pushLoading ? '...' : subscription ? 'Deaktiv et' : 'Aktiv et'}
+                </button>
+                {subscription && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { error } = await supabase.functions.invoke('send-push', {
+                          body: {
+                            user_id: user?.id,
+                            title: '🚀 Professional Test',
+                            body: 'Təbriklər! Push bildirişlər artıq zəngin media dəstəyi ilə işləyir.',
+                            url: '/settings',
+                            image: 'https://images.unsplash.com/photo-1586717791821-3f44a563dc4c?w=800&q=80',
+                            actions: [
+                              { action: 'view_pos', title: 'Satışa keç' },
+                              { action: 'close', title: 'Bağla' }
+                            ]
+                          }
+                        });
+                        if (error) throw error;
+                        toast.success('Test bildirişi göndərildi!');
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Test göndərilərkən xəta baş verdi.');
+                      }
+                    }}
+                    className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                  >
+                    Test Bildirişi Göndər
+                  </button>
+                )}
+              </div>
             ) : (
               <span className="text-xs text-red-500 font-medium font-bold">Dəstəklənmir</span>
             )}

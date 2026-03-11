@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { title, body, url, user_id } = await req.json()
+    const { title, body, url, icon, image, actions, user_id } = await req.json()
 
     // Initialize Supabase
     const supabase = createClient(
@@ -45,7 +45,14 @@ serve(async (req) => {
             p256dh: sub.p256dh
           }
         }
-        await webpush.sendNotification(pushConfig, JSON.stringify({ title, body, url }))
+        await webpush.sendNotification(pushConfig, JSON.stringify({ 
+          title, 
+          body, 
+          url,
+          icon: icon || '/icon-192.png',
+          image,
+          actions
+        }))
         return { success: true }
       } catch (err) {
         console.error('Push error:', err)

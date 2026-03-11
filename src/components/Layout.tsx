@@ -31,6 +31,7 @@ export function cn(...inputs: (string | undefined | null | false)[]) {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [showNotifications, setShowNotifications] = React.useState(false);
+  const notificationRef = React.useRef<HTMLDivElement>(null);
   const [lowStockItems, setLowStockItems] = React.useState<any[]>([]);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -80,6 +81,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Click away listener for notifications
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   const fetchLowStock = async () => {
     const { data } = await supabase
@@ -181,7 +197,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
-            <div className="relative">
+            <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
