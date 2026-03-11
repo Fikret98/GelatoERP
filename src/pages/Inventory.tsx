@@ -141,6 +141,11 @@ export default function Inventory() {
         return;
       }
 
+      if (!purchaseForm.supplier_id) {
+        toast.error('Zəhmət olmasa təchizatçı seçin');
+        return;
+      }
+
       // 1. Insert new purchase record into the NEW table
       // The DB triggers (tr_update_cogs, tr_log_purchase_expense) handle stock, COGS, and expenses!
       const { error: insertErr } = await supabase.from('inventory_purchases').insert([{
@@ -455,7 +460,7 @@ export default function Inventory() {
               </div>
               <div>
                 <label htmlFor="p-supplier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>
-                <select id="p-supplier" title={t('common.supplier')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={purchaseForm.supplier_id} onChange={e => setPurchaseForm({ ...purchaseForm, supplier_id: e.target.value })}>
+                <select id="p-supplier" title={t('common.supplier')} required className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={purchaseForm.supplier_id} onChange={e => setPurchaseForm({ ...purchaseForm, supplier_id: e.target.value })}>
                   <option value="">{t('common.select')}</option>
                   {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
