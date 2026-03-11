@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, Trash2, CreditCard, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
@@ -110,10 +110,27 @@ export default function POS() {
             </span>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: { staggerChildren: 0.05 }
+            }
+          }}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4"
+        >
           {products.map(product => (
-            <button
+            <motion.button
               key={product.id}
+              variants={{
+                hidden: { opacity: 0, scale: 0.95 },
+                show: { opacity: 1, scale: 1 }
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => addToCart(product)}
               className="bg-white dark:bg-gray-800 p-3 lg:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition text-left flex flex-col h-full"
             >
@@ -123,9 +140,9 @@ export default function POS() {
               <h3 className="font-bold text-gray-900 dark:text-white leading-tight mb-1">{product.name}</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 capitalize mb-2">{product.category}</p>
               <div className="mt-auto font-bold text-indigo-600 dark:text-indigo-400 text-lg">{product.price.toFixed(2)} ₼</div>
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Floating View Cart Button (Mobile Only) */}
@@ -178,33 +195,47 @@ export default function POS() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
-              <ShoppingCart className="w-12 h-12 mb-3 opacity-20" />
-              <p>{t('pos.emptyCart')}</p>
-            </div>
-          ) : (
-            cart.map(item => (
-              <div key={item.product.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
-                <div className="flex-1 min-w-0 pr-3">
-                  <h4 className="font-bold text-gray-900 dark:text-white truncate">{item.product.name}</h4>
-                  <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">{(item.product.price * item.quantity).toFixed(2)} ₼</div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400" title="Azalt">
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="font-bold w-6 text-center text-gray-900 dark:text-white">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400" title="Artır">
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => removeFromCart(item.product.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-md ml-2" title="Sil">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+          <AnimatePresence mode="popLayout">
+            {cart.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500"
+              >
+                <ShoppingCart className="w-12 h-12 mb-3 opacity-20" />
+                <p>{t('pos.emptyCart')}</p>
+              </motion.div>
+            ) : (
+              cart.map(item => (
+                <motion.div 
+                  key={item.product.id}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600"
+                >
+                  <div className="flex-1 min-w-0 pr-3">
+                    <h4 className="font-bold text-gray-900 dark:text-white truncate">{item.product.name}</h4>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">{(item.product.price * item.quantity).toFixed(2)} ₼</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400" title="Azalt">
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="font-bold w-6 text-center text-gray-900 dark:text-white">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 hover:bg-white dark:hover:bg-gray-600 rounded-md text-gray-500 dark:text-gray-400" title="Artır">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => removeFromCart(item.product.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-md ml-2" title="Sil">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">

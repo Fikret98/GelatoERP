@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Plus, Download, FileText, FileSpreadsheet } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -269,22 +269,44 @@ export default function Reports() {
                   <th className="px-6 py-3 font-medium">{t('common.cost')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {sales.map((sale) => (
-                  <tr
-                    key={sale.id}
-                    onClick={() => handleSaleClick(sale)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(sale.date), 'dd.MM.yyyy HH:mm')}</td>
-                    <td className="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">{sale.users?.name || '-'}</td>
-                    <td className="px-6 py-3 font-bold text-green-600 dark:text-green-400">+{sale.total_amount.toFixed(2)} ₼</td>
-                  </tr>
-                ))}
-                {sales.length === 0 && (
-                  <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">{t('reports.noSales')}</td></tr>
-                )}
-              </tbody>
+            <motion.tbody 
+              variants={{
+                show: { transition: { staggerChildren: 0.05 } }
+              }}
+              initial="hidden"
+              animate="show"
+              className="divide-y divide-gray-100 dark:divide-gray-700"
+            >
+              {sales.map((sale) => (
+                <motion.tr
+                  key={sale.id}
+                  variants={{
+                    hidden: { opacity: 0, x: -10 },
+                    show: { opacity: 1, x: 0 }
+                  }}
+                  onClick={() => handleSaleClick(sale)}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">#{sale.id}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-gray-900 dark:text-white font-medium">
+                        {format(new Date(sale.date), 'dd.MM.yyyy HH:mm')}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {sale.users?.name || '-'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right font-bold text-indigo-600 dark:text-indigo-400">
+                    {sale.total_amount.toFixed(2)} ₼
+                  </td>
+                </motion.tr>
+              ))}
+              {sales.length === 0 && (
+                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">{t('reports.noSales')}</td></tr>
+              )}
+            </motion.tbody>
             </table>
           </div>
         </div>
@@ -303,22 +325,33 @@ export default function Reports() {
                   <th className="px-6 py-3 font-medium">Məbləğ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {expenses.map((exp) => (
-                  <tr
-                    key={exp.id}
-                    onClick={() => setSelectedExpense(exp)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(exp.date), 'dd.MM.yyyy HH:mm')}</td>
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{exp.users?.name || exp.category}</td>
-                    <td className="px-6 py-3 font-bold text-red-600 dark:text-red-400">-{exp.amount.toFixed(2)} ₼</td>
-                  </tr>
-                ))}
-                {expenses.length === 0 && (
-                  <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">{t('reports.noExpenses')}</td></tr>
-                )}
-              </tbody>
+            <motion.tbody 
+              variants={{
+                show: { transition: { staggerChildren: 0.05 } }
+              }}
+              initial="hidden"
+              animate="show"
+              className="divide-y divide-gray-100 dark:divide-gray-700"
+            >
+              {expenses.map((exp) => (
+                <motion.tr
+                  key={exp.id}
+                  variants={{
+                    hidden: { opacity: 0, x: -10 },
+                    show: { opacity: 1, x: 0 }
+                  }}
+                  onClick={() => setSelectedExpense(exp)}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(exp.date), 'dd.MM.yyyy HH:mm')}</td>
+                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{exp.users?.name || exp.category}</td>
+                  <td className="px-6 py-3 font-bold text-red-600 dark:text-red-400">-{exp.amount.toFixed(2)} ₼</td>
+                </motion.tr>
+              ))}
+              {expenses.length === 0 && (
+                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">{t('reports.noExpenses')}</td></tr>
+              )}
+            </motion.tbody>
             </table>
           </div>
         </div>
@@ -337,272 +370,260 @@ export default function Reports() {
                   <th className="px-6 py-3 font-medium">Məbləğ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {incomes.map((inc) => (
-                  <tr
-                    key={inc.id}
-                    onClick={() => setSelectedIncome(inc)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(inc.date), 'dd.MM.yyyy HH:mm')}</td>
-                    <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{inc.users?.name || inc.category}</td>
-                    <td className="px-6 py-3 font-bold text-green-600 dark:text-green-400">+{inc.amount.toFixed(2)} ₼</td>
-                  </tr>
-                ))}
-                {incomes.length === 0 && (
-                  <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Mədaxil tapılmadı</td></tr>
-                )}
-              </tbody>
+            <motion.tbody 
+              variants={{
+                show: { transition: { staggerChildren: 0.05 } }
+              }}
+              initial="hidden"
+              animate="show"
+              className="divide-y divide-gray-100 dark:divide-gray-700"
+            >
+              {incomes.map((inc) => (
+                <motion.tr
+                  key={inc.id}
+                  variants={{
+                    hidden: { opacity: 0, x: -10 },
+                    show: { opacity: 1, x: 0 }
+                  }}
+                  onClick={() => setSelectedIncome(inc)}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(inc.date), 'dd.MM.yyyy HH:mm')}</td>
+                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{inc.users?.name || inc.category}</td>
+                  <td className="px-6 py-3 font-bold text-green-600 dark:text-green-400">+{inc.amount.toFixed(2)} ₼</td>
+                </motion.tr>
+              ))}
+              {incomes.length === 0 && (
+                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Mədaxil tapılmadı</td></tr>
+              )}
+            </motion.tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {showExpenseModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-          >
-            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('reports.addExpenseTitle')}</h2>
-            <form onSubmit={handleExpenseSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="expense-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
-                <input id="expense-date" required type="datetime-local" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
+      {/* Modals */}
+      <AnimatePresence>
+        {showExpenseModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('reports.addExpenseTitle')}</h2>
+              <form onSubmit={handleExpenseSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="expense-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
+                  <input id="expense-date" required type="datetime-local" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
+                </div>
+                <div>
+                  <label htmlFor="expense-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.category')}</label>
+                  <select id="expense-category" required title={t('reports.category')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.category} onChange={e => setExpenseData({ ...expenseData, category: e.target.value })}>
+                    <option value="">{t('common.select')}</option>
+                    <option value="İcarə">{t('reports.rent')}</option>
+                    <option value="Kommunal">{t('reports.utilities')}</option>
+                    <option value="Maaş">{t('reports.salary')}</option>
+                    <option value="Digər">{t('reports.other')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="expense-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
+                  <input id="expense-amount" required title={t('common.cost')} placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.amount} onChange={e => setExpenseData({ ...expenseData, amount: e.target.value })} />
+                </div>
+                <div>
+                  <label htmlFor="expense-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
+                  <textarea id="expense-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
+                </div>
+                <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
+                  <button type="button" onClick={() => setShowExpenseModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
+                  <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">{t('common.save')}</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {showIncomeModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Mədaxil Əlavə Et (Kassa)</h2>
+              <form onSubmit={handleIncomeSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="income-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
+                  <input id="income-date" required type="datetime-local" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.date} onChange={e => setIncomeData({ ...incomeData, date: e.target.value })} />
+                </div>
+                <div>
+                  <label htmlFor="income-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kateqoriya</label>
+                  <select id="income-category" required title="Kateqoriya" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.category} onChange={e => setIncomeData({ ...incomeData, category: e.target.value })}>
+                    <option value="Kassa mədaxil">Kassa mədaxil (Sahibkar)</option>
+                    <option value="Digər">Digər</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="income-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Məbləğ (₼)</label>
+                  <input id="income-amount" required title="Məbləğ" placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.amount} onChange={e => setIncomeData({ ...incomeData, amount: e.target.value })} />
+                </div>
+                <div>
+                  <label htmlFor="income-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
+                  <textarea id="income-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={incomeData.description} onChange={e => setIncomeData({ ...incomeData, description: e.target.value })}></textarea>
+                </div>
+                <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
+                  <button type="button" onClick={() => setShowIncomeModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
+                  <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium">{t('common.save')}</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {selectedSale && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sifariş Detalları #{selectedSale.id}</h2>
+                <button
+                  onClick={() => setSelectedSale(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
+                  title="Bağla"
+                >
+                  &times;
+                </button>
               </div>
-              <div>
-                <label htmlFor="expense-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.category')}</label>
-                <select id="expense-category" required title={t('reports.category')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.category} onChange={e => setExpenseData({ ...expenseData, category: e.target.value })}>
-                  <option value="">{t('common.select')}</option>
-                  <option value="İcarə">{t('reports.rent')}</option>
-                  <option value="Kommunal">{t('reports.utilities')}</option>
-                  <option value="Maaş">{t('reports.salary')}</option>
-                  <option value="Digər">{t('reports.other')}</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="expense-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
-                <input id="expense-amount" required title={t('common.cost')} placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.amount} onChange={e => setExpenseData({ ...expenseData, amount: e.target.value })} />
-              </div>
-              <div>
-                <label htmlFor="expense-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
-                <textarea id="expense-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
-              </div>
-              <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowExpenseModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">{t('common.save')}</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-      {/* Sale Details Modal */}
-      {selectedSale && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sifariş Detalları #{selectedSale.id}</h2>
-              <button
-                onClick={() => setSelectedSale(null)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
-                title="Bağla"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 pb-4 border-b border-gray-100 dark:border-gray-700">
-                <span>Tarix: {format(new Date(selectedSale.date), 'dd.MM.yyyy HH:mm')}</span>
-                <span>Satıcı: {selectedSale.users?.name || '-'}</span>
-              </div>
-              <div className="space-y-3">
-                {saleDetails.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
-                    <div>
-                      <div className="font-bold text-gray-900 dark:text-white">{item.products?.name}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</div>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 pb-4 border-b border-gray-100 dark:border-gray-700">
+                  <span>Tarix: {format(new Date(selectedSale.date), 'dd.MM.yyyy HH:mm')}</span>
+                  <span>Satıcı: {selectedSale.users?.name || '-'}</span>
+                </div>
+                <div className="space-y-3">
+                  {saleDetails.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
+                      <div>
+                        <div className="font-bold text-gray-900 dark:text-white">{item.products?.name}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</div>
+                      </div>
+                      <div className="font-black text-indigo-600 dark:text-indigo-400">{(item.quantity * item.price).toFixed(2)} ₼</div>
                     </div>
-                    <div className="font-black text-indigo-600 dark:text-indigo-400">{(item.quantity * item.price).toFixed(2)} ₼</div>
+                  ))}
+                </div>
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <span className="font-bold text-gray-900 dark:text-white">Cəmi:</span>
+                  <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedSale.total_amount.toFixed(2)} ₼</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {selectedIncome && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mədaxil Detalları #{selectedIncome.id}</h2>
+                <button
+                  onClick={() => setSelectedIncome(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
+                  title="Bağla"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
+                    <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedIncome.date), 'dd.MM.yyyy HH:mm')}</p>
                   </div>
-                ))}
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
+                    <p className="font-bold text-gray-900 dark:text-white">{selectedIncome.users?.name || '-'}</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedIncome.category}</p>
+                </div>
+                {selectedIncome.description && (
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
+                    <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedIncome.description}</p>
+                  </div>
+                )}
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
+                  <span className="text-2xl font-black text-green-600 dark:text-green-400">{selectedIncome.amount.toFixed(2)} ₼</span>
+                </div>
               </div>
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <span className="font-bold text-gray-900 dark:text-white">Cəmi:</span>
-                <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedSale.total_amount.toFixed(2)} ₼</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )}
 
-      {/* Income Details Modal */}
-      {selectedIncome && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mədaxil Detalları #{selectedIncome.id}</h2>
-              <button
-                onClick={() => setSelectedIncome(null)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
-                title="Bağla"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
-                  <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedIncome.date), 'dd.MM.yyyy HH:mm')}</p>
+        {selectedExpense && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Xərc Detalları #{selectedExpense.id}</h2>
+                <button
+                  onClick={() => setSelectedExpense(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
+                  title="Bağla"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
+                    <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedExpense.date), 'dd.MM.yyyy HH:mm')}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
+                    <p className="font-bold text-gray-900 dark:text-white">{selectedExpense.users?.name || '-'}</p>
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
-                  <p className="font-bold text-gray-900 dark:text-white">{selectedIncome.users?.name || '-'}</p>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedExpense.category}</p>
+                </div>
+                {selectedExpense.description && (
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
+                    <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedExpense.description}</p>
+                  </div>
+                )}
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
+                  <span className="text-2xl font-black text-red-600 dark:text-red-400">{selectedExpense.amount.toFixed(2)} ₼</span>
                 </div>
               </div>
-              <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedIncome.category}</p>
-              </div>
-              {selectedIncome.description && (
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
-                  <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedIncome.description}</p>
-                </div>
-              )}
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
-                <span className="text-2xl font-black text-green-600 dark:text-green-400">{selectedIncome.amount.toFixed(2)} ₼</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {showIncomeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-          >
-            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Mədaxil Əlavə Et (Kassa)</h2>
-            <form onSubmit={handleIncomeSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="income-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
-                <input id="income-date" required type="datetime-local" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.date} onChange={e => setIncomeData({ ...incomeData, date: e.target.value })} />
-              </div>
-              <div>
-                <label htmlFor="income-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kateqoriya</label>
-                <select id="income-category" required title="Kateqoriya" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.category} onChange={e => setIncomeData({ ...incomeData, category: e.target.value })}>
-                  <option value="Kassa mədaxil">Kassa mədaxil (Sahibkar)</option>
-                  <option value="Digər">Digər</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="income-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Məbləğ (₼)</label>
-                <input id="income-amount" required title="Məbləğ" placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.amount} onChange={e => setIncomeData({ ...incomeData, amount: e.target.value })} />
-              </div>
-              <div>
-                <label htmlFor="income-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
-                <textarea id="income-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={incomeData.description} onChange={e => setIncomeData({ ...incomeData, description: e.target.value })}></textarea>
-              </div>
-              <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowIncomeModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium">{t('common.save')}</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-
-      {showExpenseModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-          >
-            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('reports.addExpenseTitle')}</h2>
-            <form onSubmit={handleExpenseSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="expense-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.date')}</label>
-                <input id="expense-date" required type="datetime-local" title={t('common.date')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.date} onChange={e => setExpenseData({ ...expenseData, date: e.target.value })} />
-              </div>
-              <div>
-                <label htmlFor="expense-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.category')}</label>
-                <select id="expense-category" required title={t('reports.category')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.category} onChange={e => setExpenseData({ ...expenseData, category: e.target.value })}>
-                  <option value="">{t('common.select')}</option>
-                  <option value="İcarə">{t('reports.rent')}</option>
-                  <option value="Kommunal">{t('reports.utilities')}</option>
-                  <option value="Maaş">{t('reports.salary')}</option>
-                  <option value="Digər">{t('reports.other')}</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="expense-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
-                <input id="expense-amount" required title={t('common.cost')} placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={expenseData.amount} onChange={e => setExpenseData({ ...expenseData, amount: e.target.value })} />
-              </div>
-              <div>
-                <label htmlFor="expense-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
-                <textarea id="expense-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
-              </div>
-              <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowExpenseModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">{t('common.save')}</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Expense Details Modal */}
-      {selectedExpense && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Xərc Detalları #{selectedExpense.id}</h2>
-              <button
-                onClick={() => setSelectedExpense(null)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
-                title="Bağla"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
-                  <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedExpense.date), 'dd.MM.yyyy HH:mm')}</p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
-                  <p className="font-bold text-gray-900 dark:text-white">{selectedExpense.users?.name || '-'}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedExpense.category}</p>
-              </div>
-              {selectedExpense.description && (
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
-                  <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedExpense.description}</p>
-                </div>
-              )}
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
-                <span className="text-2xl font-black text-red-600 dark:text-red-400">{selectedExpense.amount.toFixed(2)} ₼</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

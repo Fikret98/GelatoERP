@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Phone, Mail } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
@@ -60,9 +60,28 @@ export default function Suppliers() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <motion.div 
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
         {suppliers.map((supplier) => (
-          <div key={supplier.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition">
+          <motion.div 
+            key={supplier.id}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0 }
+            }}
+            whileHover={{ y: -5 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
+          >
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{supplier.name}</h3>
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
@@ -74,11 +93,12 @@ export default function Suppliers() {
                 {supplier.email || t('suppliers.notSpecified')}
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      {showModal && (
+      <AnimatePresence>
+        {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -90,15 +110,15 @@ export default function Suppliers() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.companyName')}</label>
-                <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                <input required type="text" title={t('suppliers.companyName')} placeholder={t('suppliers.companyName')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.contactNumber')}</label>
-                <input type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.contact} onChange={e => setFormData({ ...formData, contact: e.target.value })} />
+                <input type="text" title={t('suppliers.contactNumber')} placeholder={t('suppliers.contactNumber')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.contact} onChange={e => setFormData({ ...formData, contact: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.email')}</label>
-                <input type="email" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                <input type="email" title={t('suppliers.email')} placeholder={t('suppliers.email')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
               <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setShowModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
@@ -108,6 +128,7 @@ export default function Suppliers() {
           </motion.div>
         </div>
       )}
+      </AnimatePresence>
     </motion.div>
   );
 }

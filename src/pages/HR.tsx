@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, User, Calendar, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
@@ -129,9 +129,28 @@ export default function HR() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <motion.div 
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
         {employees.map((employee) => (
-          <div key={employee.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition">
+          <motion.div
+            key={employee.id}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0 }
+            }}
+            whileHover={{ y: -5 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
+          >
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-4">
                 <User className="w-6 h-6" />
@@ -148,7 +167,7 @@ export default function HR() {
               </div>
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <Calendar className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
-                {t('hr.hireDate')}: <span className="font-medium text-gray-900 dark:text-white ml-1">{format(new Date(employee.hire_date), 'dd.MM.yyyy')}</span>
+                {t('hr.hireDate')}: <span className="font-medium text-gray-900 dark:text-white ml-1">{employee.hire_date ? format(new Date(employee.hire_date), 'dd.MM.yyyy') : '-'}</span>
               </div>
               <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg flex justify-between items-center">
                 <span className="text-xs font-bold text-green-700 dark:text-green-400">Satış Bonusu ({employee.bonus_percentage || 0.8}%):</span>
@@ -157,11 +176,12 @@ export default function HR() {
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      {showModal && (
+      <AnimatePresence>
+        {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -251,6 +271,7 @@ export default function HR() {
           </motion.div>
         </div>
       )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -147,15 +147,29 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
-        {cards.map((card, index) => (
+      <motion.div
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6"
+      >
+        {cards.map((card) => (
           <motion.div
             key={card.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            onClick={() => card.id === 'lowStock' && setShowLowStockModal(true)}
-            className={`group bg-white dark:bg-gray-800 overflow-hidden shadow-sm hover:shadow-xl rounded-3xl border border-gray-100 dark:border-gray-700 p-6 transition-all duration-300 ${card.isClickable ? 'cursor-pointer hover:-translate-y-1' : ''}`}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0 }
+            }}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
+            onClick={() => card.isClickable && card.id === 'lowStock' && (window.location.hash = '#inventory')}
+            className={`p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 ${card.bg} ${card.isClickable ? 'cursor-pointer hover:shadow-md' : ''
+              }`}
           >
             <div className="flex flex-col gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
@@ -168,7 +182,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Sales Trend */}
