@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          importScripts: ['/push-sw.js'],
           // Cache the app shell (HTML, JS, CSS, fonts, images) for offline use
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           // Network-first for Supabase API: try network, fall back to cache

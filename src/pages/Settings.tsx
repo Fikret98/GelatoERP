@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Shield, Save } from 'lucide-react';
+import { User, Mail, Phone, Shield, Save, Bell, BellOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 export default function Settings() {
   const { t } = useLanguage();
@@ -17,6 +18,7 @@ export default function Settings() {
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { isSupported, subscription, loading: pushLoading, subscribeUser, unsubscribeUser } = usePushNotifications();
 
   const [bonus, setBonus] = useState<number>(0);
 
@@ -178,6 +180,37 @@ export default function Settings() {
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="p-6 sm:p-8 border-t border-gray-100 dark:border-gray-700 bg-gray-50/20 dark:bg-gray-900/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className={`p-3 rounded-xl ${subscription ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                {subscription ? <Bell className="w-6 h-6" /> : <BellOff className="w-6 h-6" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Push Bildirişlər</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {subscription ? 'Bildirişlər aktivdir' : 'Vacib sistem xəbərdarlıqlarını cihazınızda alın'}
+                </p>
+              </div>
+            </div>
+            {isSupported ? (
+              <button
+                onClick={subscription ? unsubscribeUser : subscribeUser}
+                disabled={pushLoading}
+                className={`px-6 py-2 rounded-xl font-bold transition-all ${
+                  subscription 
+                    ? 'border-2 border-red-500 text-red-500 hover:bg-red-50' 
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                } disabled:opacity-50`}
+              >
+                {pushLoading ? '...' : subscription ? 'Deaktiv et' : 'Aktiv et'}
+              </button>
+            ) : (
+              <span className="text-xs text-red-500 font-medium font-bold">Dəstəklənmir</span>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
