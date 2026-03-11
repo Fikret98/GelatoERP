@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 // VAPID Public Key - This should ideally be in an environment variable
 // If you don't have one, you can generate it using 'npx web-push generate-vapid-keys'
-const VAPID_PUBLIC_KEY = 'BDrsEIWlTy1YTAZxpkN1f1C0EcuCjL15j8lxS3KaXzDE_BvlWIHEIGdmsP3hfiiG3ldbF89pWEc6foyFxSOe5es';
+const VAPID_PUBLIC_KEY = 'BIJTFf5ig540SULQlqcclQcOdrgFsh_9CGbh75UaNpVnyBgOUM6RDJbedxO_UJoJTD1qnsNZ684f9iog2p4yM';
 
 function urlBase64ToUint8Array(base64String: string) {
   const sanitized = base64String.trim().replace(/\s/g, '');
