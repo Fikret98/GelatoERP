@@ -57,6 +57,14 @@ export function usePushNotifications() {
   const subscribeUser = async () => {
     try {
       setLoading(true);
+
+      // Proactive permission check
+      if (Notification.permission === 'denied') {
+        toast.error('Bildiriş icazəsi bloklanıb. Zəhmət olmasa brauzer tənzimləmələrindən (sayt adının solundakı kilid işarəsi) icazə verin.');
+        setLoading(false);
+        return;
+      }
+
       const registration = await navigator.serviceWorker.ready;
       
       const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
