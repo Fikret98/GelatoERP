@@ -5,7 +5,18 @@ import { useAuth } from '../contexts/AuthContext';
 
 // VAPID Public Key - This should ideally be in an environment variable
 // If you don't have one, you can generate it using 'npx web-push generate-vapid-keys'
-const VAPID_PUBLIC_KEY = 'BPDf-m89f3e-zN7h9X4V0k9fE7Q6fG5rH4k3D2m1sL0p9k8j7h6g5f4d3s2a1q9w8e7r6t5y4u3i2o1p0L9K8J7H6M'; 
+const VAPID_PUBLIC_KEY = 'BDe6z-y_V6F8j3H-K6L5M4N3O2P1Q0R9S8T7U6V5W4X3Y2Z1A0B9C8D7E6F5G4H3I2J1K0L9M8N7O6P5Q4R3S2T1U'; 
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
@@ -39,18 +50,10 @@ export function usePushNotifications() {
       setLoading(true);
       const registration = await navigator.serviceWorker.ready;
       
-      // Convert VAPID key to Uint8Array
-      const padding = '='.repeat((4 - (VAPID_PUBLIC_KEY.length % 4)) % 4);
-      const base64 = (VAPID_PUBLIC_KEY + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const rawData = window.atob(base64);
-      const outputArray = new Uint8Array(rawData.length);
-      for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-      }
-
+      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: outputArray
+        applicationServerKey
       });
 
       // Save to Supabase
