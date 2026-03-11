@@ -84,11 +84,14 @@ export default function Inventory() {
     setSelectedItem(item);
     setIsLoadingHistory(true);
     try {
-      const { data, error } = await supabase
-        .from('inventory_purchases_detailed')
-        .select('*')
-        .eq('inventory_id', item.id)
-        .order('purchase_date', { ascending: false });
+      const [{ data, error }] = await Promise.all([
+        supabase
+          .from('inventory_purchases_detailed')
+          .select('*')
+          .eq('inventory_id', item.id)
+          .order('purchase_date', { ascending: false }),
+        new Promise(resolve => setTimeout(resolve, 800)) // Minimum visual delay for the animation
+      ]);
 
       if (error) throw error;
 

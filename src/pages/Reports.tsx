@@ -31,10 +31,14 @@ export default function Reports() {
     setSelectedSale(sale);
     setIsLoadingDetails(true);
     try {
-      const { data, error } = await supabase
-        .from('sale_items')
-        .select('*, products(name)')
-        .eq('sale_id', sale.id);
+      const [{ data, error }] = await Promise.all([
+        supabase
+          .from('sale_items')
+          .select('*, products(name)')
+          .eq('sale_id', sale.id),
+        new Promise(resolve => setTimeout(resolve, 800)) // Minimum visual delay for the animation
+      ]);
+      
       if (error) throw error;
       setSaleDetails(data || []);
     } catch (e) {
