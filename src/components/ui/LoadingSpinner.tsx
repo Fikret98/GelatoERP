@@ -68,10 +68,10 @@ export default function LoadingSpinner({ message }: LoadingSpinnerProps) {
             <motion.circle
               key={i}
               cx={b.cx}
-              cy={b.cy}
               r={b.r}
               fill="white"
               opacity={0.35}
+              initial={{ cy: b.cy }}
               animate={{ cy: [b.cy, b.cy - 18, b.cy], opacity: [0.4, 0, 0.4] }}
               transition={{
                 duration: 1.1,
