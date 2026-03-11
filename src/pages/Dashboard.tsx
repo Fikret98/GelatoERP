@@ -22,7 +22,11 @@ function AnimatedStat({ value, suffix = '', decimals = 2 }: { value: number; suf
 
 export default function Dashboard() {
   const { t } = useLanguage();
-  const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('7d');
+  const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'custom'>('week');
+  const [customRange, setCustomRange] = useState({
+    start: new Date().toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
   const [stats, setStats] = useState({
     revenue: 0,
     expenses: 0,
@@ -61,26 +65,41 @@ export default function Dashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [dateRange]);
+  }, [dateRange, customRange]);
 
   const fetchDashboardData = async () => {
     try {
-      let filterDate: string;
+      let startDate: string;
+      let endDate: string = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
       const now = new Date();
+
       if (dateRange === 'today') {
-        filterDate = now.toISOString().split('T')[0];
-      } else if (dateRange === '7d') {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        filterDate = d.toISOString().split('T')[0];
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        startDate = start.toISOString();
+      } else if (dateRange === 'week') {
+        const start = new Date();
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+        start.setDate(diff);
+        start.setHours(0, 0, 0, 0);
+        startDate = start.toISOString();
+      } else if (dateRange === 'month') {
+        const start = new Date();
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        startDate = start.toISOString();
       } else {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        filterDate = d.toISOString().split('T')[0];
+        // Custom
+        startDate = new Date(customRange.start).toISOString();
+        const end = new Date(customRange.end);
+        end.setHours(23, 59, 59, 999);
+        endDate = end.toISOString();
       }
 
       const { data, error } = await supabase.rpc('get_advanced_analytics', {
-        p_date_filter: filterDate
+        p_start_date: startDate,
+        p_end_date: endDate
       });
 
       if (error) {
@@ -142,19 +161,45 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
-          {(['today', '7d', '30d'] as const).map((range) => (
-            <button
-              key={range}
-              onClick={() => setDateRange(range)}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${dateRange === range
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm ring-1 ring-black/5'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
+            {(['today', 'week', 'month', 'custom'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setDateRange(range)}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${dateRange === range
+                  ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm ring-1 ring-black/5'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+              >
+                {range === 'today' ? 'Bugün' : range === 'week' ? 'Bu Həftə' : range === 'month' ? 'Bu Ay' : 'Manual'}
+              </button>
+            ))}
+          </div>
+
+          {dateRange === 'custom' && (
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
             >
-              {range === 'today' ? 'Bugün' : range === '7d' ? '7 Gün' : '30 Gün'}
-            </button>
-          ))}
+              <input 
+                type="date" 
+                title="Başlanğıc tarixi"
+                className="text-[10px] font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
+                value={customRange.start}
+                onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+              />
+              <span className="text-gray-300 dark:text-gray-600">|</span>
+              <input 
+                type="date" 
+                title="Son tarix"
+                className="text-[10px] font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
+                value={customRange.end}
+                onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+              />
+            </motion.div>
+          )}
         </div>
       </div>
 
