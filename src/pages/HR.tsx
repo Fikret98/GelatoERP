@@ -60,23 +60,24 @@ export default function HR() {
     try {
       setIsLoadingPage(true);
       const [
-        { data: empData, error: empErr },
         { data: usersData, error: userErr },
         { data: bonusData }
       ] = await Promise.all([
-        supabase.from('employees').select('*').order('name'),
-        supabase.from('users').select('*').order('name'),
+        supabase.from('users').select('*, employees(*)').order('name'),
         supabase.from('seller_bonuses_view').select('*')
       ]);
 
-      if (empErr) throw empErr;
       if (userErr) throw userErr;
 
-      // Merge data: all users should be visible, with employee data if it exists
+      // Merge data: users with their nested employee data
       const merged = (usersData || []).map(u => {
-        const emp = (empData || []).find(e => e.name === u.name);
+        const emp = u.employees?.[0]; // One-to-one relationship
         return {
           ...u,
+          id: u.id,
+          name: u.name,
+          role_type: u.role, // system role (admin/user)
+          job_title: emp?.job_title || 'İşçi', // business role (Barista, etc)
           salary: emp?.salary || 0,
           hire_date: emp?.hire_date || null,
           isSystemUser: true
@@ -160,28 +161,18 @@ export default function HR() {
         // 3. Update employees table
         const { error: empErr } = await supabase.from('employees').update({
           name: formData.name,
-          role: formData.role,
+          job_title: formData.role,
           salary: newSalary,
           hire_date: formData.hire_date
-        }).eq('name', editingEmployee.name); // Using name as secondary key if id is not available in both
+        }).eq('user_id', editingEmployee.id);
 
         if (empErr) throw empErr;
 
         toast.success(t('hr.updateSuccess') || 'İşçi məlumatları yeniləndi');
       } else {
         // --- ADD LOGIC ---
-        // 1. Create employee
-        const { data: empData, error: empErr } = await supabase.from('employees').insert([{
-          name: formData.name,
-          role: formData.role,
-          salary: parseFloat(formData.salary),
-          hire_date: formData.hire_date
-        }]).select().single();
-
-        if (empErr) throw empErr;
-
-        // 2. Create user account
-        const { error: userErr } = await supabase.from('users').insert([{
+        // 1. Create user account first to get ID
+        const { data: newUser, error: userErr } = await supabase.from('users').insert([{
           username: formData.username,
           password: formData.password,
           name: formData.name,
@@ -189,9 +180,20 @@ export default function HR() {
           phone: formData.phone,
           role: formData.user_role,
           bonus_percentage: parseFloat(formData.bonus_percentage)
-        }]);
+        }]).select().single();
 
         if (userErr) throw userErr;
+
+        // 2. Create employee record linked to user
+        const { error: empErr } = await supabase.from('employees').insert([{
+          user_id: newUser.id,
+          name: formData.name,
+          job_title: formData.role,
+          salary: parseFloat(formData.salary),
+          hire_date: formData.hire_date
+        }]);
+
+        if (empErr) throw empErr;
         toast.success(t('hr.addEmployee'));
       }
 
@@ -272,7 +274,7 @@ export default function HR() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">{employee.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{employee.role}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{employee.job_title}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-1">
@@ -340,7 +342,7 @@ export default function HR() {
                   <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.role')}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vəzifə (Məs: Barista)</label>
                   <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
