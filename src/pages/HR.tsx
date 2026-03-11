@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, User, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Search, User, Calendar, DollarSign, Edit2, TrendingUp, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
@@ -12,6 +12,7 @@ export default function HR() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [bonuses, setBonuses] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -26,10 +27,34 @@ export default function HR() {
     bonus_percentage: '0.8'
   });
   const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedHistoryEmployee, setSelectedHistoryEmployee] = useState<any | null>(null);
+  const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  const fetchSalaryHistory = async (employee: any) => {
+    setSelectedHistoryEmployee(employee);
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('salary_history')
+        .select('*, users!changed_by(name)')
+        .eq('user_id', employee.id)
+        .order('changed_at', { ascending: false });
+      
+      if (error) throw error;
+      setSalaryHistory(data || []);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Tarixçə yüklənərkən xəta');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -68,33 +93,110 @@ export default function HR() {
     }
   };
 
+  const handleEdit = (employee: any) => {
+    setEditingEmployee(employee);
+    setFormData({
+      name: employee.name || '',
+      role: employee.role || '',
+      salary: (employee.salary || 0).toString(),
+      hire_date: employee.hire_date || format(new Date(), 'yyyy-MM-dd'),
+      username: employee.username || '',
+      password: employee.password || '',
+      email: employee.email || '',
+      phone: employee.phone || '',
+      address: employee.address || '',
+      user_role: employee.role_type || 'user',
+      bonus_percentage: (employee.bonus_percentage || 0.8).toString()
+    });
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
     try {
-      // 1. Create employee
-      const { data: empData, error: empErr } = await supabase.from('employees').insert([{
-        name: formData.name,
-        role: formData.role,
-        salary: parseFloat(formData.salary),
-        hire_date: formData.hire_date
-      }]).select().single();
+      setIsSubmitting(true);
+      
+      if (editingEmployee) {
+        // --- EDIT LOGIC ---
+        
+        // 1. Log to salary_history if salary, bonus or role changed
+        const oldSalary = editingEmployee.salary;
+        const newSalary = parseFloat(formData.salary);
+        const oldBonus = editingEmployee.bonus_percentage;
+        const newBonus = parseFloat(formData.bonus_percentage);
+        const oldRole = editingEmployee.role;
+        const newRole = formData.role;
 
-      if (empErr) throw empErr;
+        if (oldSalary !== newSalary || oldBonus !== newBonus || oldRole !== newRole) {
+          await supabase.from('salary_history').insert([{
+            user_id: editingEmployee.id,
+            old_salary: oldSalary,
+            new_salary: newSalary,
+            old_bonus_percentage: oldBonus,
+            new_bonus_percentage: newBonus,
+            old_role: oldRole,
+            new_role: newRole,
+            change_type: oldRole !== newRole ? 'promotion' : 'salary_change',
+            note: 'Manual update from HR module',
+            changed_by: (await supabase.auth.getUser()).data.user?.id || null 
+          }]);
+        }
 
-      // 2. Create user account
-      const { error: userErr } = await supabase.from('users').insert([{
-        username: formData.username,
-        password: formData.password,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        role: formData.user_role,
-        bonus_percentage: parseFloat(formData.bonus_percentage)
-      }]);
+        // 2. Update users table
+        const { error: userErr } = await supabase.from('users').update({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.user_role,
+          bonus_percentage: newBonus,
+          // Only update password if it's changed and not empty
+          ...(formData.password && formData.password !== editingEmployee.password ? { password: formData.password } : {})
+        }).eq('id', editingEmployee.id);
 
-      if (userErr) throw userErr;
+        if (userErr) throw userErr;
+
+        // 3. Update employees table
+        const { error: empErr } = await supabase.from('employees').update({
+          name: formData.name,
+          role: formData.role,
+          salary: newSalary,
+          hire_date: formData.hire_date
+        }).eq('name', editingEmployee.name); // Using name as secondary key if id is not available in both
+
+        if (empErr) throw empErr;
+
+        toast.success(t('hr.updateSuccess') || 'İşçi məlumatları yeniləndi');
+      } else {
+        // --- ADD LOGIC ---
+        // 1. Create employee
+        const { data: empData, error: empErr } = await supabase.from('employees').insert([{
+          name: formData.name,
+          role: formData.role,
+          salary: parseFloat(formData.salary),
+          hire_date: formData.hire_date
+        }]).select().single();
+
+        if (empErr) throw empErr;
+
+        // 2. Create user account
+        const { error: userErr } = await supabase.from('users').insert([{
+          username: formData.username,
+          password: formData.password,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.user_role,
+          bonus_percentage: parseFloat(formData.bonus_percentage)
+        }]);
+
+        if (userErr) throw userErr;
+        toast.success(t('hr.addEmployee'));
+      }
 
       setShowModal(false);
+      setEditingEmployee(null);
       setFormData({
         name: '',
         role: '',
@@ -108,11 +210,12 @@ export default function HR() {
         user_role: 'user',
         bonus_percentage: '0.8'
       });
-      toast.success(t('hr.addEmployee'));
       fetchData();
     } catch (e: any) {
       console.error(e);
       toast.error('Xəta baş verdi: ' + e.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -162,13 +265,31 @@ export default function HR() {
             whileHover={{ y: -5 }}
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
           >
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-4">
-                <User className="w-6 h-6" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-4">
+                  <User className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{employee.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{employee.role}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{employee.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{employee.role}</p>
+              <div className="flex items-center space-x-1">
+                <button 
+                  onClick={() => fetchSalaryHistory(employee)}
+                  className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  title="Tarixçəyə bax"
+                >
+                  <History className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => handleEdit(employee)}
+                  className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  title={t('common.edit')}
+                >
+                  <Edit2 className="w-5 h-5" />
+                </button>
               </div>
             </div>
             <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -200,7 +321,18 @@ export default function HR() {
             className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
           >
             <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('hr.addEmployeeTitle')}</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {editingEmployee ? 'İşçi məlumatlarını redaktə et' : t('hr.addEmployeeTitle')}
+              </h2>
+              <button 
+                onClick={() => { setShowModal(false); setEditingEmployee(null); }} 
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title={t('common.cancel')}
+              >
+                <Plus className="w-6 h-6 rotate-45" />
+              </button>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -275,13 +407,122 @@ export default function HR() {
                 </div>
               </div>
               <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
+                <button 
+                  type="button" 
+                  onClick={() => { setShowModal(false); setEditingEmployee(null); }} 
+                  className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isSubmitting ? 'Gözləyin...' : (editingEmployee ? t('common.save') : t('common.add'))}
+                </button>
               </div>
             </form>
           </motion.div>
         </div>
       )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedHistoryEmployee && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dəyişiklik Tarixçəsi</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedHistoryEmployee.name}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedHistoryEmployee(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  title={t('common.cancel')}
+                >
+                  <Plus className="w-6 h-6 rotate-45" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                {isLoadingHistory ? (
+                  <div className="py-12 flex justify-center">
+                    <LoadingSpinner message="Yüklənir..." />
+                  </div>
+                ) : salaryHistory.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p>Heç bir tarixçə tapılmadı.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6 relative before:absolute before:inset-0 before:left-4 before:w-0.5 before:bg-gray-100 dark:before:bg-gray-700 before:h-full">
+                    {salaryHistory.map((log, idx) => (
+                      <div key={log.id} className="relative pl-10">
+                        <div className="absolute left-2.5 top-1.5 w-3.5 h-3.5 rounded-full bg-indigo-500 border-2 border-white dark:border-gray-800" />
+                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                              log.change_type === 'promotion' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {log.change_type === 'promotion' ? 'Vəzifə Artımı' : 'Maaş Dəyişikliyi'}
+                            </span>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                              {format(new Date(log.changed_at), 'dd.MM.yyyy')}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 mt-3">
+                            {log.old_salary !== log.new_salary && (
+                              <div>
+                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{t('hr.salary')}</p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="text-xs line-through text-gray-400">{log.old_salary} ₼</span>
+                                  <TrendingUp className="w-3 h-3 text-green-500" />
+                                  <span className="text-sm font-bold text-gray-900 dark:text-white">{log.new_salary} ₼</span>
+                                </div>
+                              </div>
+                            )}
+                            {log.old_bonus_percentage !== log.new_bonus_percentage && (
+                              <div>
+                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Bonus %</p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="text-xs line-through text-gray-400">{log.old_bonus_percentage}%</span>
+                                  <TrendingUp className="w-3 h-3 text-green-500" />
+                                  <span className="text-sm font-bold text-gray-900 dark:text-white">{log.new_bonus_percentage}%</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {log.old_role !== log.new_role && (
+                            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                              <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{t('hr.role')}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-400">{log.old_role}</span>
+                                <span className="text-xs text-gray-500">→</span>
+                                <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{log.new_role}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {log.note && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">"{log.note}"</p>}
+                          <p className="text-[9px] text-gray-400 mt-2 text-right italic">Tərəfindən: {log.users?.name || 'Sistem'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
         </>
       )}
