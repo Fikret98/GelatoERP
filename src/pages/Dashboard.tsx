@@ -166,6 +166,13 @@ export default function Dashboard() {
         setStats(data.stats);
         setCharts(data.charts);
 
+        // Fetch low stock items for the modal
+        const { data: inventoryData, error: invError } = await supabase
+          .from('inventory')
+          .select('*');
+
+        if (invError) throw invError;
+
         if (inventoryData) {
           const lowStock = inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0));
           setLowStockItems(lowStock);
