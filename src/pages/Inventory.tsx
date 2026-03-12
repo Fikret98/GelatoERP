@@ -3,11 +3,13 @@ import { Plus, Search, X, Calendar, Package, Truck, ShoppingCart, Edit2 } from '
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Inventory() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -24,9 +26,6 @@ export default function Inventory() {
 
   useEffect(() => {
     fetchData();
-    supabase.from('users').select('id').eq('username', 'admin').maybeSingle().then(({ data }) => {
-      if (data) setUserId(data.id);
-    });
   }, []);
 
   // Body scroll lock when modals are open
@@ -165,7 +164,7 @@ export default function Inventory() {
         quantity: q,
         unit_price: unitCost,
         supplier_id: purchaseForm.supplier_id ? parseInt(purchaseForm.supplier_id) : null,
-        created_by: userId
+        created_by: user?.id ? parseInt(user.id) : null
       }]);
 
       if (insertErr) throw insertErr;
