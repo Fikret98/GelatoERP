@@ -2,8 +2,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 html, body {
   @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
+  overflow: hidden; /* Prevent elastic scrolling on body, Layout handles scrolling */
 }
 
 html.splash-active, 

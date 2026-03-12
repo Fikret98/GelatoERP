@@ -27,7 +27,7 @@ export default function SplashScreen() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-indigo-600 flex flex-col items-center justify-center">
+    <div className="fixed inset-0 z-[100] bg-indigo-600 flex flex-col items-center justify-center h-[100dvh]">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
