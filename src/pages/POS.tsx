@@ -173,7 +173,7 @@ export default function POS() {
               </div>
               
               <div className="flex-1 min-h-0 flex flex-col justify-between">
-                <h3 className="font-black text-gray-900 dark:text-white leading-tight text-base sm:text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">{product.name}</h3>
+                <h3 className="font-black text-gray-900 dark:text-white leading-tight text-base sm:text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-10 sm:h-12">{product.name}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest font-black text-gray-400 dark:text-gray-500">{product.category}</span>
                 </div>

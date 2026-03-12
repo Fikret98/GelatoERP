@@ -237,7 +237,7 @@ export default function Products() {
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0 pr-4">
-                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white line-clamp-2 h-10 sm:h-auto" title={product.name}>
+                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white line-clamp-2 h-12 sm:h-14" title={product.name}>
                     {product.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-2">
