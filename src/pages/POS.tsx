@@ -146,7 +146,7 @@ export default function POS() {
           }}
           initial="hidden"
           animate="show"
-          className="p-1 sm:p-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 pb-20"
+          className="p-1 sm:p-4 grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 pb-20"
         >
           {products.map(product => (
             <motion.button
