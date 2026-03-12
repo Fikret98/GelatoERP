@@ -33,6 +33,7 @@ export const translations = {
       debt: 'Borc',
       amountPaid: 'Ödənilən məbləğ',
       payDebt: 'Borc Ödə',
+      payAdvance: 'Avans Ödə',
       paymentHistory: 'Ödəniş Tarixçəsi',
       totalDebt: 'Ümumi Borc',
       makePayment: 'Ödəniş Et'
@@ -161,6 +162,7 @@ export const translations = {
       debt: 'Debt',
       amountPaid: 'Amount Paid',
       payDebt: 'Pay Debt',
+      payAdvance: 'Pay Advance',
       paymentHistory: 'Payment History',
       totalDebt: 'Total Debt',
       makePayment: 'Make Payment'

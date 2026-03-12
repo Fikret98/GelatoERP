@@ -196,7 +196,7 @@ export default function Suppliers() {
                           }}
                           className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
                         >
-                          {t('common.payDebt')}
+                          {currentDebt > 0 ? t('common.payDebt') : t('common.payAdvance')}
                         </button>
                       </div>
                     );
@@ -254,7 +254,12 @@ export default function Suppliers() {
                 >
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('common.payDebt')}: {selectedSupplier.name}</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {(() => {
+                        const debtInfo = debts.find(d => d.supplier_id === selectedSupplier.id);
+                        return debtInfo?.current_debt > 0 ? t('common.payDebt') : t('common.payAdvance');
+                      })()}: {selectedSupplier.name}
+                    </h2>
                     <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                       <X className="w-5 h-5 text-gray-400" />
                     </button>
