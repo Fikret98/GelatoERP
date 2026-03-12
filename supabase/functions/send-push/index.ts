@@ -26,11 +26,26 @@ Deno.serve(async (req) => {
     )
 
     // Setup VAPID
-    webpush.setVapidDetails(
-      'mailto:admin@gelato.az',
-      Deno.env.get('VAPID_PUBLIC_KEY') ?? '',
-      Deno.env.get('VAPID_PRIVATE_KEY') ?? ''
-    )
+    const publicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+    const privateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+
+    console.log(`[send-push] VAPID Public Key length: ${publicKey?.length || 0}`)
+    console.log(`[send-push] VAPID Private Key length: ${privateKey?.length || 0}`)
+
+    if (!publicKey || !privateKey) {
+      throw new Error('VAPID keys are missing from environment variables')
+    }
+
+    try {
+      webpush.setVapidDetails(
+        'mailto:admin@gelato.az',
+        publicKey,
+        privateKey
+      )
+    } catch (vapidError) {
+      console.error('[send-push] VAPID initialization failed:', vapidError.message)
+      throw new Error(`VAPID Init Error: ${vapidError.message}`)
+    }
 
     // Get user subscriptions
     const { data: subscriptions, error } = await supabase
