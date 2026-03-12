@@ -183,12 +183,14 @@ export default function FixedAssets() {
                   <button
                     onClick={() => { setEditingAsset(asset); setFormData({ ...asset, cost: asset.cost.toString() }); setShowModal(true); }}
                     className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    title={t('common.edit')}
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(asset.id)}
                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    title={t('common.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -242,6 +244,7 @@ export default function FixedAssets() {
                   <input
                     required
                     type="text"
+                    title={t('assets.assetName')}
                     className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -254,6 +257,7 @@ export default function FixedAssets() {
                     <input
                       required
                       type="date"
+                      title={t('assets.purchaseDate')}
                       className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                       value={formData.purchase_date}
                       onChange={e => setFormData({ ...formData, purchase_date: e.target.value })}
@@ -265,6 +269,7 @@ export default function FixedAssets() {
                       required
                       type="number"
                       step="0.01"
+                      title={t('assets.cost')}
                       className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                       value={formData.cost}
                       onChange={e => setFormData({ ...formData, cost: e.target.value })}
@@ -275,6 +280,7 @@ export default function FixedAssets() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.status')}</label>
                   <select
+                    title={t('assets.status')}
                     className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                     value={formData.status}
                     onChange={e => setFormData({ ...formData, status: e.target.value })}
@@ -288,6 +294,7 @@ export default function FixedAssets() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
                   <textarea
+                    title={t('reports.description')}
                     className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
                     value={formData.description}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}

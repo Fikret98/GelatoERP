@@ -15,6 +15,7 @@ export const translations = {
       search: 'Axtar...',
       save: 'Yadda saxla',
       cancel: 'Ləğv et',
+      close: 'Bağla',
       add: 'Əlavə et',
       edit: 'Düzəliş et',
       delete: 'Sil',
@@ -60,7 +61,8 @@ export const translations = {
       lowStock: 'Azalan Anbar',
       employees: 'İşçilər',
       salesChart: 'Son 7 Günlük Satışlar',
-      expenseChart: 'Xərclərin Bölgüsü'
+      expenseChart: 'Xərclərin Bölgüsü',
+      fixedAssets: 'Əsas Vəsaitlər'
     },
     reports: {
       exportExcel: 'Excel',
@@ -158,6 +160,7 @@ export const translations = {
       search: 'Search...',
       save: 'Save',
       cancel: 'Cancel',
+      close: 'Close',
       add: 'Add',
       edit: 'Edit',
       delete: 'Delete',
@@ -203,7 +206,8 @@ export const translations = {
       lowStock: 'Low Stock',
       employees: 'Employees',
       salesChart: 'Last 7 Days Sales',
-      expenseChart: 'Expenses Breakdown'
+      expenseChart: 'Expenses Breakdown',
+      fixedAssets: 'Fixed Assets'
     },
     reports: {
       exportExcel: 'Excel',

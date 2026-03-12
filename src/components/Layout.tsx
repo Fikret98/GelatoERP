@@ -38,10 +38,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { nameKey: 'nav.dashboard', href: '/', icon: LayoutDashboard, adminOnly: true },
     { nameKey: 'nav.pos', href: '/pos', icon: ShoppingCart },
     { nameKey: 'nav.inventory', href: '/inventory', icon: Package, adminOnly: true },
+    { nameKey: 'nav.assets', href: '/assets', icon: Package, adminOnly: true },
     { nameKey: 'nav.products', href: '/products', icon: IceCream, adminOnly: true },
     { nameKey: 'nav.suppliers', href: '/suppliers', icon: Users, adminOnly: true },
     { nameKey: 'nav.hr', href: '/hr', icon: Briefcase, adminOnly: true },
-    { nameKey: 'nav.assets', href: '/assets', icon: Package, adminOnly: true },
     { nameKey: 'nav.reports', href: '/reports', icon: BarChart3 },
     { nameKey: 'nav.settings', href: '/settings', icon: User },
   ].filter(item => !item.adminOnly || user?.role === 'admin');

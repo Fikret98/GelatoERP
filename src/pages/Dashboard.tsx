@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -35,7 +35,8 @@ export default function Dashboard() {
     employees: 0,
     transactions: 0,
     inventoryValue: 0,
-    totalSupplierDebt: 0
+    totalSupplierDebt: 0,
+    totalFixedAssets: 0
   });
 
   const [charts, setCharts] = useState({
@@ -80,6 +81,10 @@ export default function Dashboard() {
     totalSupplierDebt: {
       title: 'Təchizatçılara Borc',
       content: 'Bütün təchizatçılara olan ümumi borcunuzun cəmi.'
+    },
+    totalFixedAssets: {
+      title: 'Əsas Vəsaitlər',
+      content: 'Biznesinizə aid olan avadanlıq, maşın və digər əsas vəsaitlərin ümumi maya dəyəri.'
     },
     salesTrend: {
       title: 'Satış Trendi',
@@ -161,28 +166,9 @@ export default function Dashboard() {
         setStats(data.stats);
         setCharts(data.charts);
 
-        // Fix: Fetch low stock items properly (PostgREST filter cannot compare two columns directly)
-        // We fetch all inventory and filter in JS to compare against critical_limit
-        const { data: inventoryData, error: invError } = await supabase
-          .from('inventory')
-          .select('*');
-
-        if (invError) throw invError;
-
         if (inventoryData) {
           const lowStock = inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0));
           setLowStockItems(lowStock);
-        }
-
-        // Fetch Total Debt independently to ensure it's not affected by date range if desired, 
-        // or just fetch it here as it represents current state.
-        const { data: debtData, error: debtError } = await supabase
-          .from('supplier_debts_view')
-          .select('current_debt');
-        
-        if (!debtError && debtData) {
-          const totalDebt = debtData.reduce((acc, curr) => acc + (Number(curr.current_debt) || 0), 0);
-          setStats(prev => ({ ...prev, totalSupplierDebt: totalDebt }));
         }
       }
 
@@ -201,8 +187,9 @@ export default function Dashboard() {
     { id: 'netProfit',      name: 'Xalis Mənfəət',   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
     { id: 'aov',            name: 'Orta Satış (AOV)', rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { id: 'inventoryValue', name: 'Anbar Dəyəri',     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-    { id: 'totalSupplierDebt', name: 'Təchizatçılara Borc', rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { id: 'lowStock',       name: t('dashboard.lowStock'), rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: Package,    color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
+    { id: 'totalSupplierDebt', name: 'Təchizatçılara Borc', rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { id: 'totalFixedAssets', name: t('dashboard.fixedAssets'), rawValue: stats.totalFixedAssets, suffix: ' ₼', decimals: 2, icon: Package, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+    { id: 'lowStock',       name: t('dashboard.lowStock'), rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
   ];
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
