@@ -146,7 +146,7 @@ export default function POS() {
           }}
           initial="hidden"
           animate="show"
-          className="p-1 sm:p-4 grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 pb-20"
+          className="p-1 sm:p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 pb-20"
         >
           {products.map(product => (
             <motion.button
@@ -166,14 +166,14 @@ export default function POS() {
                 </div>
               </div>
               
-              <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300">
-                <span className="text-4xl drop-shadow-sm select-none">
+              <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden shrink-0">
+                <span className="text-3xl sm:text-4xl drop-shadow-sm select-none">
                   {product.category === 'dondurma' ? '🍦' : product.category === 'kokteyl' ? '🍹' : '🍰'}
                 </span>
               </div>
               
-              <div className="flex-1 space-y-1">
-                <h3 className="font-black text-gray-900 dark:text-white leading-snug text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{product.name}</h3>
+              <div className="flex-1 min-h-0 flex flex-col justify-between">
+                <h3 className="font-black text-gray-900 dark:text-white leading-tight text-base sm:text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">{product.name}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest font-black text-gray-400 dark:text-gray-500">{product.category}</span>
                 </div>
@@ -217,7 +217,7 @@ export default function POS() {
       `} onClick={() => setShowMobileCart(false)} />
 
       <div className={`
-        fixed bottom-0 left-0 right-0 z-[110] h-[85vh] lg:h-full
+        fixed bottom-0 left-0 right-0 z-[200] h-[85vh] lg:h-full
         lg:static lg:w-96
         bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl shadow-xl lg:shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col
         transition-transform duration-300 lg:transform-none
@@ -282,7 +282,7 @@ export default function POS() {
           </AnimatePresence>
         </div>
 
-        <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+4rem)] lg:pb-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
           <div className="flex justify-between items-center mb-4">
             <span className="text-gray-600 dark:text-gray-400 font-medium">{t('pos.total')}</span>
             <span className="text-2xl font-black text-gray-900 dark:text-white">{total.toFixed(2)} ₼</span>

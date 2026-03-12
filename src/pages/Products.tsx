@@ -224,7 +224,7 @@ export default function Products() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
       >
         {products.map((product) => {
           const isExpanded = expandedProducts.has(product.id);
@@ -233,11 +233,11 @@ export default function Products() {
               variants={itemVariants}
               whileHover={{ y: -2, transition: { duration: 0.2 } }}
               key={product.id} 
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col h-fit"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 flex flex-col h-fit"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0 pr-4">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate" title={product.name}>
+                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white line-clamp-2 h-10 sm:h-auto" title={product.name}>
                     {product.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-2">
