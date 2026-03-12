@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
-import { ShoppingBag, DollarSign } from 'lucide-react';
+import { IceCream } from 'lucide-react';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
@@ -8,26 +8,28 @@ interface PullToRefreshProps {
   className?: string;
 }
 
-const MONEY_PARTICLES = Array.from({ length: 6 });
+// Dondurma üzərinə səpilən rəngli karamellər (Sprinkles) üçün
+const SPRINKLES = Array.from({ length: 12 });
+const SPRINKLE_COLORS = ['bg-pink-300', 'bg-cyan-300', 'bg-yellow-300', 'bg-green-300', 'bg-white'];
 
-export default function PullToRefresh({ onRefresh, children, className }: PullToRefreshProps) {
+export default function GelatoPullToRefresh({ onRefresh, children, className }: PullToRefreshProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const hasVibrated = useRef(false);
-  const PULL_THRESHOLD = 140; // Increased threshold for the larger animation
+  const PULL_THRESHOLD = 140; 
   
   const y = useMotionValue(0);
   
-  // Header background transforms
+  // Arxa fon və ümumi ölçülər (Çiyələkli dondurma rənglərinə uyğun)
   const headerHeight = useTransform(y, [0, PULL_THRESHOLD], [0, 180]);
-  const headerOpacity = useTransform(y, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0, 0.5, 1]);
+  const headerOpacity = useTransform(y, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0, 0.7, 1]);
   
-  // Icon/Animation items transforms
-  const bagScale = useTransform(y, [0, PULL_THRESHOLD], [0.4, 1.1]);
-  const bagY = useTransform(y, [0, PULL_THRESHOLD], [-20, 0]);
-  const textOpacity = useTransform(y, [PULL_THRESHOLD * 0.7, PULL_THRESHOLD], [0, 1]);
+  // Dondurma ikonunun hərəkətləri
+  const iconScale = useTransform(y, [0, PULL_THRESHOLD], [0.2, 1.2]);
+  const iconY = useTransform(y, [0, PULL_THRESHOLD], [-40, 0]);
+  const textOpacity = useTransform(y, [PULL_THRESHOLD * 0.6, PULL_THRESHOLD], [0, 1]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -54,8 +56,9 @@ export default function PullToRefresh({ onRefresh, children, className }: PullTo
         setPullDistance(distance);
         y.set(distance);
 
+        // İstifadəçiyə hiss etdirmək üçün kiçik vibrasiyalar (Haptic feedback)
         if (distance >= PULL_THRESHOLD && !hasVibrated.current) {
-          if (window.navigator?.vibrate) window.navigator.vibrate([10, 30, 10]);
+          if (window.navigator?.vibrate) window.navigator.vibrate([15, 40, 15]);
           hasVibrated.current = true;
         } else if (distance < PULL_THRESHOLD) {
           hasVibrated.current = false;
@@ -105,99 +108,91 @@ export default function PullToRefresh({ onRefresh, children, className }: PullTo
       className={`relative h-full overflow-y-auto overflow-x-hidden ${className || ''}`}
       style={{ isolation: 'isolate', WebkitOverflowScrolling: 'touch' }}
     >
-      {/* Creative Background Header */}
+      {/* Şirin Dondurma Mövzulu Arxa Fon */}
       <motion.div
         style={{ 
           height: isRefreshing ? 180 : headerHeight,
           opacity: headerOpacity
         }}
-        className="absolute top-0 left-0 right-0 bg-indigo-600 z-[0] overflow-hidden"
+        className="absolute top-0 left-0 right-0 bg-gradient-to-b from-rose-400 to-pink-500 z-[0] overflow-hidden"
       >
-        {/* Curved bottom edge */}
+        {/* Yumşaq dalğalı alt kənar effekti */}
         <div 
-          className="absolute bottom-[-40px] left-[-25%] right-[-25%] h-20 bg-indigo-600 rounded-[50%]"
+          className="absolute bottom-[-30px] left-[-10%] right-[-10%] h-16 bg-pink-500 rounded-[50%] opacity-80"
         />
 
-        {/* Falling Currency Particles */}
+        {/* Yağan Rəngli Karamellər (Sprinkles) */}
         <AnimatePresence>
-          {(pullDistance > 20 || isRefreshing) && MONEY_PARTICLES.map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ y: -50, x: `${10 + (i * 15)}%`, opacity: 0, rotate: 0 }}
-              animate={isRefreshing ? {
-                y: [0, 200],
-                opacity: [0, 1, 0],
-                rotate: [0, 360],
-              } : {
-                y: (pullDistance / PULL_THRESHOLD) * 100,
-                opacity: (pullDistance / PULL_THRESHOLD) * 0.6,
-                rotate: (pullDistance / PULL_THRESHOLD) * 180,
-              }}
-              transition={isRefreshing ? {
-                duration: 1.5 + Math.random(),
-                repeat: Infinity,
-                ease: "linear",
-                delay: i * 0.2
-              } : { duration: 0 }}
-              className="absolute pointer-events-none"
-            >
-              <DollarSign className="w-5 h-5 text-indigo-300/50" />
-            </motion.div>
-          ))}
+          {(pullDistance > 20 || isRefreshing) && SPRINKLES.map((_, i) => {
+            const randomColor = SPRINKLE_COLORS[i % SPRINKLE_COLORS.length];
+            return (
+              <motion.div
+                key={i}
+                initial={{ y: -50, x: `${5 + (i * 8)}%`, opacity: 0, rotate: i * 45 }}
+                animate={isRefreshing ? {
+                  y: [0, 250],
+                  opacity: [0, 1, 0],
+                  rotate: [i * 45, i * 45 + 180],
+                } : {
+                  y: (pullDistance / PULL_THRESHOLD) * (100 + (i % 3) * 20),
+                  opacity: (pullDistance / PULL_THRESHOLD) * 0.8,
+                }}
+                transition={isRefreshing ? {
+                  duration: 1 + Math.random() * 0.5,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: Math.random() * 0.5
+                } : { duration: 0 }}
+                className={`absolute pointer-events-none w-1.5 h-4 rounded-full ${randomColor}`}
+              />
+            );
+          })}
         </AnimatePresence>
 
-        {/* Central Money Bag Animation */}
+        {/* Mərkəzi Dondurma Animasiyası */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
           <motion.div
-            style={{ scale: isRefreshing ? 1.1 : bagScale, y: isRefreshing ? 0 : bagY }}
+            style={{ scale: isRefreshing ? 1.2 : iconScale, y: isRefreshing ? 0 : iconY }}
             animate={isRefreshing ? {
-              rotate: [-5, 5, -5],
-              scale: [1, 1.1, 1]
+              rotate: [-10, 10, -10],
+              y: [-5, 5, -5]
             } : { rotate: 0 }}
             transition={isRefreshing ? {
               repeat: Infinity,
-              duration: 0.5,
+              duration: 0.8,
               ease: "easeInOut"
             } : { duration: 0 }}
             className="relative"
           >
-            <div className="w-20 h-20 bg-indigo-500 rounded-3xl shadow-2xl border-4 border-indigo-400 flex items-center justify-center">
-              <ShoppingBag className="w-10 h-10 text-white fill-white/20" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-1">
-                <span className="text-2xl font-black text-indigo-100">$</span>
-              </div>
+            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full shadow-xl border-2 border-white/40 flex items-center justify-center">
+              <IceCream className="w-10 h-10 text-white drop-shadow-md" strokeWidth={2.5} />
             </div>
             
-            {/* Pulsing light effect */}
+            {/* Yenilənmə zamanı arxada parlayan halə */}
             {isRefreshing && (
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.5, opacity: [0, 0.4, 0] }}
-                transition={{ repeat: Infinity, duration: 1 }}
-                className="absolute inset-0 bg-white rounded-full blur-xl"
+                animate={{ scale: 1.6, opacity: [0, 0.5, 0] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
+                className="absolute inset-0 bg-white rounded-full blur-md -z-10"
               />
             )}
           </motion.div>
 
           <motion.p
             style={{ opacity: isRefreshing ? 1 : textOpacity }}
-            className="text-white font-black text-xs uppercase tracking-[0.2em] mt-3 drop-shadow-md"
+            className="text-white font-bold text-sm tracking-wider mt-4 drop-shadow-md font-sans"
           >
-            {isRefreshing ? 'Gözləyin...' : 'Yeniləmək üçün dartın'}
+            {isRefreshing ? 'TƏZƏ GELATO YÜKLƏNİR...' : 'SƏRİNLƏMƏK ÜÇÜN DARTIN'}
           </motion.p>
         </div>
       </motion.div>
 
-      {/* Main Content Area */}
+      {/* Əsas Kontent */}
       <motion.div 
         style={{ y: isRefreshing ? 180 : y }}
-        className="relative z-[1] h-full bg-gray-50 dark:bg-gray-900"
+        className="relative z-[1] h-full bg-gray-50 dark:bg-gray-900 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.05)]"
       >
-        {/* Subtle top shadow when pulling */}
-        <motion.div 
-          style={{ opacity: headerOpacity }}
-          className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/5 to-transparent pointer-events-none"
-        />
         {children}
       </motion.div>
     </div>
