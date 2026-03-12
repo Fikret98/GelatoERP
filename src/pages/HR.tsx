@@ -283,11 +283,26 @@ export default function HR() {
               show: { opacity: 1, y: 0 }
             }}
             whileHover={{ y: -5 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
+            className={cn(
+              "bg-white dark:bg-gray-800 rounded-2xl shadow-sm border p-6 transition group relative overflow-hidden",
+              employee.role === 'admin' 
+                ? "border-indigo-500/50 dark:border-indigo-400/50 shadow-indigo-100/50 dark:shadow-indigo-900/20" 
+                : "border-gray-100 dark:border-gray-700 hover:shadow-md"
+            )}
           >
+            {employee.role === 'admin' && (
+              <div className="absolute top-0 right-0 px-3 py-1 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-bl-xl shadow-sm z-10">
+                ADMİN
+              </div>
+            )}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-4">
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center mr-4 shadow-inner transition-colors",
+                  employee.role === 'admin' 
+                    ? "bg-indigo-600 text-white shadow-indigo-200 dark:shadow-indigo-900/30" 
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                )}>
                   <User className="w-6 h-6" />
                 </div>
                 <div>
