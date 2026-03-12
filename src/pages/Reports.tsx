@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { Plus, Download, FileText, FileSpreadsheet, X, ShoppingBag, Calendar, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,44 +10,44 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { TrendingUp, TrendingDown, Coins, Briefcase, Tag, Info } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 export default function Reports() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [sales, setSales] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [incomes, setIncomes] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'sale' | 'expense' | 'income'>('all');
+  const [dateFilters, setDateFilters] = useState({ start: '', end: '' });
+  
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [expenseData, setExpenseData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: '', amount: '', description: '' });
   const [incomeData, setIncomeData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: 'Kassa mədaxil', amount: '', description: '' });
-  const [selectedSale, setSelectedSale] = useState<any | null>(null);
-
+  
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
-  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
-  const [selectedIncome, setSelectedIncome] = useState<any | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
-  const handleSaleClick = async (sale: any) => {
-    setSelectedSale(sale);
-    setIsLoadingDetails(true);
-    try {
-      const [{ data, error }] = await Promise.all([
-        supabase
+  const handleTransactionClick = async (transaction: any) => {
+    setSelectedTransaction(transaction);
+    if (transaction.type === 'sale') {
+      setIsLoadingDetails(true);
+      try {
+        const { data, error } = await supabase
           .from('sale_items')
           .select('*, products(name)')
-          .eq('sale_id', sale.id),
-        new Promise(resolve => setTimeout(resolve, 800)) // Minimum visual delay for the animation
-      ]);
-      
-      if (error) throw error;
-      setSaleDetails(data || []);
-    } catch (e) {
-      console.error(e);
-      toast.error('Detallar yüklənərkən xəta');
-    } finally {
-      setIsLoadingDetails(false);
+          .eq('sale_id', transaction.id);
+        
+        if (error) throw error;
+        setSaleDetails(data || []);
+      } catch (e) {
+        console.error(e);
+        toast.error('Detallar yüklənərkən xəta');
+      } finally {
+        setIsLoadingDetails(false);
+      }
     }
   };
 
@@ -63,18 +63,22 @@ export default function Reports() {
         { data: expData, error: expErr },
         { data: incData, error: incErr }
       ] = await Promise.all([
-        supabase.from('sales').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false }),
-        supabase.from('expenses').select('*, users(name), suppliers(name)').order('date', { ascending: false }).order('id', { ascending: false }),
-        supabase.from('incomes').select('*, users(name)').order('date', { ascending: false }).order('id', { ascending: false })
+        supabase.from('sales').select('*, users(name)').order('date', { ascending: false }),
+        supabase.from('expenses').select('*, users(name), suppliers(name)').order('date', { ascending: false }),
+        supabase.from('incomes').select('*, users(name)').order('date', { ascending: false })
       ]);
 
       if (salesErr) throw salesErr;
       if (expErr) throw expErr;
       if (incErr) throw incErr;
 
-      setSales(salesData || []);
-      setExpenses(expData || []);
-      setIncomes(incData || []);
+      const unified: any[] = [
+        ...(salesData || []).map(s => ({ ...s, type: 'sale', amount: s.total_amount })),
+        ...(expData || []).map(e => ({ ...e, type: 'expense', amount: e.amount })),
+        ...(incData || []).map(i => ({ ...i, type: 'income', amount: i.amount }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setTransactions(unified);
     } catch (e) {
       console.error(e);
       toast.error('Məlumatların yüklənməsində xəta');
@@ -82,6 +86,24 @@ export default function Reports() {
       setIsLoadingPage(false);
     }
   };
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const matchesType = activeTab === 'all' || t.type === activeTab;
+      const tDate = new Date(t.date);
+      const matchesStart = !dateFilters.start || tDate >= new Date(dateFilters.start);
+      const matchesEnd = !dateFilters.end || tDate <= new Date(dateFilters.end + 'T23:59:59');
+      return matchesType && matchesStart && matchesEnd;
+    });
+  }, [transactions, activeTab, dateFilters]);
+
+  const summary = useMemo(() => {
+    return filteredTransactions.reduce((acc, t) => {
+      if (t.type === 'sale' || t.type === 'income') acc.totalIn += t.amount;
+      else if (t.type === 'expense') acc.totalOut += t.amount;
+      return acc;
+    }, { totalIn: 0, totalOut: 0 });
+  }, [filteredTransactions]);
 
   const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,97 +159,42 @@ export default function Reports() {
   };
 
   const exportToExcel = () => {
+    const data = filteredTransactions.map(t => ({
+      'Tarix': format(new Date(t.date), 'dd.MM.yyyy HH:mm'),
+      'Növ': t.type === 'sale' ? 'Satış' : t.type === 'expense' ? 'Xərc' : 'Mədaxil',
+      'Kateqoriya': t.category || (t.type === 'sale' ? 'Satış' : ''),
+      'Məbləğ (₼)': (t.type === 'expense' ? -1 : 1) * t.amount,
+      'İcraçı': t.users?.name || '',
+      'Açıqlama': t.description || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-
-    // Sales Sheet
-    const salesData = sales.map(s => ({
-      'Tarix': format(new Date(s.date), 'dd.MM.yyyy HH:mm'),
-      'Məbləğ (₼)': s.total_amount
-    }));
-    const wsSales = XLSX.utils.json_to_sheet(salesData);
-    XLSX.utils.book_append_sheet(wb, wsSales, "Satışlar");
-
-    // Expenses Sheet
-    const expData = expenses.map(e => ({
-      'Tarix': format(new Date(e.date), 'dd.MM.yyyy HH:mm'),
-      'İcraçı': e.users?.name || e.category,
-      'Məbləğ (₼)': e.amount,
-      'Açıqlama': e.description || ''
-    }));
-    const wsExp = XLSX.utils.json_to_sheet(expData);
-    XLSX.utils.book_append_sheet(wb, wsExp, "Xərclər");
-
-    // Incomes Sheet
-    const incData = incomes.map(i => ({
-      'Tarix': format(new Date(i.date), 'dd.MM.yyyy HH:mm'),
-      'İcraçı': i.users?.name || i.category,
-      'Məbləğ (₼)': i.amount,
-      'Açıqlama': i.description || ''
-    }));
-    const wsInc = XLSX.utils.json_to_sheet(incData);
-    XLSX.utils.book_append_sheet(wb, wsInc, "Mədaxillər");
-
-    XLSX.writeFile(wb, `Hesabat_${format(new Date(), 'dd_MM_yyyy')}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Tranzaksiyalar");
+    XLSX.writeFile(wb, `Tranzaksiyalar_${format(new Date(), 'dd_MM_yyyy')}.xlsx`);
   };
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-
     doc.setFontSize(18);
-    doc.text('Gelato ERP - Ümumi Hesabat', 14, 22);
-
-    doc.setFontSize(14);
-    doc.text('Satışlar', 14, 35);
-
-    const salesBody = sales.map(s => [
-      format(new Date(s.date), 'dd.MM.yyyy HH:mm'),
-      `${s.total_amount.toFixed(2)} ₼`
+    doc.text('Gelato ERP - Tranzaksiyalar', 14, 22);
+    
+    const body = filteredTransactions.map(t => [
+      format(new Date(t.date), 'dd.MM.yyyy HH:mm'),
+      t.type === 'sale' ? 'Satış' : t.type === 'expense' ? 'Xərc' : 'Mədaxil',
+      t.category || (t.type === 'sale' ? 'Satış' : ''),
+      `${((t.type === 'expense' ? -1 : 1) * t.amount).toFixed(2)} ₼`,
+      t.users?.name || ''
     ]);
 
     (doc as any).autoTable({
-      startY: 40,
-      head: [['Tarix', 'Məbləğ']],
-      body: salesBody,
+      startY: 30,
+      head: [['Tarix', 'Növ', 'Kateqoriya', 'Məbləğ', 'İcraçı']],
+      body: body,
       theme: 'grid',
       headStyles: { fillColor: [79, 70, 229] }
     });
 
-    let finalY = (doc as any).lastAutoTable.finalY || 40;
-
-    doc.text('Xərclər', 14, finalY + 15);
-
-    const expBody = expenses.map(e => [
-      format(new Date(e.date), 'dd.MM.yyyy HH:mm'),
-      e.users?.name || e.category,
-      `${e.amount.toFixed(2)} ₼`
-    ]);
-
-    (doc as any).autoTable({
-      startY: finalY + 20,
-      head: [['Tarix', 'Kateqoriya', 'Məbləğ']],
-      body: expBody,
-      theme: 'grid',
-      headStyles: { fillColor: [239, 68, 68] }
-    });
-
-    finalY = (doc as any).lastAutoTable.finalY || finalY + 40;
-    doc.text('Mədaxillər', 14, finalY + 15);
-
-    const incBody = incomes.map(i => [
-      format(new Date(i.date), 'dd.MM.yyyy HH:mm'),
-      i.users?.name || i.category,
-      `${i.amount.toFixed(2)} ₼`
-    ]);
-
-    (doc as any).autoTable({
-      startY: finalY + 20,
-      head: [['Tarix', 'Kateqoriya', 'Məbləğ']],
-      body: incBody,
-      theme: 'grid',
-      headStyles: { fillColor: [34, 197, 94] }
-    });
-
-    doc.save(`Hesabat_${format(new Date(), 'dd_MM_yyyy')}.pdf`);
+    doc.save(`Tranzaksiyalar_${format(new Date(), 'dd_MM_yyyy')}.pdf`);
   };
 
   return (
@@ -243,192 +210,200 @@ export default function Reports() {
         </div>
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.reports')}</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={exportToExcel}
-            className="bg-green-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-green-700 transition shadow-sm"
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.reports')}</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2 font-medium">
+            <TrendingUp className="w-4 h-4 text-indigo-500" />
+            Tranzaksiyaların mərkəzləşdirilmiş idarəolunması
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <button onClick={exportToExcel} className="flex-1 sm:flex-none justify-center bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-5 py-3 rounded-2xl flex items-center hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all font-bold border border-emerald-100 dark:border-emerald-800">
+            <FileSpreadsheet className="w-5 h-5 mr-2" />
             Excel
           </button>
-          <button
-            onClick={exportToPDF}
-            className="bg-red-500 text-white px-4 py-2 rounded-xl flex items-center hover:bg-red-600 transition shadow-sm"
-          >
-            <FileText className="w-4 h-4 mr-2" />
+          <button onClick={exportToPDF} className="flex-1 sm:flex-none justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-5 py-3 rounded-2xl flex items-center hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all font-bold border border-rose-100 dark:border-rose-800">
+            <FileText className="w-5 h-5 mr-2" />
             PDF
           </button>
-          <button
-            onClick={() => setShowExpenseModal(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-red-700 transition shadow-sm"
-          >
-            <Plus className="w-5 h-5 mr-2" />
+          <button onClick={() => setShowExpenseModal(true)} className="flex-1 sm:flex-none justify-center bg-red-600 text-white px-5 py-3 rounded-2xl flex items-center hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 font-bold">
+            <TrendingDown className="w-5 h-5 mr-2" />
             {t('reports.addExpense')}
           </button>
-          <button
-            onClick={() => setShowIncomeModal(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-green-700 transition shadow-sm"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Mədaxil Əlavə Et
+          <button onClick={() => setShowIncomeModal(true)} className="flex-1 sm:flex-none justify-center bg-indigo-600 text-white px-5 py-3 rounded-2xl flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 font-bold">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            Mədaxil
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Report */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('reports.latestSales')}</h2>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Cəmi Mədaxil</p>
+              <p className="text-2xl font-black text-emerald-600 tabular-nums">{summary.totalIn.toFixed(2)} ₼</p>
+            </div>
           </div>
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto pb-4">
-            <table className="w-full text-left text-sm min-w-[400px]">
-              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
-                <tr className="bg-gray-50/50 dark:bg-gray-900/50">
-                  <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-gray-500 dark:text-gray-400">Sifariş #</th>
-                  <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-gray-500 dark:text-gray-400">{t('common.date')}</th>
-                  <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-gray-500 dark:text-gray-400 text-right">Məbləğ</th>
-                </tr>
-              </thead>
-            <motion.tbody 
-              variants={{
-                show: { transition: { staggerChildren: 0.05 } }
-              }}
-              initial="hidden"
-              animate="show"
-              className="divide-y divide-gray-100 dark:divide-gray-700"
-            >
-              {sales.map((sale) => (
-                <motion.tr
-                  key={sale.id}
-                  variants={{
-                    hidden: { opacity: 0, x: -10 },
-                    show: { opacity: 1, x: 0 }
-                  }}
-                  onClick={() => handleSaleClick(sale)}
-                  className="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 cursor-pointer transition-all border-b border-gray-100 dark:border-gray-800 last:border-none"
-                >
-                  <td className="px-6 py-5 text-gray-900 dark:text-white font-black text-base italic">#{sale.id}</td>
-                  <td className="px-6 py-5">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-gray-900 dark:text-white font-bold">
-                        {format(new Date(sale.date), 'dd.MM.yyyy HH:mm')}
-                      </span>
-                      <span className="text-[11px] font-black uppercase tracking-tight text-gray-400 dark:text-gray-500">
-                        {sale.users?.name || '-'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    <div className="text-lg font-black text-indigo-600 dark:text-indigo-400">
-                      {sale.total_amount.toFixed(2)} <span className="text-xs">₼</span>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-              {sales.length === 0 && (
-                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">{t('reports.noSales')}</td></tr>
-              )}
-            </motion.tbody>
-            </table>
+        </motion.div>
+        <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+              <TrendingDown className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Cəmi Məxaric</p>
+              <p className="text-2xl font-black text-rose-600 tabular-nums">{summary.totalOut.toFixed(2)} ₼</p>
+            </div>
           </div>
-        </div>
+        </motion.div>
+        <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <Coins className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Xalis Qalıq</p>
+              <p className="text-2xl font-black text-indigo-600 tabular-nums">{(summary.totalIn - summary.totalOut).toFixed(2)} ₼</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
 
-        {/* Expenses Report */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('reports.latestExpenses')}</h2>
-          </div>
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto pb-4">
-            <table className="w-full text-left text-sm min-w-[500px]">
-              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 font-medium">{t('common.date')}</th>
-                  <th className="px-6 py-3 font-medium">İcraçı</th>
-                  <th className="px-6 py-3 font-medium">Məbləğ</th>
-                </tr>
-              </thead>
-            <motion.tbody 
-              variants={{
-                show: { transition: { staggerChildren: 0.05 } }
-              }}
-              initial="hidden"
-              animate="show"
-              className="divide-y divide-gray-100 dark:divide-gray-700"
-            >
-              {expenses.map((exp) => (
-                <motion.tr
-                  key={exp.id}
-                  variants={{
-                    hidden: { opacity: 0, x: -10 },
-                    show: { opacity: 1, x: 0 }
-                  }}
-                  onClick={() => setSelectedExpense(exp)}
-                  className="hover:bg-red-50/30 dark:hover:bg-red-900/10 cursor-pointer transition-all border-b border-gray-100 dark:border-gray-800 last:border-none"
-                >
-                  <td className="px-6 py-5 text-gray-900 dark:text-gray-300 font-bold">{format(new Date(exp.date), 'dd.MM.yyyy HH:mm')}</td>
-                  <td className="px-6 py-5 text-gray-500 dark:text-gray-400 font-bold text-xs uppercase tracking-tight">{exp.users?.name || exp.category}</td>
-                  <td className="px-6 py-5 text-right">
-                    <div className="text-lg font-black text-red-600 dark:text-red-400">
-                      -{exp.amount.toFixed(2)} <span className="text-xs">₼</span>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-              {expenses.length === 0 && (
-                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">{t('reports.noExpenses')}</td></tr>
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row gap-4">
+        <div className="flex flex-wrap bg-gray-100 dark:bg-gray-900/50 p-1.5 rounded-2xl gap-1">
+          {(['all', 'sale', 'expense', 'income'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-tight transition-all",
+                activeTab === tab
+                  ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
               )}
-            </motion.tbody>
-            </table>
-          </div>
+            >
+              {tab === 'all' ? 'Hamısı' : tab === 'sale' ? 'Satışlar' : tab === 'expense' ? 'Xərclər' : 'Mədaxillər'}
+            </button>
+          ))}
         </div>
+        <div className="flex items-center gap-3 lg:ml-auto">
+          <div className="relative group">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+            <input 
+              type="date" 
+              title="Başlanğıc tarixi"
+              className="pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              value={dateFilters.start}
+              onChange={e => setDateFilters({ ...dateFilters, start: e.target.value })}
+            />
+          </div>
+          <span className="text-gray-300 dark:text-gray-600 font-bold">-</span>
+          <div className="relative group">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+            <input 
+              type="date" 
+              title="Son tarix"
+              className="pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              value={dateFilters.end}
+              onChange={e => setDateFilters({ ...dateFilters, end: e.target.value })}
+            />
+          </div>
+          {(dateFilters.start || dateFilters.end) && (
+            <button 
+              onClick={() => setDateFilters({ start: '', end: '' })}
+              className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-xl hover:text-red-500 transition-colors"
+              title="Təmizlə"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
-        {/* Incomes Report */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Son Mədaxillər (Kassa)</h2>
+      {/* Transaction Feed */}
+      <div className="space-y-4">
+        {filteredTransactions.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center border border-dashed border-gray-200 dark:border-gray-700">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Info className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-400 font-medium">Bu kriteriyalara uyğun heç bir tranzaksiya tapılmadı.</p>
           </div>
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto pb-4">
-            <table className="w-full text-left text-sm min-w-[500px]">
-              <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 font-medium">{t('common.date')}</th>
-                  <th className="px-6 py-3 font-medium">İcraçı</th>
-                  <th className="px-6 py-3 font-medium">Məbləğ</th>
-                </tr>
-              </thead>
-            <motion.tbody 
-              variants={{
-                show: { transition: { staggerChildren: 0.05 } }
-              }}
-              initial="hidden"
-              animate="show"
-              className="divide-y divide-gray-100 dark:divide-gray-700"
+        ) : (
+          filteredTransactions.map((t) => (
+            <motion.div
+              layout
+              key={`${t.type}-${t.id}`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-4"
+              onClick={() => handleTransactionClick(t)}
             >
-              {incomes.map((inc) => (
-                <motion.tr
-                  key={inc.id}
-                  variants={{
-                    hidden: { opacity: 0, x: -10 },
-                    show: { opacity: 1, x: 0 }
-                  }}
-                  onClick={() => setSelectedIncome(inc)}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                >
-                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(inc.date), 'dd.MM.yyyy HH:mm')}</td>
-                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{inc.users?.name || inc.category}</td>
-                  <td className="px-6 py-3 font-bold text-green-600 dark:text-green-400">+{inc.amount.toFixed(2)} ₼</td>
-                </motion.tr>
-              ))}
-              {incomes.length === 0 && (
-                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Mədaxil tapılmadı</td></tr>
-              )}
-            </motion.tbody>
-            </table>
-          </div>
-        </div>
+              <div className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                t.type === 'sale' ? "bg-emerald-100 dark:bg-emerald-900/30" :
+                t.type === 'income' ? "bg-indigo-100 dark:bg-indigo-900/30" :
+                "bg-rose-100 dark:bg-rose-900/30"
+              )}>
+                {t.type === 'sale' ? (
+                  <ShoppingBag className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                ) : t.type === 'income' ? (
+                  <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                ) : (
+                  <TrendingDown className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-black text-gray-900 dark:text-white text-base">
+                    {t.type === 'sale' ? `Sifariş #${t.id}` : t.category}
+                  </span>
+                  {t.suppliers?.name && (
+                    <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tight">
+                      {t.suppliers.name}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs font-bold text-gray-400 dark:text-gray-500">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {format(new Date(t.date), 'dd.MM.yyyy HH:mm')}
+                  </span>
+                  <span className="flex items-center gap-1.5 uppercase tracking-tight">
+                    <User className="w-3.5 h-3.5" />
+                    {t.users?.name || '-'}
+                  </span>
+                  {t.description && (
+                    <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">•</span>
+                  )}
+                  {t.description && (
+                    <span className="truncate max-w-[200px] hidden sm:inline italic">{t.description}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <p className={cn(
+                  "text-xl font-black tabular-nums",
+                  (t.type === 'sale' || t.type === 'income') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                )}>
+                  {(t.type === 'expense' ? '-' : '+')}{t.amount.toFixed(2)} ₼
+                </p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+                  {t.type === 'sale' ? 'Nəğd Satış' : t.type === 'income' ? 'Kassa Mədaxil' : 'Məxaric'}
+                </p>
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* Modals */}
@@ -514,157 +489,100 @@ export default function Reports() {
           </div>
         )}
 
-        {selectedSale && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+        {selectedTransaction && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm" onClick={() => setSelectedTransaction(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl border border-gray-100 dark:border-gray-700"
             >
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] mb-1">Məxaric Sənədi</span>
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Sifariş #{selectedSale.id}</h2>
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <div className={cn(
+                    "inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3",
+                    selectedTransaction.type === 'sale' ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                    selectedTransaction.type === 'income' ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" :
+                    "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+                  )}>
+                    {selectedTransaction.type === 'sale' ? 'Satış' : selectedTransaction.type === 'income' ? 'Mədaxil' : 'Məxaric'}
+                  </div>
+                  <h2 className="text-3xl font-black text-gray-900 dark:text-white">
+                    {selectedTransaction.type === 'sale' ? `Sifariş #${selectedTransaction.id}` : selectedTransaction.category}
+                  </h2>
                 </div>
                 <button
-                  onClick={() => setSelectedSale(null)}
-                  className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all h-12 w-12 flex items-center justify-center border border-gray-100 dark:border-gray-700"
+                  onClick={() => setSelectedTransaction(null)}
+                  className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all"
                   title="Bağla"
                 >
                   <X className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
-              
-              {isLoadingDetails ? (
-                <div className="py-12">
-                  <LoadingSpinner message="Detallar yüklənir..." />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 pb-4 border-b border-gray-100 dark:border-gray-700">
-                    <span>Tarix: {format(new Date(selectedSale.date), 'dd.MM.yyyy HH:mm')}</span>
-                    <span>Satıcı: {selectedSale.users?.name || '-'}</span>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tarix</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedTransaction.date), 'dd.MM.yyyy HH:mm')}</p>
                   </div>
-                  <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
-                    {saleDetails.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50">
-                        <div>
-                          <div className="font-bold text-gray-900 dark:text-white text-base">{item.products?.name}</div>
-                          <div className="text-[10px] font-black uppercase tracking-tight text-gray-400 dark:text-gray-500 mt-1">
-                            {item.quantity} ədəd × {item.price.toFixed(2)} ₼
-                          </div>
-                        </div>
-                        <div className="font-black text-indigo-600 dark:text-indigo-400 text-lg">{(item.quantity * item.price).toFixed(2)} <span className="text-xs italic">₼</span></div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">İcraçı</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{selectedTransaction.users?.name || '-'}</p>
+                  </div>
+                </div>
+
+                {selectedTransaction.suppliers?.name && (
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Briefcase className="w-5 h-5 text-indigo-500" />
+                      <div>
+                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Təchizatçı</p>
+                        <p className="font-bold text-indigo-700 dark:text-indigo-300">{selectedTransaction.suppliers.name}</p>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                  <div className="pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <span className="font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest text-xs">Yekun Məbləğ:</span>
-                    <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{selectedSale.total_amount.toFixed(2)} <span className="text-base font-bold">₼</span></span>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
+                )}
 
-        {selectedIncome && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mədaxil Detalları #{selectedIncome.id}</h2>
-                <button
-                  onClick={() => setSelectedIncome(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
-                  title="Bağla"
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                  <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
-                    <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedIncome.date), 'dd.MM.yyyy HH:mm')}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
-                    <p className="font-bold text-gray-900 dark:text-white">{selectedIncome.users?.name || '-'}</p>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedIncome.category}</p>
-                </div>
-                {selectedIncome.description && (
-                  <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
-                    <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedIncome.description}</p>
+                {selectedTransaction.type === 'sale' && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Sifariş Tərkibi</p>
+                    {isLoadingDetails ? (
+                      <div className="py-8"><LoadingSpinner /></div>
+                    ) : (
+                      <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
+                        {saleDetails.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                            <div>
+                              <p className="font-bold text-gray-900 dark:text-white text-sm">{item.products?.name}</p>
+                              <p className="text-[10px] text-gray-400 font-bold">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</p>
+                            </div>
+                            <p className="font-black text-gray-900 dark:text-white">{(item.quantity * item.price).toFixed(2)} ₼</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                  <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
-                  <span className="text-2xl font-black text-green-600 dark:text-green-400">{selectedIncome.amount.toFixed(2)} ₼</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
 
-        {selectedExpense && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Xərc Detalları #{selectedExpense.id}</h2>
-                <button
-                  onClick={() => setSelectedExpense(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
-                  title="Bağla"
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                  <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Tarix və Saat</label>
-                    <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedExpense.date), 'dd.MM.yyyy HH:mm')}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Kimin tərəfindən</label>
-                    <p className="font-bold text-gray-900 dark:text-white">{selectedExpense.users?.name || '-'}</p>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Kateqoriya</label>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedExpense.category}</p>
-                </div>
-                {selectedExpense.suppliers?.name && (
-                  <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl px-4 py-3">
-                    <span className="text-xs text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide">Təchizatçı</span>
-                    <span className="text-base font-black text-indigo-700 dark:text-indigo-300">{selectedExpense.suppliers.name}</span>
+                {selectedTransaction.description && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Açıqlama</p>
+                    <p className="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl font-medium leading-relaxed italic border border-gray-100 dark:border-gray-700">
+                      "{selectedTransaction.description}"
+                    </p>
                   </div>
                 )}
-                {selectedExpense.description && (
-                  <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Açıqlama</label>
-                    <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">{selectedExpense.description}</p>
-                  </div>
-                )}
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                  <span className="font-bold text-gray-900 dark:text-white">Məbləğ:</span>
-                  <span className="text-2xl font-black text-red-600 dark:text-red-400">{selectedExpense.amount.toFixed(2)} ₼</span>
+
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <span className="font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest text-sm">Yekun Məbləğ</span>
+                  <span className={cn(
+                    "text-4xl font-black tabular-nums",
+                    (selectedTransaction.type === 'sale' || selectedTransaction.type === 'income') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                  )}>
+                    {(selectedTransaction.type === 'expense' ? '-' : '+')}{selectedTransaction.amount.toFixed(2)} <span className="text-xl font-bold">₼</span>
+                  </span>
                 </div>
               </div>
             </motion.div>
