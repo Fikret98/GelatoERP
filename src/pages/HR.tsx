@@ -247,12 +247,12 @@ export default function HR() {
       ) : (
         <>
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.hr')}</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.hr')}</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
+          className="bg-indigo-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center hover:bg-indigo-700 transition text-xs sm:text-sm font-bold"
         >
-          <Plus className="w-5 h-5 mr-2" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
           {t('hr.newEmployee')}
         </button>
       </div>
@@ -285,8 +285,8 @@ export default function HR() {
                   <User className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{employee.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{employee.job_title}</p>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">{employee.name}</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{employee.job_title}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-1">

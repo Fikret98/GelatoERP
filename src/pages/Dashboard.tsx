@@ -198,7 +198,7 @@ export default function Dashboard() {
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('nav.dashboard')}</h1>
+          <h1 className="text-lg sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.dashboard')}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Biznesinizin cari vəziyyəti
@@ -211,7 +211,7 @@ export default function Dashboard() {
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${dateRange === range
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-200 ${dateRange === range
                   ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm ring-1 ring-black/5'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
@@ -275,7 +275,7 @@ export default function Dashboard() {
                 if (info) setInfoModal({ show: true, ...info });
               }
             }}
-            className={`p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 cursor-pointer hover:shadow-md ${card.bg}`}
+            className={`p-3 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 cursor-pointer hover:shadow-md ${card.bg}`}
           >
             <div className="flex flex-col gap-4">
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
@@ -283,7 +283,7 @@ export default function Dashboard() {
               </div>
               <dl>
                 <dt className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{card.name}</dt>
-                <dd className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white mt-1 leading-tight">
+                <dd className="text-base sm:text-2xl font-black text-gray-900 dark:text-white mt-1 leading-tight">
                   <AnimatedStat value={card.rawValue} suffix={card.suffix} decimals={card.decimals} />
                 </dd>
               </dl>
@@ -305,7 +305,7 @@ export default function Dashboard() {
             className="w-full text-left"
           >
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-base sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-indigo-500" />
                 Satış Trendi
               </h2>

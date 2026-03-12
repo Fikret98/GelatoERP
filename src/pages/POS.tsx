@@ -128,10 +128,10 @@ export default function POS() {
           {/* Products Grid */}
           <div className="flex-1 overflow-y-auto w-full pr-0 lg:pr-2 pt-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.pos')}</h1>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.pos')}</h1>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Giriş edilib:</span>
-            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800">
+            <span className="text-[10px] sm:text-sm font-medium text-gray-500 dark:text-gray-400">Giriş:</span>
+            <span className="text-[10px] sm:text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800">
               {user?.name}
             </span>
           </div>
@@ -158,7 +158,7 @@ export default function POS() {
               whileHover={{ y: -4, shadow: "0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
               whileTap={{ scale: 0.98 }}
               onClick={() => addToCart(product)}
-              className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all text-left flex flex-col h-full group relative overflow-hidden"
+              className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all text-left flex flex-col h-full group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200 dark:shadow-none">
@@ -167,21 +167,21 @@ export default function POS() {
               </div>
               
               <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden shrink-0">
-                <span className="text-3xl sm:text-4xl drop-shadow-sm select-none">
+                <span className="text-2xl sm:text-3xl lg:text-4xl drop-shadow-sm select-none">
                   {product.category === 'dondurma' ? '🍦' : product.category === 'kokteyl' ? '🍹' : '🍰'}
                 </span>
               </div>
               
               <div className="flex-1 min-h-0 flex flex-col justify-between">
-                <h3 className="font-black text-gray-900 dark:text-white leading-tight text-base sm:text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-10 sm:h-12">{product.name}</h3>
+                <h3 className="font-black text-gray-900 dark:text-white leading-tight text-xs sm:text-base lg:text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-8 sm:h-10 lg:h-12">{product.name}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest font-black text-gray-400 dark:text-gray-500">{product.category}</span>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                <div className="text-xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
-                  {product.price.toFixed(2)} <span className="text-xs">₼</span>
+                <div className="text-base sm:text-xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
+                  {product.price.toFixed(2)} <span className="text-[10px] sm:text-xs">₼</span>
                 </div>
               </div>
             </motion.button>

@@ -210,12 +210,12 @@ export default function Products() {
       ) : (
         <>
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.products')}</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.products')}</h1>
         <button
           onClick={openNewProductModal}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
+          className="bg-indigo-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center hover:bg-indigo-700 transition text-xs sm:text-sm font-bold"
         >
-          <Plus className="w-5 h-5 mr-2" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
           {t('products.newProduct')}
         </button>
       </div>
@@ -224,7 +224,7 @@ export default function Products() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
       >
         {products.map((product) => {
           const isExpanded = expandedProducts.has(product.id);
@@ -233,11 +233,11 @@ export default function Products() {
               variants={itemVariants}
               whileHover={{ y: -2, transition: { duration: 0.2 } }}
               key={product.id} 
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 flex flex-col h-fit"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 flex flex-col h-fit"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0 pr-4">
-                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white line-clamp-2 h-12 sm:h-14" title={product.name}>
+                  <h3 className="text-sm sm:text-xl font-bold text-gray-900 dark:text-white line-clamp-2 h-10 sm:h-14" title={product.name}>
                     {product.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-2">
@@ -271,8 +271,8 @@ export default function Products() {
                   <div className="text-[10px] uppercase tracking-wider font-black text-indigo-500/70 dark:text-indigo-400/70">
                     Satış Qiyməti
                   </div>
-                  <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline justify-end gap-1">
-                    {Number(product.price || 0).toFixed(2)} <span className="text-sm">₼</span>
+                  <div className="text-lg sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline justify-end gap-1">
+                    {Number(product.price || 0).toFixed(2)} <span className="text-xs sm:text-sm">₼</span>
                   </div>
                 </div>
               </div>
