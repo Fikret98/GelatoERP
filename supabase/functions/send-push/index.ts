@@ -1,23 +1,21 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import webpush from "npm:web-push"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.11.0"
+import webpush from "https://esm.sh/web-push@3.6.7"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Max-Age': '86400',
 }
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: corsHeaders
-    })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { title, body, url, icon, image, actions, user_id } = await req.json()
+    console.log(`[send-push] Processing for user: ${user_id}`)
 
     if (!user_id) throw new Error('user_id is required')
 
@@ -40,7 +38,12 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('user_id', user_id)
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error:', error)
+      throw error
+    }
+
+    console.log(`[send-push] Found ${subscriptions?.length || 0} subscriptions`)
 
     const results = await Promise.all((subscriptions || []).map(async (sub) => {
       try {
@@ -61,14 +64,14 @@ Deno.serve(async (req) => {
           actions: actions || []
         }))
 
-        return { success: true }
+        return { success: true, endpoint: sub.endpoint }
       } catch (err) {
-        console.error(`Error sending notification to ${sub.endpoint}:`, err)
-        // If 404 or 410, sub is expired/invalid
-        if (err.statusCode === 404 || err.statusCode === 410) {
+        console.error(`[send-push] Error sending to ${sub.endpoint}:`, err)
+        // If 401, 403, 404 or 410, sub is expired/invalid
+        if ([401, 403, 404, 410].includes(err.statusCode)) {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id)
         }
-        return { success: false, error: err.message }
+        return { success: false, error: err.message, endpoint: sub.endpoint }
       }
     }))
 
@@ -78,7 +81,7 @@ Deno.serve(async (req) => {
     })
 
   } catch (error) {
-    console.error('Function error:', error)
+    console.error('[send-push] Critical error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
