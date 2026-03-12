@@ -36,6 +36,18 @@ export default function HR() {
     fetchData();
   }, []);
 
+  // Body scroll lock when modals are open
+  useEffect(() => {
+    if (showModal || selectedHistoryEmployee) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal, selectedHistoryEmployee]);
+
   const fetchSalaryHistory = async (employee: any) => {
     setSelectedHistoryEmployee(employee);
     setIsLoadingHistory(true);
@@ -316,7 +328,7 @@ export default function HR() {
 
       <AnimatePresence>
         {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -432,7 +444,7 @@ export default function HR() {
 
       <AnimatePresence>
         {selectedHistoryEmployee && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

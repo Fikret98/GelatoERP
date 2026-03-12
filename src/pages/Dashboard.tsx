@@ -99,6 +99,18 @@ export default function Dashboard() {
     };
   }, [dateRange, customRange]);
 
+  // Body scroll lock when modals are open
+  useEffect(() => {
+    if (showLowStockModal || infoModal?.show) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showLowStockModal, infoModal]);
+
   const fetchDashboardData = async () => {
     try {
       let startDate: string;
@@ -245,7 +257,7 @@ export default function Dashboard() {
         }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-3 lg:grid-cols-6"
+        className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
       >
         {cards.map((card) => (
           <motion.div
@@ -483,7 +495,7 @@ export default function Dashboard() {
       {/* Informational Modal */}
       <AnimatePresence>
         {infoModal?.show && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setInfoModal(null)}>
+          <div className="fixed inset-0 z-[100] flex items-end lg:items-center justify-center p-0 lg:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setInfoModal(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

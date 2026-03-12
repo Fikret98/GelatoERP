@@ -21,6 +21,18 @@ export default function Products() {
     fetchData();
   }, []);
 
+  // Body scroll lock when modal is open
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal]);
+
   const fetchData = async () => {
     try {
       setIsLoadingPage(true);
@@ -201,7 +213,7 @@ export default function Products() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6"
       >
         {products.map((product) => (
           <motion.div 
@@ -260,7 +272,7 @@ export default function Products() {
       </motion.div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

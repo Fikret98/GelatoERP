@@ -117,16 +117,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
+          className="fixed inset-0 z-[70] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <div className={cn(
-        "fixed inset-y-0 left-0 z-[70] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-[80] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center justify-between h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <Link
             to="/"
             className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity"
@@ -183,8 +183,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden" title="Menyu">
+        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+          <button 
+            onClick={() => setSidebarOpen(true)} 
+            className="lg:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" 
+            title="Menyu"
+          >
             <Menu className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
           <div className="flex items-center space-x-4 ml-auto">
@@ -215,7 +219,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-[90] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
                     <h3 className="font-bold text-gray-900 dark:text-white text-sm">Bildirişlər</h3>
                     <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-black uppercase">
@@ -246,7 +250,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
           <PullToRefresh 
             onRefresh={async () => {
               window.location.reload();
@@ -261,7 +265,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 h-16">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)]">
         <nav className="flex justify-between items-center px-2 py-0 h-16 overflow-x-auto no-scrollbar">
           {mobileNavigation.map((item) => {
             const isActive = location.pathname === item.href;

@@ -24,6 +24,18 @@ export default function POS() {
     fetchProducts();
   }, []);
 
+  // Body scroll lock when mobile cart is open
+  useEffect(() => {
+    if (showMobileCart) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showMobileCart]);
+
   const fetchProducts = async () => {
     try {
       setIsLoadingPage(true);
@@ -105,7 +117,7 @@ export default function POS() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col lg:flex-row gap-6 h-full lg:h-[calc(100vh-8rem)] pb-28 lg:pb-0 relative"
+      className="flex flex-col lg:flex-row gap-6 h-full lg:h-[calc(100vh-8rem)] relative"
     >
       {isLoadingPage ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -134,7 +146,7 @@ export default function POS() {
           }}
           initial="hidden"
           animate="show"
-          className="p-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"
+          className="p-1 sm:p-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 pb-20"
         >
           {products.map(product => (
             <motion.button
@@ -146,9 +158,9 @@ export default function POS() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => addToCart(product)}
-              className="bg-white dark:bg-gray-800 p-3 lg:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition text-left flex flex-col h-full"
+              className="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition text-left flex flex-col h-full"
             >
-              <div className="w-full aspect-square bg-indigo-50 dark:bg-indigo-900/30 rounded-xl mb-3 flex items-center justify-center">
+              <div className="w-full aspect-square bg-indigo-50 dark:bg-indigo-900/30 rounded-lg sm:rounded-xl mb-2 sm:mb-3 flex items-center justify-center">
                 <span className="text-3xl">🍦</span>
               </div>
               <h3 className="font-bold text-gray-900 dark:text-white leading-tight mb-1">{product.name}</h3>
@@ -161,7 +173,7 @@ export default function POS() {
 
       {/* Floating View Cart Button (Mobile Only) */}
       {!showMobileCart && cart.length > 0 && (
-        <div className="lg:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40">
+        <div className="lg:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-[60]">
           <button
             onClick={() => setShowMobileCart(true)}
             className="w-full bg-indigo-600 text-white shadow-lg p-4 rounded-2xl flex items-center justify-between font-bold"
@@ -182,12 +194,12 @@ export default function POS() {
 
       {/* Cart Sidebar / Mobile Bottom Sheet */}
       <div className={`
-        fixed inset-0 z-[80] bg-black/50 lg:hidden transition-opacity
+        fixed inset-0 z-[100] bg-black/50 lg:hidden transition-opacity
         ${showMobileCart ? 'opacity-100' : 'opacity-0 pointer-events-none'}
       `} onClick={() => setShowMobileCart(false)} />
 
       <div className={`
-        fixed bottom-0 left-0 right-0 z-[80] h-[85vh] lg:h-full
+        fixed bottom-0 left-0 right-0 z-[110] h-[85vh] lg:h-full
         lg:static lg:w-96
         bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl shadow-xl lg:shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col
         transition-transform duration-300 lg:transform-none
