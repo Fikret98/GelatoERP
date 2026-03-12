@@ -126,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         "fixed inset-y-0 left-0 z-[70] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-[env(safe-area-inset-top)] h-[calc(4rem+env(safe-area-inset-top))] px-6 border-b border-gray-200 dark:border-gray-700">
           <Link
             to="/"
             className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity"
@@ -183,7 +183,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 pt-[env(safe-area-inset-top)] h-[calc(4rem+env(safe-area-inset-top))] flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden" title="Menyu">
             <Menu className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
