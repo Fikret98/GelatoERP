@@ -6,10 +6,8 @@ ecdh.generateKeys();
 
 const toBase64url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 
-const keys = {
-  publicKey: toBase64url(ecdh.getPublicKey()),
-  privateKey: toBase64url(ecdh.getPrivateKey())
-};
+const pub = toBase64url(ecdh.getPublicKey());
+const priv = toBase64url(ecdh.getPrivateKey());
 
-fs.writeFileSync('new_keys.json', JSON.stringify(keys, null, 2));
-console.log('Keys generated successfully');
+fs.writeFileSync('vapid_keys_final.txt', pub + '\n' + priv);
+console.log('Keys saved to vapid_keys_final.txt');

@@ -1,8 +1,8 @@
 const { execSync } = require('child_process');
 
 const secrets = {
-  VAPID_PUBLIC_KEY: 'BFsCmKN5EyRWAs6XPIxmMwEH3BOYAjECqRn2LZgPYJMqigPUmjxeO2UTNkBUDQ9anOrvqjEFMU78E6ZvnTi9NlE',
-  VAPID_PRIVATE_KEY: 'IduX3jUkWRhz2ADp2FHwK7iDWqiAbTjSL0sInHapvg'
+  VAPID_PUBLIC_KEY: 'BFeYQPH-QTk5rwGxzL3IOr-Ya3OanMTyb9-miBy69qSP4IfAopE5tuLEX2XiPFZtnSseilLNT2URtuIuyNVfjB4',
+  VAPID_PRIVATE_KEY: 'QwXFiGwnXiOuR9VBWycnZUvExGyxA1e02AF1WzT2BsI'
 };
 
 const projectRef = 'canoruljgackpmziotel';
