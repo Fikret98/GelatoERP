@@ -265,7 +265,7 @@ export default function Products() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl overflow-x-hidden"
           >
             <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
@@ -273,23 +273,25 @@ export default function Products() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('products.productName')}</label>
-                <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                <label htmlFor="product-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('products.productName')}</label>
+                <input id="product-name" title={t('products.productName')} required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('products.category')}</label>
-                  <select className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
+                  <label htmlFor="product-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('products.category')}</label>
+                  <select id="product-category" title={t('products.category')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
                     <option value="dondurma">{t('products.iceCream')}</option>
                     <option value="kokteyl">{t('products.cocktail')}</option>
                     <option value="diger">{t('products.other')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="product-price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {t('products.price')} (₼)
                   </label>
                   <input
+                    id="product-price"
+                    title={t('products.price')}
                     required
                     type="number"
                     step="0.01"
@@ -307,12 +309,14 @@ export default function Products() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-1 font-bold">
+                  <label htmlFor="product-margin" className="block text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-1 font-bold">
                     İstənilən Marja %
                   </label>
                   <input
+                    id="product-margin"
+                    title="İstənilən Marja %"
                     type="number"
                     step="0.1"
                     placeholder="Məs: 50"
@@ -344,11 +348,11 @@ export default function Products() {
 
                 <div className="space-y-3">
                   {recipeItems.map((item, index) => (
-                    <div key={index} className="flex gap-3">
+                    <div key={index} className="flex gap-2 sm:gap-3">
                       <select
                         required
                         title={t('products.selectIngredient')}
-                        className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm"
+                        className="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-2 sm:px-3 py-2 text-sm"
                         value={item.inventory_id}
                         onChange={e => {
                           const newItems = [...recipeItems];
@@ -364,7 +368,7 @@ export default function Products() {
                         type="number"
                         step="0.001"
                         placeholder={t('common.quantity')}
-                        className="w-24 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm"
+                        className="w-20 sm:w-24 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-2 sm:px-3 py-2 text-sm"
                         value={item.quantity_needed}
                         onChange={e => {
                           const newItems = [...recipeItems];
@@ -375,7 +379,7 @@ export default function Products() {
                       <button
                         type="button"
                         onClick={() => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
-                        className="text-red-500 hover:text-red-700 font-bold px-2"
+                        className="text-red-500 hover:text-red-700 font-bold px-1 sm:px-2"
                       >
                         &times;
                       </button>

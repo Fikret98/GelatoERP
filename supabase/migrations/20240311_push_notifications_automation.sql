@@ -17,7 +17,7 @@ BEGIN
     -- Note: This requires the edge function to be deployed and accessible
     PERFORM
       net.http_post(
-        url := (SELECT value FROM (SELECT COALESCE(current_setting('app.settings.supabase_url', true), 'https://your-project.supabase.co')) AS s) || '/functions/v1/send-push',
+        url := COALESCE(current_setting('app.settings.supabase_url', true), 'https://your-project.supabase.co') || '/functions/v1/send-push',
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || COALESCE(current_setting('app.settings.service_role_key', true), '')

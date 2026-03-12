@@ -49,6 +49,38 @@ export default function Dashboard() {
 
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
   const [showLowStockModal, setShowLowStockModal] = useState(false);
+  const [infoModal, setInfoModal] = useState<{ show: boolean; title: string; content: string } | null>(null);
+
+  const reportInfo = {
+    cash: {
+      title: 'Kassa (Nəğd)',
+      content: 'Kassadakı cari nəğd pul qalığı. Satışlardan gələn nəğd pullar ilə alış-veriş və xərclər arasındakı fərqi göstərir.'
+    },
+    revenue: {
+      title: 'Ümumi Gəlir',
+      content: 'Seçilmiş tarix aralığında edilən bütün satışların cəmi (Maya dəyəri çıxılmadan).'
+    },
+    netProfit: {
+      title: 'Xalis Mənfəət',
+      content: 'Ümumi Gəlir - (Satılan malların mayası + Xərclər). Biznesinizin real qazancını göstərir.'
+    },
+    aov: {
+      title: 'Orta Satış (AOV)',
+      content: 'Ümumi Gəlir / Satış sayı. Hər müştərinin orta hesabla nə qədər xərclədiyini göstərir.'
+    },
+    inventoryValue: {
+      title: 'Anbar Dəyəri',
+      content: 'Anbardakı bütün malların hazırki maya dəyəri ilə cəmi qiyməti.'
+    },
+    lowStock: {
+      title: 'Azalan Anbar',
+      content: 'Stoku təyin etdiyiniz kritik həddən aşağı düşən məhsulların sayı.'
+    },
+    salesTrend: {
+      title: 'Satış Trendi',
+      content: 'Günlər üzrə satış məbləğlərinin paylanması. Histogram formatı ən çox satış olan günləri vizual olaraq fərqləndirir.'
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -223,9 +255,15 @@ export default function Dashboard() {
               show: { opacity: 1, y: 0 }
             }}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            onClick={() => card.isClickable && card.id === 'lowStock' && (window.location.hash = '#inventory')}
-            className={`p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 ${card.bg} ${card.isClickable ? 'cursor-pointer hover:shadow-md' : ''
-              }`}
+            onClick={() => {
+              if (card.id === 'lowStock') {
+                setShowLowStockModal(true);
+              } else {
+                const info = (reportInfo as any)[card.id];
+                if (info) setInfoModal({ show: true, ...info });
+              }
+            }}
+            className={`p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 cursor-pointer hover:shadow-md ${card.bg}`}
           >
             <div className="flex flex-col gap-4">
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
@@ -250,32 +288,32 @@ export default function Dashboard() {
           transition={{ delay: 0.3 }}
           className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
         >
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-indigo-500" />
-              Satış Trendi
-            </h2>
-          </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={charts.salesData}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dy={15} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dx={-15} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                  itemStyle={{ fontWeight: 'bold' }}
-                />
-                <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorSales)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <button 
+            onClick={() => setInfoModal({ show: true, ...reportInfo.salesTrend })}
+            className="w-full text-left"
+          >
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-indigo-500" />
+                Satış Trendi
+              </h2>
+            </div>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={charts.salesData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dy={15} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dx={-15} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                    itemStyle={{ fontWeight: 'bold' }}
+                    cursor={{ fill: 'rgba(79, 70, 229, 0.1)' }}
+                  />
+                  <Bar dataKey="amount" fill="#4f46e5" radius={[8, 8, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </button>
         </motion.div>
 
         {/* Revenue by Category */}
@@ -398,6 +436,7 @@ export default function Dashboard() {
                 <button
                   key={mode}
                   onClick={() => setAbcMode(mode)}
+                  title={mode === 'revenue' ? 'Gəlirə görə ABC Analizini göstər' : 'Mənfəətə görə ABC Analizini göstər'}
                   className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all duration-200 ${abcMode === mode
                     ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -441,52 +480,47 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Low Stock Popup Modal */}
-      {showLowStockModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in slide-in-from-bottom-4">
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-orange-500" />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  Kritik Anbar Qalığı ({lowStockItems.length})
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowLowStockModal(false)}
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+      {/* Informational Modal */}
+      <AnimatePresence>
+        {infoModal?.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setInfoModal(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-indigo-600" />
+              <button 
+                onClick={() => setInfoModal(null)}
                 title="Bağla"
+                className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-gray-400" />
               </button>
-            </div>
-
-            <div className="max-h-[60vh] overflow-y-auto p-2">
-              {lowStockItems.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  Hər şey qaydasındadır, kritik mal yoxdur.
+              
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {lowStockItems.map((item, idx) => (
-                    <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex justify-between items-center rounded-xl">
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white">{item.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Limit: {item.critical_limit} {item.unit}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="inline-block bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold px-3 py-1 rounded-full text-sm">
-                          {item.stock_quantity} {item.unit}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white">{infoModal.title}</h3>
+              </div>
+              
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                {infoModal.content}
+              </p>
+              
+              <button 
+                onClick={() => setInfoModal(null)}
+                className="w-full mt-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black hover:opacity-90 transition-opacity"
+              >
+                Anladım
+              </button>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
     </motion.div>
   );
