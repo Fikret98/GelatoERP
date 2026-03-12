@@ -36,7 +36,8 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
     if (!el) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (el.scrollTop <= 0) {
+      // Use a small buffer to ensure we are really at the top
+      if (el.scrollTop <= 2) {
         startY.current = e.touches[0].pageY;
       } else {
         startY.current = -1;
@@ -44,6 +45,11 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      // If user starts moving while not at top, ensure we stay disabled
+      if (el.scrollTop > 2) {
+        startY.current = -1;
+      }
+      
       if (startY.current === -1 || isRefreshing) return;
 
       const currentY = e.touches[0].pageY;

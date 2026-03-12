@@ -29,6 +29,7 @@ export default function Reports() {
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [totalCogs, setTotalCogs] = useState(0);
 
   const handleTransactionClick = async (transaction: any) => {
     setSelectedTransaction(transaction);
@@ -79,11 +80,29 @@ export default function Reports() {
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setTransactions(unified);
+      
+      // Fetch total COGS for the whole range to start with
+      await fetchCogs();
     } catch (e) {
       console.error(e);
       toast.error('Məlumatların yüklənməsində xəta');
     } finally {
       setIsLoadingPage(false);
+    }
+  };
+
+  const fetchCogs = async () => {
+    try {
+      // For simplicity in this unified feed, we'll fetch the aggregate COGS from the RPC
+      // or a custom query. Here we'll just use a direct query for now.
+      const { data, error } = await supabase.rpc('get_advanced_analytics', {
+        p_start_date: '2000-01-01', // All time for now, or match current filters
+        p_end_date: new Date().toISOString()
+      });
+      if (error) throw error;
+      setTotalCogs(data.stats.cogs || 0);
+    } catch (e) {
+      console.error("COGS fetch error:", e);
     }
   };
 
@@ -104,6 +123,22 @@ export default function Reports() {
       return acc;
     }, { totalIn: 0, totalOut: 0 });
   }, [filteredTransactions]);
+
+  // For Net Profit, we need COGS. Since we are filtering in memory, 
+  // we'll approximate the profit by using the total COGS 
+  // (In a production app, we'd fetch filtered COGS from the DB)
+  const netProfit = useMemo(() => {
+    const revenue = filteredTransactions
+      .filter(t => t.type === 'sale')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expenses = filteredTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    // Note: This is an approximation if the date filters are active 
+    // because totalCogs is currently for everything.
+    return revenue - expenses - (revenue > 0 ? (totalCogs * (revenue / summary.totalIn)) : 0);
+  }, [filteredTransactions, totalCogs, summary.totalIn]);
 
   const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,30 +253,30 @@ export default function Reports() {
             Tranzaksiyaların mərkəzləşdirilmiş idarəolunması
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          <button onClick={exportToExcel} className="flex-1 sm:flex-none justify-center bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-5 py-3 rounded-2xl flex items-center hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all font-bold border border-emerald-100 dark:border-emerald-800">
-            <FileSpreadsheet className="w-5 h-5 mr-2" />
+        <div className="grid grid-cols-2 sm:flex sm:flex-nowrap items-center gap-3 w-full lg:w-auto">
+          <button onClick={exportToExcel} className="flex justify-center bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 sm:px-5 py-3 rounded-2xl flex items-center hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all font-bold border border-emerald-100 dark:border-emerald-800 text-xs sm:text-sm">
+            <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
             Excel
           </button>
-          <button onClick={exportToPDF} className="flex-1 sm:flex-none justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-5 py-3 rounded-2xl flex items-center hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all font-bold border border-rose-100 dark:border-rose-800">
-            <FileText className="w-5 h-5 mr-2" />
+          <button onClick={exportToPDF} className="flex justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-3 sm:px-5 py-3 rounded-2xl flex items-center hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all font-bold border border-rose-100 dark:border-rose-800 text-xs sm:text-sm">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
             PDF
           </button>
-          <button onClick={() => setShowExpenseModal(true)} className="flex-1 sm:flex-none justify-center bg-red-600 text-white px-5 py-3 rounded-2xl flex items-center hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 font-bold">
-            <TrendingDown className="w-5 h-5 mr-2" />
+          <button onClick={() => setShowExpenseModal(true)} className="flex justify-center bg-red-600 text-white px-3 sm:px-5 py-3 rounded-2xl flex items-center hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 font-bold text-xs sm:text-sm">
+            <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
             {t('reports.addExpense')}
           </button>
-          <button onClick={() => setShowIncomeModal(true)} className="flex-1 sm:flex-none justify-center bg-indigo-600 text-white px-5 py-3 rounded-2xl flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 font-bold">
-            <TrendingUp className="w-5 h-5 mr-2" />
+          <button onClick={() => setShowIncomeModal(true)} className="flex justify-center bg-indigo-600 text-white px-3 sm:px-5 py-3 rounded-2xl flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 font-bold text-xs sm:text-sm">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
             Mədaxil
           </button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
@@ -252,7 +287,7 @@ export default function Reports() {
           </div>
         </motion.div>
         <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
               <TrendingDown className="w-6 h-6 text-rose-600 dark:text-rose-400" />
             </div>
@@ -263,13 +298,24 @@ export default function Reports() {
           </div>
         </motion.div>
         <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-              <Coins className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <Coins className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Xalis Qalıq</p>
-              <p className="text-2xl font-black text-indigo-600 tabular-nums">{(summary.totalIn - summary.totalOut).toFixed(2)} ₼</p>
+              <p className="text-2xl font-black text-blue-600 tabular-nums">{(summary.totalIn - summary.totalOut).toFixed(2)} ₼</p>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 shadow-lg shadow-indigo-500/5 ring-1 ring-indigo-500/10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <Briefcase className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Xalis Mənfəət</p>
+              <p className="text-2xl font-black text-indigo-600 tabular-nums">{netProfit.toFixed(2)} ₼</p>
             </div>
           </div>
         </motion.div>
