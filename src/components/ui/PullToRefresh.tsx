@@ -188,7 +188,7 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
         </div>
       </motion.div>
 
-      {/* Əsas Kontent */}
+      {/* Əsas Kontent Area */}
       <motion.div 
         style={{ y: isRefreshing ? 180 : y }}
         className="relative z-[1] h-full bg-gray-50 dark:bg-gray-900 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.05)]"

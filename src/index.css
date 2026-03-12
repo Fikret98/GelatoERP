@@ -6,6 +6,12 @@ html, body {
   @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
 }
 
+html.splash-active, 
+html.splash-active body,
+html.splash-active #root {
+  background-color: #4f46e5 !important;
+}
+
 :root {
   background-color: #f9fafb; /* gray-50 */
 }

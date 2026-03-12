@@ -7,27 +7,27 @@ export default function SplashScreen() {
   const { t } = useLanguage();
 
   React.useEffect(() => {
+    // Add class for global CSS override
+    document.documentElement.classList.add('splash-active');
+
     // Preserve original theme-color
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     const originalColor = metaThemeColor?.getAttribute('content');
     
-    // Set splash theme color and body background
+    // Set splash theme color
     if (metaThemeColor) metaThemeColor.setAttribute('content', '#4f46e5');
-    document.body.style.backgroundColor = '#4f46e5';
-    document.documentElement.style.backgroundColor = '#4f46e5';
 
     return () => {
-      // Restore on unmount
+      // Clean up
+      document.documentElement.classList.remove('splash-active');
       if (metaThemeColor && originalColor) {
         metaThemeColor.setAttribute('content', originalColor);
       }
-      document.body.style.backgroundColor = '';
-      document.documentElement.style.backgroundColor = '';
     };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-indigo-600 flex flex-col items-center justify-center h-[100dvh] w-screen">
+    <div className="fixed inset-0 z-[100] bg-indigo-600 flex flex-col items-center justify-center">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
