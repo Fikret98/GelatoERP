@@ -24,7 +24,6 @@ import { twMerge } from 'tailwind-merge';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import PullToRefresh from './ui/PullToRefresh';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -39,8 +38,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
-
-  useScrollLock(sidebarOpen);
 
   const navigation = [
     { nameKey: 'nav.dashboard', href: '/', icon: LayoutDashboard, adminOnly: true },
@@ -129,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         "fixed inset-y-0 left-0 z-[70] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between pt-[env(safe-area-inset-top,0px)] h-16 box-content px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <Link
             to="/"
             className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity"
@@ -186,7 +183,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 pt-[env(safe-area-inset-top,0px)] h-16 box-content flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden" title="Menyu">
             <Menu className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
@@ -254,7 +251,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             onRefresh={async () => {
               window.location.reload();
             }}
-            className="p-4 pt-6 pb-24 sm:p-6 sm:pt-10 lg:p-8 lg:pb-8"
+            className="p-4 sm:p-6 lg:p-8"
           >
             <div className="max-w-7xl mx-auto">
               {children}
@@ -264,7 +261,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-[env(safe-area-inset-bottom,0px)] h-16 box-content">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 h-16">
         <nav className="flex justify-between items-center px-2 py-0 h-16 overflow-x-auto no-scrollbar">
           {mobileNavigation.map((item) => {
             const isActive = location.pathname === item.href;

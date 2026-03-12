@@ -6,7 +6,6 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 export default function HR() {
   const { t } = useLanguage();
@@ -32,8 +31,6 @@ export default function HR() {
   const [selectedHistoryEmployee, setSelectedHistoryEmployee] = useState<any | null>(null);
   const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-
-  useScrollLock(showModal || !!selectedHistoryEmployee);
 
   useEffect(() => {
     fetchData();
@@ -237,7 +234,7 @@ export default function HR() {
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.hr')}</h1>
         <button
           onClick={() => setShowModal(true)}

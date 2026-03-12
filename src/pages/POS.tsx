@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -17,8 +16,9 @@ export default function POS() {
   const [loading, setLoading] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [saleSuccess, setSaleSuccess] = useState(false);
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null);
 
-  useScrollLock(showMobileCart);
 
   useEffect(() => {
     fetchProducts();
@@ -115,7 +115,7 @@ export default function POS() {
         <>
           {/* Products Grid */}
           <div className="flex-1 overflow-y-auto w-full pr-0 lg:pr-2 pt-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.pos')}</h1>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Giriş edilib:</span>
@@ -134,7 +134,7 @@ export default function POS() {
           }}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4"
+          className="p-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"
         >
           {products.map(product => (
             <motion.button
@@ -252,7 +252,7 @@ export default function POS() {
           </AnimatePresence>
         </div>
 
-        <div className="p-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
           <div className="flex justify-between items-center mb-4">
             <span className="text-gray-600 dark:text-gray-400 font-medium">{t('pos.total')}</span>
             <span className="text-2xl font-black text-gray-900 dark:text-white">{total.toFixed(2)} ₼</span>

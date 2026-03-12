@@ -12,30 +12,16 @@
 
 /* Base Styles */
 html, body {
-  @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
+  @apply bg-white dark:bg-gray-900 transition-colors duration-200;
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  /* Support for browsers with dynamic address bars */
-  min-height: -webkit-fill-available; 
 }
 
 #root {
   min-height: 100vh;
-  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
-}
-
-/* Splash Screen Overrides */
-html.splash-active, 
-html.splash-active body,
-html.splash-active #root {
-  background-color: #4f46e5 !important;
-  color-scheme: dark !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  overflow: hidden !important;
 }
 
 /* Scrollbar customization */

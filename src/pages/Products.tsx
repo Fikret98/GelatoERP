@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 export default function Products() {
   const { t } = useLanguage();
@@ -14,8 +13,6 @@ export default function Products() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-
-  useScrollLock(showModal);
 
   const [formData, setFormData] = useState({ name: '', category: 'dondurma', price: '', margin: '' });
   const [recipeItems, setRecipeItems] = useState<{ inventory_id: string, quantity_needed: string }[]>([]);
@@ -189,7 +186,7 @@ export default function Products() {
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.products')}</h1>
         <button
           onClick={openNewProductModal}

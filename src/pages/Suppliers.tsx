@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 export default function Suppliers() {
   const { t } = useLanguage();
@@ -13,8 +12,6 @@ export default function Suppliers() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', contact: '', email: '' });
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-
-  useScrollLock(showModal);
 
   useEffect(() => {
     fetchData();
@@ -63,7 +60,7 @@ export default function Suppliers() {
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.suppliers')}</h1>
         <button
           onClick={() => setShowModal(true)}

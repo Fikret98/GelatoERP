@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 export default function Inventory() {
   const { t, language } = useLanguage();
@@ -22,8 +21,6 @@ export default function Inventory() {
   const [userId, setUserId] = useState<number | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-
-  useScrollLock(showModal || !!selectedItem || showPurchaseModal);
 
   useEffect(() => {
     fetchData();
@@ -191,7 +188,7 @@ export default function Inventory() {
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('inventory.title')}</h1>
 
         <button

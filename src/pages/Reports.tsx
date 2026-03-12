@@ -10,7 +10,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 export default function Reports() {
   const { t } = useLanguage();
@@ -24,7 +23,6 @@ export default function Reports() {
   const [incomeData, setIncomeData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: 'Kassa mədaxil', amount: '', description: '' });
   const [selectedSale, setSelectedSale] = useState<any | null>(null);
 
-  useScrollLock(!!selectedSale);
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [selectedIncome, setSelectedIncome] = useState<any | null>(null);
@@ -518,7 +516,7 @@ export default function Reports() {
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
             >
-              <div className="flex justify-between items-center mb-6 pt-4">
+              <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sifariş Detalları #{selectedSale.id}</h2>
                 <button
                   onClick={() => setSelectedSale(null)}
