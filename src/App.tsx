@@ -21,6 +21,7 @@ import POS from './pages/POS';
 import HR from './pages/HR';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import FixedAssets from './pages/FixedAssets';
 import { Navigate } from 'react-router-dom';
 
 function AnimatedRoutes() {
@@ -39,6 +40,7 @@ function AnimatedRoutes() {
         <Route path="/suppliers" element={isAdmin ? <Suppliers /> : <Navigate to="/pos" replace />} />
         <Route path="/products" element={isAdmin ? <Products /> : <Navigate to="/pos" replace />} />
         <Route path="/hr" element={isAdmin ? <HR /> : <Navigate to="/pos" replace />} />
+        <Route path="/assets" element={isAdmin ? <FixedAssets /> : <Navigate to="/pos" replace />} />
 
         {/* Common routes (Admin & Employee) */}
         <Route path="/pos" element={<POS />} />

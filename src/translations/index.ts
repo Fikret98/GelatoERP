@@ -7,6 +7,7 @@ export const translations = {
       products: 'Məhsullar & Reseptlər',
       suppliers: 'Təchizatçılar',
       hr: 'İnsan Resursları',
+      assets: 'Əsas Vəsaitlər',
       reports: 'Hesabatlar',
       settings: 'Tənzimləmələr',
     },
@@ -126,6 +127,19 @@ export const translations = {
     },
     splash: {
       loading: 'Sistemə daxil olunur...'
+    },
+    assets: {
+      title: 'Əsas Vəsaitlər',
+      newAsset: 'Yeni Vəsait',
+      addTitle: 'Yeni Vəsait Əlavə Et',
+      assetName: 'Vəsaitin Adı',
+      purchaseDate: 'Alış Tarixi',
+      cost: 'Dəyəri',
+      status: 'Status',
+      active: 'Aktiv',
+      maintenance: 'Təmirdə',
+      disposed: 'Silinib',
+      totalValue: 'Ümumi Vəsait Dəyəri'
     }
   },
   en: {
@@ -136,6 +150,7 @@ export const translations = {
       products: 'Products & Recipes',
       suppliers: 'Suppliers',
       hr: 'Human Resources',
+      assets: 'Fixed Assets',
       reports: 'Reports',
       settings: 'Settings',
     },
@@ -255,6 +270,19 @@ export const translations = {
     },
     splash: {
       loading: 'Logging into the system...'
+    },
+    assets: {
+      title: 'Fixed Assets',
+      newAsset: 'New Asset',
+      addTitle: 'Add New Asset',
+      assetName: 'Asset Name',
+      purchaseDate: 'Purchase Date',
+      cost: 'Cost',
+      status: 'Status',
+      active: 'Active',
+      maintenance: 'Maintenance',
+      disposed: 'Disposed',
+      totalValue: 'Total Asset Value'
     }
   }
 };
