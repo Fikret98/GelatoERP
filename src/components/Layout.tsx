@@ -126,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         "fixed inset-y-0 left-0 z-[70] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between pt-[env(safe-area-inset-top)] h-[calc(4rem+env(safe-area-inset-top))] px-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-[env(safe-area-inset-top,0px)] h-[calc(4rem+env(safe-area-inset-top,0px))] px-6 border-b border-gray-200 dark:border-gray-700">
           <Link
             to="/"
             className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity"
@@ -183,7 +183,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 pt-[env(safe-area-inset-top)] h-[calc(4rem+env(safe-area-inset-top))] flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 pt-[env(safe-area-inset-top,0px)] h-[calc(4rem+env(safe-area-inset-top,0px))] flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden" title="Menyu">
             <Menu className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
@@ -261,7 +261,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-[env(safe-area-inset-bottom,0px)] h-[calc(4.5rem+env(safe-area-inset-bottom,0px))]">
         <nav className="flex justify-between items-center px-2 py-2 overflow-x-auto no-scrollbar">
           {mobileNavigation.map((item) => {
             const isActive = location.pathname === item.href;

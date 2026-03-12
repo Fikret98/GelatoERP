@@ -2,28 +2,35 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
+:root {
+  color-scheme: light;
 }
 
+.dark {
+  color-scheme: dark;
+}
+
+/* Base Styles */
 html, body {
   @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
-  overflow: hidden; /* Prevent elastic scrolling on body, Layout handles scrolling */
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
+/* Splash Screen Overrides */
 html.splash-active, 
 html.splash-active body,
 html.splash-active #root {
   background-color: #4f46e5 !important;
+  color-scheme: dark !important;
 }
 
-:root {
-  background-color: #f9fafb; /* gray-50 */
+/* Mobile Layout Helpers */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-
-.dark {
-  background-color: #111827; /* gray-900 */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
 }
