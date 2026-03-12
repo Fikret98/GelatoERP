@@ -219,7 +219,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-[90] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 lg:right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-[90] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
                     <h3 className="font-bold text-gray-900 dark:text-white text-sm">Bildirişlər</h3>
                     <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-black uppercase">

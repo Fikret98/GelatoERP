@@ -84,7 +84,16 @@ export default function App() {
           <Router>
             <MainContent />
           </Router>
-          <Toaster position="top-right" />
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              className: 'dark:bg-gray-800 dark:text-white border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl',
+              duration: 4000,
+            }}
+            containerStyle={{
+              top: 'calc(env(safe-area-inset-top) + 1rem)',
+            }}
+          />
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
