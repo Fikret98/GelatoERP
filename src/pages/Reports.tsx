@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Plus, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Plus, Download, FileText, FileSpreadsheet, X, ShoppingBag, Calendar, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -286,10 +286,10 @@ export default function Reports() {
           <div className="overflow-x-auto max-h-[500px] overflow-y-auto pb-4">
             <table className="w-full text-left text-sm min-w-[400px]">
               <thead className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 font-medium">Sifariş #</th>
-                  <th className="px-6 py-3 font-medium">{t('common.date')}</th>
-                  <th className="px-6 py-3 font-medium text-right">Məbləğ</th>
+                <tr className="bg-gray-50/50 dark:bg-gray-900/50">
+                  <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-gray-500 dark:text-gray-400">Sifariş #</th>
+                  <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-gray-500 dark:text-gray-400">{t('common.date')}</th>
+                  <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-gray-500 dark:text-gray-400 text-right">Məbləğ</th>
                 </tr>
               </thead>
             <motion.tbody 
@@ -308,21 +308,23 @@ export default function Reports() {
                     show: { opacity: 1, x: 0 }
                   }}
                   onClick={() => handleSaleClick(sale)}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                  className="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 cursor-pointer transition-all border-b border-gray-100 dark:border-gray-800 last:border-none"
                 >
-                  <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">#{sale.id}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-gray-900 dark:text-white font-medium">
+                  <td className="px-6 py-5 text-gray-900 dark:text-white font-black text-base italic">#{sale.id}</td>
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-gray-900 dark:text-white font-bold">
                         {format(new Date(sale.date), 'dd.MM.yyyy HH:mm')}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-[11px] font-black uppercase tracking-tight text-gray-400 dark:text-gray-500">
                         {sale.users?.name || '-'}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right font-bold text-indigo-600 dark:text-indigo-400">
-                    {sale.total_amount.toFixed(2)} ₼
+                  <td className="px-6 py-5 text-right">
+                    <div className="text-lg font-black text-indigo-600 dark:text-indigo-400">
+                      {sale.total_amount.toFixed(2)} <span className="text-xs">₼</span>
+                    </div>
                   </td>
                 </motion.tr>
               ))}
@@ -364,11 +366,15 @@ export default function Reports() {
                     show: { opacity: 1, x: 0 }
                   }}
                   onClick={() => setSelectedExpense(exp)}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                  className="hover:bg-red-50/30 dark:hover:bg-red-900/10 cursor-pointer transition-all border-b border-gray-100 dark:border-gray-800 last:border-none"
                 >
-                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{format(new Date(exp.date), 'dd.MM.yyyy HH:mm')}</td>
-                  <td className="px-6 py-3 text-gray-900 dark:text-gray-300">{exp.users?.name || exp.category}</td>
-                  <td className="px-6 py-3 font-bold text-red-600 dark:text-red-400">-{exp.amount.toFixed(2)} ₼</td>
+                  <td className="px-6 py-5 text-gray-900 dark:text-gray-300 font-bold">{format(new Date(exp.date), 'dd.MM.yyyy HH:mm')}</td>
+                  <td className="px-6 py-5 text-gray-500 dark:text-gray-400 font-bold text-xs uppercase tracking-tight">{exp.users?.name || exp.category}</td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="text-lg font-black text-red-600 dark:text-red-400">
+                      -{exp.amount.toFixed(2)} <span className="text-xs">₼</span>
+                    </div>
+                  </td>
                 </motion.tr>
               ))}
               {expenses.length === 0 && (
@@ -517,13 +523,16 @@ export default function Reports() {
               className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
             >
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sifariş Detalları #{selectedSale.id}</h2>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] mb-1">Məxaric Sənədi</span>
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Sifariş #{selectedSale.id}</h2>
+                </div>
                 <button
                   onClick={() => setSelectedSale(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors font-bold text-xl h-10 w-10 flex items-center justify-center"
+                  className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all h-12 w-12 flex items-center justify-center border border-gray-100 dark:border-gray-700"
                   title="Bağla"
                 >
-                  &times;
+                  <X className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
               
@@ -537,20 +546,22 @@ export default function Reports() {
                     <span>Tarix: {format(new Date(selectedSale.date), 'dd.MM.yyyy HH:mm')}</span>
                     <span>Satıcı: {selectedSale.users?.name || '-'}</span>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
                     {saleDetails.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
+                      <div key={idx} className="flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50">
                         <div>
-                          <div className="font-bold text-gray-900 dark:text-white">{item.products?.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</div>
+                          <div className="font-bold text-gray-900 dark:text-white text-base">{item.products?.name}</div>
+                          <div className="text-[10px] font-black uppercase tracking-tight text-gray-400 dark:text-gray-500 mt-1">
+                            {item.quantity} ədəd × {item.price.toFixed(2)} ₼
+                          </div>
                         </div>
-                        <div className="font-black text-indigo-600 dark:text-indigo-400">{(item.quantity * item.price).toFixed(2)} ₼</div>
+                        <div className="font-black text-indigo-600 dark:text-indigo-400 text-lg">{(item.quantity * item.price).toFixed(2)} <span className="text-xs italic">₼</span></div>
                       </div>
                     ))}
                   </div>
-                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <span className="font-bold text-gray-900 dark:text-white">Cəmi:</span>
-                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedSale.total_amount.toFixed(2)} ₼</span>
+                  <div className="pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <span className="font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest text-xs">Yekun Məbləğ:</span>
+                    <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{selectedSale.total_amount.toFixed(2)} <span className="text-base font-bold">₼</span></span>
                   </div>
                 </div>
               )}

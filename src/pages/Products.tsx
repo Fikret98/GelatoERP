@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, PackageSearch, ChefHat, Edit2, Layers } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Plus, PackageSearch, ChefHat, Edit2, Layers, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
@@ -13,6 +13,17 @@ export default function Products() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set());
+
+  const toggleExpand = (productId: number) => {
+    const newExpanded = new Set(expandedProducts);
+    if (newExpanded.has(productId)) {
+      newExpanded.delete(productId);
+    } else {
+      newExpanded.add(productId);
+    }
+    setExpandedProducts(newExpanded);
+  };
 
   const [formData, setFormData] = useState({ name: '', category: 'dondurma', price: '', margin: '' });
   const [recipeItems, setRecipeItems] = useState<{ inventory_id: string, quantity_needed: string }[]>([]);
@@ -213,62 +224,118 @@ export default function Products() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
       >
-        {products.map((product) => (
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            key={product.id} 
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{product.name}</h3>
-                <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md mt-1 capitalize">
-                  {product.category}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Maya: {Number(product.costPrice || 0).toFixed(2)} ₼
-                  </div>
-                  <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400 leading-none">
-                    Satış: {Number(product.price || 0).toFixed(2)} ₼
-                  </div>
-                  <div className={`text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded-md inline-block ${
-                    (product.price > 0 ? ((product.price - product.costPrice) / product.price) * 100 : 0) > 30 
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                  }`}>
-                    Marja: {Number(product.price > 0 ? ((product.price - product.costPrice) / product.price) * 100 : 0).toFixed(1)}%
+        {products.map((product) => {
+          const isExpanded = expandedProducts.has(product.id);
+          return (
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ y: -2, transition: { duration: 0.2 } }}
+              key={product.id} 
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col h-fit"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1 min-w-0 pr-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate" title={product.name}>
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 capitalize">
+                      {product.category}
+                    </span>
                   </div>
                 </div>
-                <button onClick={() => editProduct(product)} className="text-gray-400 hover:text-indigo-600 transition" title={t('common.edit')}>
-                  <Edit2 className="w-5 h-5" />
+                <div className="flex flex-col items-end shrink-0">
+                  <button 
+                    onClick={() => editProduct(product)} 
+                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
+                    title={t('common.edit')}
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-end justify-between bg-gray-50/50 dark:bg-gray-900/30 rounded-2xl p-4 border border-gray-100/50 dark:border-gray-700/30">
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider font-black text-gray-400 dark:text-gray-500">
+                    Maya Dəyəri
+                  </div>
+                  <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
+                    {Number(product.costPrice || 0).toFixed(2)} <span className="text-[10px]">₼</span>
+                  </div>
+                </div>
+                
+                <div className="text-right space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider font-black text-indigo-500/70 dark:text-indigo-400/70">
+                    Satış Qiyməti
+                  </div>
+                  <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline justify-end gap-1">
+                    {Number(product.price || 0).toFixed(2)} <span className="text-sm">₼</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <div className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                  (product.price > 0 ? ((product.price - product.costPrice) / product.price) * 100 : 0) > 30 
+                  ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-100 dark:border-green-800/30' 
+                  : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30'
+                }`}>
+                  Qazanc: {Number(product.price > 0 ? ((product.price - product.costPrice) / product.price) * 100 : 0).toFixed(1)}%
+                </div>
+
+                <button 
+                  onClick={() => toggleExpand(product.id)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors uppercase tracking-tight"
+                >
+                  {isExpanded ? 'Gizlə' : 'Resept'}
+                  <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                  </motion.div>
                 </button>
               </div>
-            </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center">
-                <Layers className="w-4 h-4 mr-2" /> {t('products.recipe')}
-              </h4>
-              <ul className="space-y-2">
-                {product.recipes?.map((r: any) => (
-                  <li key={r.id} className="flex justify-between text-sm">
-                    <span className="text-gray-700 dark:text-gray-300">{r.ingredient_name}</span>
-                    <span className="text-gray-500 dark:text-gray-400 font-mono">{r.quantity_needed}</span>
-                  </li>
-                ))}
-                {(!product.recipes || product.recipes.length === 0) && (
-                  <li className="text-sm text-gray-400 dark:text-gray-500 italic">{t('products.noRecipe')}</li>
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ChefHat className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('products.recipe')}</span>
+                      </div>
+                      <ul className="space-y-2.5">
+                        {product.recipes?.map((r: any) => (
+                          <li key={r.id} className="flex justify-between items-center text-sm group">
+                            <span className="text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{r.ingredient_name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="h-px w-8 bg-gray-100 dark:bg-gray-700/50" />
+                              <span className="text-gray-900 dark:text-white font-black">{r.quantity_needed}</span>
+                            </div>
+                          </li>
+                        ))}
+                        {(!product.recipes || product.recipes.length === 0) && (
+                          <li className="text-sm text-gray-400 dark:text-gray-500 italic flex items-center justify-center py-4 bg-gray-50/50 dark:bg-gray-900/20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                            {t('products.noRecipe')}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </motion.div>
                 )}
-              </ul>
-            </div>
-          </motion.div>
-        ))}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       {showModal && (

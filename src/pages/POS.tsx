@@ -146,7 +146,7 @@ export default function POS() {
           }}
           initial="hidden"
           animate="show"
-          className="p-1 sm:p-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 pb-20"
+          className="p-1 sm:p-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 pb-20"
         >
           {products.map(product => (
             <motion.button
@@ -155,17 +155,35 @@ export default function POS() {
                 hidden: { opacity: 0, scale: 0.95 },
                 show: { opacity: 1, scale: 1 }
               }}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ y: -4, shadow: "0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
               whileTap={{ scale: 0.98 }}
               onClick={() => addToCart(product)}
-              className="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition text-left flex flex-col h-full"
+              className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all text-left flex flex-col h-full group relative overflow-hidden"
             >
-              <div className="w-full aspect-square bg-indigo-50 dark:bg-indigo-900/30 rounded-lg sm:rounded-xl mb-2 sm:mb-3 flex items-center justify-center">
-                <span className="text-3xl">🍦</span>
+              <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200 dark:shadow-none">
+                  <Plus className="w-4 h-4" />
+                </div>
               </div>
-              <h3 className="font-bold text-gray-900 dark:text-white leading-tight mb-1">{product.name}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 capitalize mb-2">{product.category}</p>
-              <div className="mt-auto font-bold text-indigo-600 dark:text-indigo-400 text-lg">{product.price.toFixed(2)} ₼</div>
+              
+              <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300">
+                <span className="text-4xl drop-shadow-sm select-none">
+                  {product.category === 'dondurma' ? '🍦' : product.category === 'kokteyl' ? '🍹' : '🍰'}
+                </span>
+              </div>
+              
+              <div className="flex-1 space-y-1">
+                <h3 className="font-black text-gray-900 dark:text-white leading-snug text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{product.name}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest font-black text-gray-400 dark:text-gray-500">{product.category}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div className="text-xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
+                  {product.price.toFixed(2)} <span className="text-xs">₼</span>
+                </div>
+              </div>
             </motion.button>
           ))}
         </motion.div>
