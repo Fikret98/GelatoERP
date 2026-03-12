@@ -24,7 +24,8 @@ export default function HR() {
     phone: '',
     address: '',
     user_role: 'user',
-    bonus_percentage: '0.8'
+    bonus_percentage: '0.8',
+    work_schedule: ''
   });
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,6 +93,7 @@ export default function HR() {
           job_title: emp?.job_title || 'İşçi', // business role (Barista, etc)
           salary: emp?.salary || 0,
           hire_date: emp?.hire_date || null,
+          work_schedule: emp?.work_schedule || '',
           isSystemUser: true
         };
       });
@@ -119,7 +121,8 @@ export default function HR() {
       phone: employee.phone || '',
       address: employee.address || '',
       user_role: employee.role || 'user', // Correctly use the system role from the users table
-      bonus_percentage: (employee.bonus_percentage || 0.8).toString()
+      bonus_percentage: (employee.bonus_percentage || 0.8).toString(),
+      work_schedule: employee.work_schedule || ''
     });
     setShowModal(true);
   };
@@ -175,7 +178,8 @@ export default function HR() {
           name: formData.name,
           job_title: formData.role,
           salary: newSalary,
-          hire_date: formData.hire_date
+          hire_date: formData.hire_date,
+          work_schedule: formData.work_schedule
         }).eq('user_id', editingEmployee.id);
 
         if (empErr) throw empErr;
@@ -202,7 +206,8 @@ export default function HR() {
           name: formData.name,
           job_title: formData.role,
           salary: parseFloat(formData.salary),
-          hire_date: formData.hire_date
+          hire_date: formData.hire_date,
+          work_schedule: formData.work_schedule
         }]);
 
         if (empErr) throw empErr;
@@ -222,7 +227,8 @@ export default function HR() {
         phone: '',
         address: '',
         user_role: 'user',
-        bonus_percentage: '0.8'
+        bonus_percentage: '0.8',
+        work_schedule: ''
       });
       fetchData();
     } catch (e: any) {
@@ -315,6 +321,10 @@ export default function HR() {
                 <Calendar className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
                 {t('hr.hireDate')}: <span className="font-medium text-gray-900 dark:text-white ml-1">{employee.hire_date ? format(new Date(employee.hire_date), 'dd.MM.yyyy') : '-'}</span>
               </div>
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <History className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                İş Qrafiki: <span className="font-medium text-gray-900 dark:text-white ml-1">{employee.work_schedule || '-'}</span>
+              </div>
               <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg flex justify-between items-center">
                 <span className="text-xs font-bold text-green-700 dark:text-green-400">Satış Bonusu ({employee.bonus_percentage || 0.8}%):</span>
                 <span className="text-sm font-black text-green-600 dark:text-green-300">
@@ -356,6 +366,10 @@ export default function HR() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vəzifə (Məs: Barista)</label>
                   <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">İş Qrafiki (Məs: 09:00 - 18:00)</label>
+                  <input type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} placeholder="09:00 - 18:00" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
