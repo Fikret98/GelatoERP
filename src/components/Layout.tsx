@@ -24,6 +24,7 @@ import { twMerge } from 'tailwind-merge';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import PullToRefresh from './ui/PullToRefresh';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -38,6 +39,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
+
+  useScrollLock(sidebarOpen);
 
   const navigation = [
     { nameKey: 'nav.dashboard', href: '/', icon: LayoutDashboard, adminOnly: true },
@@ -251,7 +254,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             onRefresh={async () => {
               window.location.reload();
             }}
-            className="p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8"
+            className="p-4 pt-6 pb-24 sm:p-6 sm:pt-10 lg:p-8 lg:pb-8"
           >
             <div className="max-w-7xl mx-auto">
               {children}
