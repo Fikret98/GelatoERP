@@ -19,7 +19,7 @@ export default function Inventory() {
   const [formData, setFormData] = useState({ name: '', unit: 'kq', unit_cost: '', stock_quantity: '', supplier_id: '', critical_limit: '' });
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseItem, setPurchaseItem] = useState<any>(null);
-  const [purchaseForm, setPurchaseForm] = useState({ quantity: '', unit_cost: '', supplier_id: '' });
+  const [purchaseForm, setPurchaseForm] = useState({ quantity: '', unit_cost: '', supplier_id: '', amount_paid: '' });
   const [userId, setUserId] = useState<number | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
@@ -131,7 +131,8 @@ export default function Inventory() {
     setPurchaseForm({
       quantity: '',
       unit_cost: item.unit_cost.toString(),
-      supplier_id: item.supplier_id ? item.supplier_id.toString() : ''
+      supplier_id: item.supplier_id ? item.supplier_id.toString() : '',
+      amount_paid: ''
     });
     setShowPurchaseModal(true);
   };
@@ -164,6 +165,7 @@ export default function Inventory() {
         quantity: q,
         unit_price: unitCost,
         supplier_id: purchaseForm.supplier_id ? parseInt(purchaseForm.supplier_id) : null,
+        amount_paid: purchaseForm.amount_paid ? parseFloat(purchaseForm.amount_paid) : totalCost,
         created_by: user?.id ? parseInt(user.id) : null
       }]);
 
@@ -487,11 +489,32 @@ export default function Inventory() {
             <form onSubmit={handlePurchaseSubmit} className="space-y-4">
               <div>
                 <label htmlFor="p-qty" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.quantity')} ({purchaseItem.unit})</label>
-                <input id="p-qty" title={t('common.quantity')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={purchaseForm.quantity} onChange={e => setPurchaseForm({ ...purchaseForm, quantity: e.target.value })} />
+                <input id="p-qty" title={t('common.quantity')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={purchaseForm.quantity} onChange={e => {
+                  const val = e.target.value;
+                  setPurchaseForm(prev => ({ 
+                    ...prev, 
+                    quantity: val,
+                    amount_paid: (parseFloat(val || '0') * parseFloat(prev.unit_cost || '0')).toFixed(2)
+                  }));
+                }} />
               </div>
               <div>
                 <label htmlFor="p-cost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.cost')} (₼)</label>
-                <input id="p-cost" title={t('common.cost')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={purchaseForm.unit_cost} onChange={e => setPurchaseForm({ ...purchaseForm, unit_cost: e.target.value })} />
+                <input id="p-cost" title={t('common.cost')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={purchaseForm.unit_cost} onChange={e => {
+                  const val = e.target.value;
+                  setPurchaseForm(prev => ({ 
+                    ...prev, 
+                    unit_cost: val,
+                    amount_paid: (parseFloat(val || '0') * parseFloat(prev.quantity || '0')).toFixed(2)
+                  }));
+                }} />
+              </div>
+              <div>
+                <label htmlFor="p-paid" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.amountPaid')} (₼)</label>
+                <input id="p-paid" title={t('common.amountPaid')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold text-green-600 dark:text-green-400" value={purchaseForm.amount_paid} onChange={e => setPurchaseForm({ ...purchaseForm, amount_paid: e.target.value })} placeholder={(Number(purchaseForm.quantity || 0) * Number(purchaseForm.unit_cost || 0)).toFixed(2)} />
+                <p className="text-[10px] text-gray-500 mt-1 italic">
+                  Yekun: {(Number(purchaseForm.quantity || 0) * Number(purchaseForm.unit_cost || 0)).toFixed(2)} ₼
+                </p>
               </div>
               <div>
                 <label htmlFor="p-supplier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>

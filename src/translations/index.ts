@@ -30,6 +30,12 @@ export const translations = {
       select: 'Seçin...',
       history: 'Tarixçə',
       notFound: 'Məlumat tapılmadı.',
+      debt: 'Borc',
+      amountPaid: 'Ödənilən məbləğ',
+      payDebt: 'Borc Ödə',
+      paymentHistory: 'Ödəniş Tarixçəsi',
+      totalDebt: 'Ümumi Borc',
+      makePayment: 'Ödəniş Et'
     },
     inventory: {
       title: 'Anbar',
@@ -152,6 +158,12 @@ export const translations = {
       select: 'Select...',
       history: 'History',
       notFound: 'No data found.',
+      debt: 'Debt',
+      amountPaid: 'Amount Paid',
+      payDebt: 'Pay Debt',
+      paymentHistory: 'Payment History',
+      totalDebt: 'Total Debt',
+      makePayment: 'Make Payment'
     },
     inventory: {
       title: 'Inventory',
