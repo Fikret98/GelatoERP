@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Phone, Mail } from 'lucide-react';
+import { Plus, Phone, Mail, X, History, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -13,9 +13,12 @@ export default function Suppliers() {
   const [debts, setDebts] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', contact: '', email: '' });
   const [paymentData, setPaymentData] = useState({ amount: '', description: '' });
+  const [history, setHistory] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
@@ -86,6 +89,26 @@ export default function Suppliers() {
     }
   };
 
+  const fetchHistory = async (supplierId: number) => {
+    try {
+      setIsLoadingHistory(true);
+      const { data, error } = await supabase
+        .from('supplier_payments')
+        .select('*, users(name)')
+        .eq('supplier_id', supplierId)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      setHistory(data || []);
+      setShowHistoryModal(true);
+    } catch (e) {
+      console.error(e);
+      toast.error('Tarixçə yüklənərkən xəta');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -101,140 +124,223 @@ export default function Suppliers() {
         <>
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('nav.suppliers')}</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          {t('suppliers.newSupplier')}
-        </button>
-      </div>
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {t('suppliers.newSupplier')}
+            </button>
+          </div>
 
-      <motion.div 
-        variants={{
-          hidden: { opacity: 0 },
-          show: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-          }
-        }}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        {suppliers.map((supplier) => (
-          <motion.div 
-            key={supplier.id}
+          <motion.div
             variants={{
-              hidden: { opacity: 0, y: 20 },
-              show: { opacity: 1, y: 0 }
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 }
+              }
             }}
-            whileHover={{ y: -5 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{supplier.name}</h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Phone className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
-                {supplier.contact || t('suppliers.notSpecified')}
-              </div>
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Mail className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
-                {supplier.email || t('suppliers.notSpecified')}
-              </div>
-              {(() => {
-                const debtInfo = debts.find(d => d.supplier_id === supplier.id);
-                const currentDebt = debtInfo?.current_debt || 0;
-                return (
-                  <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <div>
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black">{t('common.debt')}</p>
-                      <p className={cn(
-                        "text-lg font-black",
-                        currentDebt > 0 ? "text-red-500" : "text-green-500"
-                      )}>
-                        {Number(currentDebt).toFixed(2)} ₼
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedSupplier(supplier);
-                        setPaymentData({ amount: currentDebt > 0 ? currentDebt.toString() : '', description: '' });
-                        setShowPaymentModal(true);
-                      }}
-                      className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-                    >
-                      {t('common.payDebt')}
+            {suppliers.map((supplier) => (
+              <motion.div
+                key={supplier.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 }
+                }}
+                whileHover={{ y: -5 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{supplier.name}</h3>
+                  <button 
+                    onClick={() => fetchHistory(supplier.id)}
+                    className="p-2 bg-gray-50 dark:bg-gray-900/50 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors border border-gray-100 dark:border-gray-700"
+                    title={t('common.paymentHistory')}
+                  >
+                    <History className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Phone className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    {supplier.contact || t('suppliers.notSpecified')}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Mail className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    {supplier.email || t('suppliers.notSpecified')}
+                  </div>
+                  {(() => {
+                    const debtInfo = debts.find(d => d.supplier_id === supplier.id);
+                    const currentDebt = debtInfo?.current_debt || 0;
+                    return (
+                      <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                        <div>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black">{t('common.debt')}</p>
+                          <p className={cn(
+                            "text-lg font-black",
+                            currentDebt > 0 ? "text-red-500" : "text-green-500"
+                          )}>
+                            {Number(currentDebt).toFixed(2)} ₼
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedSupplier(supplier);
+                            setPaymentData({ amount: currentDebt > 0 ? currentDebt.toString() : '', description: '' });
+                            setShowPaymentModal(true);
+                          }}
+                          className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                        >
+                          {t('common.payDebt')}
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <AnimatePresence>
+            {showModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                >
+                  <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('suppliers.addSupplierTitle')}</h2>
+                    <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                      <X className="w-5 h-5 text-gray-400" />
                     </button>
                   </div>
-                );
-              })()}
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.companyName')}</label>
+                      <input required type="text" title={t('suppliers.companyName')} placeholder={t('suppliers.companyName')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.contactNumber')}</label>
+                      <input type="text" title={t('suppliers.contactNumber')} placeholder={t('suppliers.contactNumber')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.contact} onChange={e => setFormData({ ...formData, contact: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.email')}</label>
+                      <input type="email" title={t('suppliers.email')} placeholder={t('suppliers.email')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                    </div>
+                    <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
+                      <button type="button" onClick={() => setShowModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
+                      <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
-      <AnimatePresence>
-        {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-          >
-            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('suppliers.addSupplierTitle')}</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.companyName')}</label>
-                <input required type="text" title={t('suppliers.companyName')} placeholder={t('suppliers.companyName')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+          <AnimatePresence>
+            {showPaymentModal && selectedSupplier && (
+              <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                >
+                  <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('common.payDebt')}: {selectedSupplier.name}</h2>
+                    <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                      <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                  </div>
+                  <form onSubmit={handlePayment} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.amountPaid')} (₼)</label>
+                      <input required type="number" step="0.01" title={t('common.amountPaid')} placeholder="0.00" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold" value={paymentData.amount} onChange={e => setPaymentData({ ...paymentData, amount: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
+                      <textarea title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={paymentData.description} onChange={e => setPaymentData({ ...paymentData, description: e.target.value })} />
+                    </div>
+                    <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
+                      <button type="button" onClick={() => setShowPaymentModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
+                      <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
+                    </div>
+                  </form>
+                </motion.div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.contactNumber')}</label>
-                <input type="text" title={t('suppliers.contactNumber')} placeholder={t('suppliers.contactNumber')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.contact} onChange={e => setFormData({ ...formData, contact: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('suppliers.email')}</label>
-                <input type="email" title={t('suppliers.email')} placeholder={t('suppliers.email')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-              </div>
-              <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-      </AnimatePresence>
+            )}
+          </AnimatePresence>
 
-      <AnimatePresence>
-        {showPaymentModal && selectedSupplier && (
-          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-            >
-              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('common.payDebt')}: {selectedSupplier.name}</h2>
-              <form onSubmit={handlePayment} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.amountPaid')} (₼)</label>
-                  <input required type="number" step="0.01" title={t('common.amountPaid')} placeholder="0.00" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold" value={paymentData.amount} onChange={e => setPaymentData({ ...paymentData, amount: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
-                  <textarea title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={paymentData.description} onChange={e => setPaymentData({ ...paymentData, description: e.target.value })} />
-                </div>
-                <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
-                  <button type="button" onClick={() => setShowPaymentModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
-                  <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium">{t('common.save')}</button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+          <AnimatePresence>
+            {showHistoryModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
+                >
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                        <History className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('common.paymentHistory')}</h2>
+                        <p className="text-xs text-gray-500">{history.length} {t('pos.items')}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setShowHistoryModal(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition">
+                      <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                  </div>
+                  <div className="p-6 overflow-y-auto">
+                    {isLoadingHistory ? (
+                       <div className="flex justify-center py-10">
+                         <LoadingSpinner />
+                       </div>
+                    ) : history.length === 0 ? (
+                      <div className="text-center py-10">
+                        <History className="w-12 h-12 text-gray-200 dark:text-gray-700 mx-auto mb-3" />
+                        <p className="text-gray-500">{t('common.notFound')}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {history.map(payment => (
+                          <div key={payment.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                            <div>
+                              <p className="font-black text-lg text-gray-900 dark:text-white">{Number(payment.amount).toFixed(2)} ₼</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{payment.description || '-'}</p>
+                              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 uppercase font-black">{new Date(payment.date).toLocaleString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center text-[10px] uppercase font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md">
+                                <User className="w-3 h-3 mr-1" />
+                                {payment.users?.name}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </motion.div>

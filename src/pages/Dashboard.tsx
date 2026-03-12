@@ -34,7 +34,8 @@ export default function Dashboard() {
     lowStock: 0,
     employees: 0,
     transactions: 0,
-    inventoryValue: 0
+    inventoryValue: 0,
+    totalSupplierDebt: 0
   });
 
   const [charts, setCharts] = useState({
@@ -75,6 +76,10 @@ export default function Dashboard() {
     lowStock: {
       title: 'Azalan Anbar',
       content: 'Stoku təyin etdiyiniz kritik həddən aşağı düşən məhsulların sayı.'
+    },
+    totalSupplierDebt: {
+      title: 'Təchizatçılara Borc',
+      content: 'Bütün təchizatçılara olan ümumi borcunuzun cəmi.'
     },
     salesTrend: {
       title: 'Satış Trendi',
@@ -168,6 +173,17 @@ export default function Dashboard() {
           const lowStock = inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0));
           setLowStockItems(lowStock);
         }
+
+        // Fetch Total Debt independently to ensure it's not affected by date range if desired, 
+        // or just fetch it here as it represents current state.
+        const { data: debtData, error: debtError } = await supabase
+          .from('supplier_debts_view')
+          .select('current_debt');
+        
+        if (!debtError && debtData) {
+          const totalDebt = debtData.reduce((acc, curr) => acc + (Number(curr.current_debt) || 0), 0);
+          setStats(prev => ({ ...prev, totalSupplierDebt: totalDebt }));
+        }
       }
 
     } catch (error) {
@@ -185,6 +201,7 @@ export default function Dashboard() {
     { id: 'netProfit',      name: 'Xalis Mənfəət',   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
     { id: 'aov',            name: 'Orta Satış (AOV)', rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { id: 'inventoryValue', name: 'Anbar Dəyəri',     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    { id: 'totalSupplierDebt', name: 'Təchizatçılara Borc', rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
     { id: 'lowStock',       name: t('dashboard.lowStock'), rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: Package,    color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
   ];
 
