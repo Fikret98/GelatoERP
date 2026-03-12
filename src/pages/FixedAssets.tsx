@@ -3,12 +3,14 @@ import { Plus, Search, Calendar, DollarSign, Tag, MoreVertical, Edit2, Trash2, A
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function FixedAssets() {
   const { t } = useLanguage();
+  const { user: authUser } = useAuth();
   const [assets, setAssets] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<any>(null);
@@ -48,11 +50,10 @@ export default function FixedAssets() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       const payload = {
         ...formData,
         cost: parseFloat(formData.cost),
-        created_by: user?.id ? parseInt(user.id) : null
+        created_by: authUser?.id ? parseInt(authUser.id) : null
       };
 
       if (editingAsset) {
