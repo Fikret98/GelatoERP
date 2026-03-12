@@ -102,7 +102,7 @@ export default function POS() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col lg:flex-row gap-6 h-full lg:h-[calc(100vh-8rem)] pb-20 lg:pb-0 relative"
+      className="flex flex-col lg:flex-row gap-6 h-full lg:h-[calc(100vh-8rem)] pb-28 lg:pb-0 relative"
     >
       {isLoadingPage ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -158,7 +158,7 @@ export default function POS() {
 
       {/* Floating View Cart Button (Mobile Only) */}
       {!showMobileCart && cart.length > 0 && (
-        <div className="lg:hidden fixed bottom-24 left-4 right-4 z-40">
+        <div className="lg:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40">
           <button
             onClick={() => setShowMobileCart(true)}
             className="w-full bg-indigo-600 text-white shadow-lg p-4 rounded-2xl flex items-center justify-between font-bold"
@@ -179,12 +179,12 @@ export default function POS() {
 
       {/* Cart Sidebar / Mobile Bottom Sheet */}
       <div className={`
-        fixed inset-0 z-[70] bg-black/50 lg:hidden transition-opacity
+        fixed inset-0 z-[80] bg-black/50 lg:hidden transition-opacity
         ${showMobileCart ? 'opacity-100' : 'opacity-0 pointer-events-none'}
       `} onClick={() => setShowMobileCart(false)} />
 
       <div className={`
-        fixed bottom-0 left-0 right-0 z-[70] h-[85vh] lg:h-full
+        fixed bottom-0 left-0 right-0 z-[80] h-[85vh] lg:h-full
         lg:static lg:w-96
         bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl shadow-xl lg:shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col
         transition-transform duration-300 lg:transform-none
@@ -249,7 +249,7 @@ export default function POS() {
           </AnimatePresence>
         </div>
 
-        <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
           <div className="flex justify-between items-center mb-4">
             <span className="text-gray-600 dark:text-gray-400 font-medium">{t('pos.total')}</span>
             <span className="text-2xl font-black text-gray-900 dark:text-white">{total.toFixed(2)} ₼</span>
