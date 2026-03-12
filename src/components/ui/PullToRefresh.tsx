@@ -13,6 +13,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const PULL_THRESHOLD = 80;
+  const hasVibrated = useRef(false);
   
   const y = useMotionValue(0);
   const rotate = useTransform(y, [0, PULL_THRESHOLD], [0, 360]);
@@ -20,7 +21,8 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const scale = useTransform(y, [0, PULL_THRESHOLD], [0.5, 1.2]);
 
   const handleTouchStart = (e: TouchEvent) => {
-    if (window.scrollY === 0) {
+    const parent = containerRef.current?.parentElement;
+    if (parent && parent.scrollTop === 0) {
       startY.current = e.touches[0].pageY;
     } else {
       startY.current = -1;
@@ -30,14 +32,27 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const handleTouchMove = (e: TouchEvent) => {
     if (startY.current === -1 || isRefreshing) return;
 
+    const parent = containerRef.current?.parentElement;
+    if (!parent || parent.scrollTop !== 0) {
+      startY.current = -1;
+      return;
+    }
+
     const currentY = e.touches[0].pageY;
     const diff = currentY - startY.current;
 
-    if (diff > 0 && window.scrollY === 0) {
+    if (diff > 0) {
       // Resistance effect
       const distance = Math.min(diff * 0.4, PULL_THRESHOLD * 1.5);
       setPullDistance(distance);
       y.set(distance);
+      
+      if (distance >= PULL_THRESHOLD && !hasVibrated.current) {
+        if (window.navigator?.vibrate) window.navigator.vibrate(10);
+        hasVibrated.current = true;
+      } else if (distance < PULL_THRESHOLD) {
+        hasVibrated.current = false;
+      }
       
       if (diff > 10) {
         if (e.cancelable) e.preventDefault();
