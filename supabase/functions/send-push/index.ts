@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import webpush from "https://esm.sh/web-push"
+import webpush from "npm:web-push"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,12 +9,9 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  console.log(`[send-push] Request: ${req.method} ${req.url}`)
-  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
-      status: 200,
       headers: corsHeaders
     })
   }
@@ -66,6 +63,7 @@ Deno.serve(async (req) => {
 
         return { success: true }
       } catch (err) {
+        console.error(`Error sending notification to ${sub.endpoint}:`, err)
         // If 404 or 410, sub is expired/invalid
         if (err.statusCode === 404 || err.statusCode === 410) {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id)
