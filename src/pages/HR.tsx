@@ -554,8 +554,8 @@ export default function HR() {
                           <input id="emp-role" title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">İş Rejimi</label>
-                          <input className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} placeholder="Məs: 09:00 - 18:00 (6 gün)" />
+                          <label htmlFor="emp-schedule" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">İş Rejimi</label>
+                          <input id="emp-schedule" title="İş Rejimi" placeholder="Məs: 09:00 - 18:00 (6 gün)" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
                         </div>
                       </div>
 
@@ -575,13 +575,13 @@ export default function HR() {
                         <div className="grid grid-cols-2 gap-4">
                           {!editingEmployee && (
                             <div>
-                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">İstifadəçi Adı</label>
-                              <input required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
+                              <label htmlFor="emp-username" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">İstifadəçi Adı</label>
+                              <input id="emp-username" title="İstifadəçi Adı" placeholder="istifadəçi_adı" required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
                             </div>
                           )}
                           <div className={editingEmployee ? "col-span-2" : ""}>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{editingEmployee ? 'Yeni Şifrə (Boş qalsın: dəyişmə)' : 'Şifrə'}</label>
-                            <input required={!editingEmployee} type="password" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                            <label htmlFor="emp-password" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{editingEmployee ? 'Yeni Şifrə (Boş qalsın: dəyişmə)' : 'Şifrə'}</label>
+                            <input id="emp-password" title={editingEmployee ? 'Yeni Şifrə' : 'Şifrə'} placeholder="••••••••" required={!editingEmployee} type="password" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                           </div>
                         </div>
                       </div>

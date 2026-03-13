@@ -74,7 +74,7 @@ export default function Reports() {
       setIsLoadingPage(true);
       const { data, error } = await supabase
         .from('all_transactions_view')
-        .select('*, users(name)')
+        .select('*')
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -421,7 +421,7 @@ export default function Reports() {
                       </span>
                       <span className="flex items-center gap-1 uppercase tracking-tight">
                         <User className="w-3 h-3" />
-                        {t.users?.name || '-'}
+                        {t.user_name || '-'}
                       </span>
                     </div>
                   </div>
@@ -485,7 +485,7 @@ export default function Reports() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">İcraçı</p>
-                        <p className="font-bold text-gray-900 dark:text-white text-base uppercase tracking-tighter">{selectedTransaction.users?.name || '-'}</p>
+                        <p className="font-bold text-gray-900 dark:text-white text-base uppercase tracking-tighter">{selectedTransaction.user_name || '-'}</p>
                       </div>
                     </div>
 
@@ -497,7 +497,7 @@ export default function Reports() {
                         </h3>
                         {isLoadingDetails ? (
                           <div className="py-12 flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
-                            <LoadingSpinner size="sm" />
+                            <LoadingSpinner />
                           </div>
                         ) : (
                           <div className="grid gap-3">

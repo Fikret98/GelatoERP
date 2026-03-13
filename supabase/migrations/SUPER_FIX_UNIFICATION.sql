@@ -1,45 +1,51 @@
--- SUPER FIX: RUN THIS IN SUPABASE SQL EDITOR
--- This script fixes ALL regressions and cleans up the schema.
+-- FINAL SUPER FIX: RUN THIS IN SUPABASE SQL EDITOR
+-- This script fixes ALL regressions, including the Relationship/Join error.
 
 -- 1. DROP EVERYTHING OLD TO START CLEAN
 DROP VIEW IF EXISTS public.all_transactions_view CASCADE;
 DROP FUNCTION IF EXISTS public.process_sale(numeric, jsonb, integer, text, bigint) CASCADE;
 DROP FUNCTION IF EXISTS public.process_sale(numeric, jsonb, integer, text) CASCADE;
 
--- 2. RECREATE all_transactions_view
+-- 2. RECREATE all_transactions_view (WITH EMBEDDED USER NAMES)
 CREATE OR REPLACE VIEW public.all_transactions_view AS
 SELECT 
     'sale'::text as type,
-    id,
-    total_amount as amount,
+    s.id,
+    s.total_amount as amount,
     'Satış'::text as category,
     ''::text as description,
-    payment_method,
-    date,
-    seller_id as user_id
-FROM public.sales
+    s.payment_method,
+    s.date,
+    s.seller_id as user_id,
+    u.name as user_name
+FROM public.sales s
+LEFT JOIN public.users u ON s.seller_id = u.id
 UNION ALL
 SELECT 
     'expense'::text as type,
-    id,
-    amount,
-    category,
-    description,
-    payment_method,
-    date,
-    user_id
-FROM public.expenses
+    e.id,
+    e.amount,
+    e.category,
+    e.description,
+    e.payment_method,
+    e.date,
+    e.user_id,
+    u.name as user_name
+FROM public.expenses e
+LEFT JOIN public.users u ON e.user_id = u.id
 UNION ALL
 SELECT 
     'income'::text as type,
-    id,
-    amount,
-    category,
-    description,
-    payment_method,
-    date,
-    user_id
-FROM public.incomes;
+    i.id,
+    i.amount,
+    i.category,
+    i.description,
+    i.payment_method,
+    i.date,
+    i.user_id,
+    u.name as user_name
+FROM public.incomes i
+LEFT JOIN public.users u ON i.user_id = u.id;
 
 -- 3. RECREATE process_sale (Simplified, no shift dependencies)
 CREATE OR REPLACE FUNCTION public.process_sale(
@@ -108,5 +114,5 @@ $$;
 GRANT SELECT ON public.all_transactions_view TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.process_sale(numeric, jsonb, integer, text) TO authenticated, anon;
 
--- 5. RELOAD SCHEMA CACHE (Internal PostgREST hint)
+-- 5. RELOAD SCHEMA CACHE
 NOTIFY pgrst, 'reload schema';
