@@ -18,6 +18,8 @@ interface ShiftContextType {
   openShift: (openingBalance: number) => Promise<void>;
   closeShift: (actualBalance: number, notes?: string) => Promise<void>;
   refreshShift: () => Promise<void>;
+  getExpectedCash: () => Promise<number>;
+  getLastShiftClosingBalance: () => Promise<number>;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -151,8 +153,54 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const getExpectedCash = async (): Promise<number> => {
+    if (!activeShift) return 0;
+    try {
+      const [{ data: salesData }, { data: expData }, { data: incData }] = await Promise.all([
+        supabase.from('sales').select('total_amount').eq('shift_id', activeShift.id).eq('payment_method', 'cash'),
+        supabase.from('expenses').select('amount').eq('shift_id', activeShift.id).eq('payment_method', 'cash'),
+        supabase.from('incomes').select('amount').eq('shift_id', activeShift.id).eq('payment_method', 'cash')
+      ]);
+
+      const cashSales = (salesData || []).reduce((sum, s) => sum + s.total_amount, 0);
+      const cashIncomes = (incData || []).reduce((sum, i) => sum + i.amount, 0);
+      const cashExpenses = (expData || []).reduce((sum, e) => sum + e.amount, 0);
+      
+      return activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
+    } catch (e) {
+      console.error('Error calculating expected cash:', e);
+      return activeShift.opening_balance;
+    }
+  };
+
+  const getLastShiftClosingBalance = async (): Promise<number> => {
+    try {
+      const { data, error } = await supabase
+        .from('shifts')
+        .select('actual_cash_balance')
+        .eq('status', 'closed')
+        .order('closed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.actual_cash_balance || 0;
+    } catch (e) {
+      console.error('Error fetching last shift balance:', e);
+      return 0;
+    }
+  };
+
   return (
-    <ShiftContext.Provider value={{ activeShift, loading, openShift, closeShift, refreshShift }}>
+    <ShiftContext.Provider value={{ 
+      activeShift, 
+      loading, 
+      openShift, 
+      closeShift, 
+      refreshShift,
+      getExpectedCash,
+      getLastShiftClosingBalance
+    }}>
       {children}
     </ShiftContext.Provider>
   );

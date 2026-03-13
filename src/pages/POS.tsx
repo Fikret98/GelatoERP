@@ -20,10 +20,12 @@ export default function POS() {
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [saleSuccess, setSaleSuccess] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
-  const { activeShift, openShift, closeShift, loading: shiftLoading } = useShift();
+  const { activeShift, openShift, closeShift, loading: shiftLoading, getExpectedCash, getLastShiftClosingBalance } = useShift();
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [openingBalance, setOpeningBalance] = useState('');
   const [actualBalance, setActualBalance] = useState('');
+  const [expectedBalance, setExpectedBalance] = useState<number | null>(null);
+  const [lastClosingBalance, setLastClosingBalance] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
 
 
@@ -95,7 +97,15 @@ export default function POS() {
       return item;
     }).filter(item => item.quantity > 0));
   };
-
+  useEffect(() => {
+    if (showShiftModal) {
+      if (activeShift) {
+        getExpectedCash().then(setExpectedBalance);
+      } else {
+        getLastShiftClosingBalance().then(setLastClosingBalance);
+      }
+    }
+  }, [showShiftModal, activeShift]);
   const removeFromCart = (productId: number) => {
     setCart(cart.filter(item => item.product.id !== productId));
   };
@@ -420,8 +430,14 @@ export default function POS() {
                 <form onSubmit={handleCloseShift} className="space-y-6">
                   <div>
                     <label htmlFor="actual-balance" className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-widest">
-                      Kassada olan faktiki nağd məbləğ (₼)
+                      Faktiki nağd məbləğ (₼)
                     </label>
+                    {expectedBalance !== null && (
+                      <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 mb-4">
+                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Sistemdə olmalı olan məbləğ</p>
+                        <p className="text-2xl font-black text-indigo-700 dark:text-indigo-300">{expectedBalance.toFixed(2)} ₼</p>
+                      </div>
+                    )}
                     <input
                       id="actual-balance"
                       title="Faktiki nağd məbləğ"
@@ -451,6 +467,12 @@ export default function POS() {
                     <label htmlFor="opening-balance" className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-widest">
                       Kassa Açılış Balansı (₼)
                     </label>
+                    {lastClosingBalance !== null && (
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-4 mb-4">
+                        <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Sonuncu növbənin qapanış balansı</p>
+                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{lastClosingBalance.toFixed(2)} ₼</p>
+                      </div>
+                    )}
                     <input
                       id="opening-balance"
                       title="Açılış balansı"
