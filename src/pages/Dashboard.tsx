@@ -156,7 +156,9 @@ export default function Dashboard() {
         start.setHours(0, 0, 0, 0);
         startDate = start.toISOString();
       } else {
-        if (!customRange.start || !customRange.end) {
+        const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime());
+        
+        if (!isValidDate(customRange.start) || !isValidDate(customRange.end)) {
           const start = new Date();
           start.setHours(0, 0, 0, 0);
           startDate = start.toISOString();
