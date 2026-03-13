@@ -7,6 +7,7 @@ ALTER TABLE public.shifts ALTER COLUMN user_id TYPE integer USING NULL;
 ALTER TABLE public.shifts ADD CONSTRAINT shifts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 -- 2. Update get_user_active_shift to use correct types (Integer user_id, Bigint return)
+DROP FUNCTION IF EXISTS get_user_active_shift(integer);
 CREATE OR REPLACE FUNCTION get_user_active_shift(p_user_id integer)
 RETURNS bigint
 LANGUAGE plpgsql
