@@ -476,7 +476,7 @@ export default function Reports() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 lg:p-8 w-full max-w-md max-h-[85vh] lg:max-h-[90vh] overflow-y-auto shadow-2xl pb-28 lg:pb-8"
             >
               <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
               <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('reports.addExpenseTitle')}</h2>
@@ -518,7 +518,7 @@ export default function Reports() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 lg:p-8 w-full max-w-md max-h-[85vh] lg:max-h-[90vh] overflow-y-auto shadow-2xl pb-28 lg:pb-8"
             >
               <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
               <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Mədaxil Əlavə Et (Kassa)</h2>
@@ -558,7 +558,7 @@ export default function Reports() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar touch-pan-y"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[85vh] lg:max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar touch-pan-y pb-28 lg:pb-8"
             >
               <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 lg:hidden" />
               <div className="flex justify-between items-start mb-4 lg:mb-8">
