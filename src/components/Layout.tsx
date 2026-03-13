@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import PullToRefresh from './ui/PullToRefresh';
 import { cn } from '../lib/utils';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -246,17 +245,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 overscroll-none text-gray-900 dark:text-white">
-          <PullToRefresh 
-            onRefresh={async () => {
-              window.location.reload();
-            }}
-            className="p-4 sm:p-6 lg:p-8"
-          >
-            <div className="max-w-[1700px] mx-auto">
-              {children}
-            </div>
-          </PullToRefresh>
+        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 text-gray-900 dark:text-white">
+          <div className="max-w-[1700px] mx-auto p-4 sm:p-6 lg:p-8 w-full">
+            {children}
+          </div>
         </main>
       </div>
 
