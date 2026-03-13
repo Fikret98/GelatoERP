@@ -37,6 +37,8 @@ export default function HR() {
   const [selectedHistoryEmployee, setSelectedHistoryEmployee] = useState<any | null>(null);
   const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [pendingAudits, setPendingAudits] = useState<any[]>([]);
+  const [isLoadingAudits, setIsLoadingAudits] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -174,11 +176,75 @@ export default function HR() {
 
       setEmployees(merged);
       setBonuses(bonusData || []);
+      fetchPendingAudits();
     } catch (e) {
       console.error(e);
       toast.error('Məlumatlar yüklənərkən xəta');
     } finally {
       setIsLoadingPage(false);
+    }
+  };
+
+  const fetchPendingAudits = async () => {
+    setIsLoadingAudits(true);
+    try {
+      const [{ data: expAudits }, { data: incAudits }] = await Promise.all([
+        supabase.from('expenses').select('*').eq('category', 'Növbə Arası (Araşdırılır)'),
+        supabase.from('incomes').select('*').eq('category', 'Növbə Arası (Araşdırılır)')
+      ]);
+
+      const mergedAudits = [
+        ...(expAudits || []).map(a => ({ ...a, auditType: 'shortage' })),
+        ...(incAudits || []).map(a => ({ ...a, auditType: 'excess' }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setPendingAudits(mergedAudits);
+    } catch (e) {
+      console.error('Error fetching audits:', e);
+    } finally {
+      setIsLoadingAudits(false);
+    }
+  };
+
+  const handleResolveAudit = async (audit: any, userId: string | null, type: 'debt' | 'expense' | 'income') => {
+    try {
+      if (type === 'debt' && userId) {
+        // 1. Record the debt
+        const { error: debtErr } = await supabase.from('employee_debts').insert([{
+          user_id: userId,
+          amount: audit.auditType === 'shortage' ? audit.amount : -audit.amount,
+          type: audit.auditType === 'shortage' ? 'shortage' : 'excess',
+          notes: `Növbə arası fərq tənzimləməsi (Tarix: ${format(new Date(audit.date), 'dd.MM.yyyy')})`
+        }]);
+        if (debtErr) throw debtErr;
+
+        // 2. Update the audit record category to mark as resolved
+        const table = audit.auditType === 'shortage' ? 'expenses' : 'incomes';
+        const { error: auditErr } = await supabase
+          .from(table)
+          .update({ 
+            category: audit.auditType === 'shortage' ? 'İşçi Borcu (Kəsir)' : 'Kassa Artığı',
+            description: audit.description + ` (Təsdiqləndi: ${userId} borcuna yazıldı)`
+          })
+          .eq('id', audit.id);
+        if (auditErr) throw auditErr;
+
+      } else if (type === 'expense' || type === 'income') {
+        // Owner withdrawal - just update category
+        const table = audit.auditType === 'shortage' ? 'expenses' : 'incomes';
+        await supabase
+          .from(table)
+          .update({ 
+            category: audit.auditType === 'shortage' ? 'Sahibkar Götürdü' : 'Digər Mədaxil',
+            description: audit.description + ' (Təsdiqləndi: Sahibkar tərəfindən tənzimləndi)'
+          })
+          .eq('id', audit.id);
+      }
+
+      toast.success('Uğurla tənzimləndi');
+      fetchData();
+    } catch (e: any) {
+      toast.error('Xəta: ' + e.message);
     }
   };
 
@@ -336,6 +402,69 @@ export default function HR() {
           {t('hr.newEmployee')}
         </button>
       </div>
+
+      {pendingAudits.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-2xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400 rotate-180" />
+            <h2 className="text-lg font-bold text-amber-900 dark:text-amber-100 uppercase tracking-tight">Növbə Arası (Araşdırılır)</h2>
+          </div>
+          <div className="space-y-4">
+            {pendingAudits.map((audit) => {
+              // Parse user IDs from description if present
+              const prevUserMatch = audit.description?.match(/Əvvəlki işçi: ([^,]+)/);
+              const newUserMatch = audit.description?.match(/Yeni işçi: ([^,]+)/);
+              const prevUserId = prevUserMatch ? prevUserMatch[1] : null;
+              const newUserId = newUserMatch ? newUserMatch[1] : null;
+
+              const prevEmployee = employees.find(e => e.id === prevUserId);
+              const newEmployee = employees.find(e => e.id === newUserId);
+
+              return (
+                <div key={audit.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-amber-100 dark:border-amber-900/20 shadow-sm flex flex-col lg:flex-row justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={cn(
+                        "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded",
+                        audit.auditType === 'shortage' ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                      )}>
+                        {audit.auditType === 'shortage' ? 'Kəsir' : 'Artıq'}
+                      </span>
+                      <span className="text-sm font-black text-gray-900 dark:text-white">
+                        {audit.amount.toFixed(2)} ₼
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {format(new Date(audit.date), 'dd.MM.yyyy HH:mm')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 italic mb-2">"{audit.description}"</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => handleResolveAudit(audit, prevUserId, 'debt')}
+                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200"
+                    >
+                      {prevEmployee ? prevEmployee.name : 'Əvvəlki işçi'}-ə yaz
+                    </button>
+                    <button
+                      onClick={() => handleResolveAudit(audit, newUserId, 'debt')}
+                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200"
+                    >
+                      {newEmployee ? newEmployee.name : 'Yeni işçi'}-ə yaz
+                    </button>
+                    <button
+                      onClick={() => handleResolveAudit(audit, null, audit.auditType === 'shortage' ? 'expense' : 'income')}
+                      className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      Mən götürmüşəm (Xərc)
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <motion.div 
         variants={{

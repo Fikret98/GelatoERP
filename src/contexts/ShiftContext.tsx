@@ -19,7 +19,7 @@ interface ShiftContextType {
   closeShift: (actualBalance: number, notes?: string) => Promise<void>;
   refreshShift: () => Promise<void>;
   getExpectedCash: () => Promise<number>;
-  getLastShiftClosingBalance: () => Promise<number>;
+  getLastShift: () => Promise<any | null>;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -59,27 +59,29 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       // 1. Detect transition discrepancy (between shifts)
-      const lastClosing = await getLastShiftClosingBalance();
+      const lastShift = await getLastShift();
+      const lastClosing = lastShift?.actual_cash_balance || 0;
+      const lastUser = lastShift?.user_id;
       const diff = openingBalance - lastClosing;
 
       if (diff !== 0) {
         if (diff < 0) {
-          // It's a shortage between shifts -> Record as Expense
+          // It's a shortage between shifts -> Record as Pending Audit Expense
           await supabase.from('expenses').insert([{
             date: new Date().toISOString(),
-            category: 'Növbə Arası Kəsir',
+            category: 'Növbə Arası (Araşdırılır)',
             amount: Math.abs(diff),
-            description: `Yeni növbə açılışında aşkar olunan kəsir (Əvvəlki qapanış: ${lastClosing.toFixed(2)}, Yeni açılış: ${openingBalance.toFixed(2)})`,
+            description: `Keçid fərqi (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}). Əvvəlki işçi: ${lastUser || 'Naməlum'}, Yeni işçi: ${user.id}`,
             payment_method: 'cash',
             user_id: user.id
           }]);
         } else {
-          // It's an excess between shifts -> Record as Income
+          // It's an excess between shifts -> Record as Pending Audit Income
           await supabase.from('incomes').insert([{
             date: new Date().toISOString(),
-            category: 'Növbə Arası Artıq',
+            category: 'Növbə Arası (Araşdırılır)',
             amount: diff,
-            description: `Yeni növbə açılışında aşkar olunan artıq (Əvvəlki qapanış: ${lastClosing.toFixed(2)}, Yeni açılış: ${openingBalance.toFixed(2)})`,
+            description: `Keçid fərqi (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}). Əvvəlki işçi: ${lastUser || 'Naməlum'}, Yeni işçi: ${user.id}`,
             payment_method: 'cash',
             user_id: user.id
           }]);
@@ -226,22 +228,27 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getLastShiftClosingBalance = async (): Promise<number> => {
+  const getLastShift = async (): Promise<any | null> => {
     try {
       const { data, error } = await supabase
         .from('shifts')
-        .select('actual_cash_balance')
+        .select('*')
         .eq('status', 'closed')
         .order('closed_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return data?.actual_cash_balance || 0;
+      return data;
     } catch (e) {
-      console.error('Error fetching last shift balance:', e);
-      return 0;
+      console.error('Error fetching last shift:', e);
+      return null;
     }
+  };
+
+  const getLastShiftClosingBalance = async (): Promise<number> => {
+    const lastShift = await getLastShift();
+    return lastShift?.actual_cash_balance || 0;
   };
 
   return (
@@ -252,7 +259,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       closeShift, 
       refreshShift,
       getExpectedCash,
-      getLastShiftClosingBalance
+      getLastShift
     }}>
       {children}
     </ShiftContext.Provider>
