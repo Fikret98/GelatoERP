@@ -59,7 +59,7 @@ export default function Dashboard() {
       content: 'Kassadakı cari nəğd pul qalığı. Satışlardan gələn nəğd pullar ilə əl ilə edilən nağd alış-veriş və xərclər arasındakı fərqi göstərir.'
     },
     bank: {
-      title: 'Bank (Kart)',
+      title: 'Kassa(Bank Hesabı)',
       content: 'Bank hesabınızdakı cari qalıq. Kartla edilən satışlar və bank köçürməsi ilə edilən mədaxil/məxaricləri göstərir.'
     },
     revenue: {
@@ -211,7 +211,7 @@ export default function Dashboard() {
 
   const cards = [
     { id: 'cash',           name: 'Kassa (Nəğd)',     rawValue: stats.kassa || 0,       suffix: ' ₼', decimals: 2, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-    { id: 'bank',           name: 'Bank (Kart)',      rawValue: stats.bank_balance || 0, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'bank',           name: 'Kassa(Bank Hesabı)',      rawValue: stats.bank_balance || 0, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { id: 'revenue',        name: t('dashboard.revenue'), rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: DollarSign, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
     { id: 'netProfit',      name: 'Xalis Mənfəət',   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
     { id: 'aov',            name: 'Orta Satış (AOV)', rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },

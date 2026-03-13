@@ -130,18 +130,42 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      // 3. Record shortage as debt if necessary
+      // 3. Record shortage/excess as financial adjustment to sync system balance
       const shortage = expectedCash - actualBalance;
-      if (shortage > 0) {
-        await supabase
-          .from('employee_debts')
-          .insert([{
+      if (shortage !== 0) {
+        if (shortage > 0) {
+          // It's a shortage (kəsir) -> Record as Expense and Debt
+          await Promise.all([
+            supabase.from('employee_debts').insert([{
+              user_id: activeShift.user_id,
+              shift_id: activeShift.id,
+              amount: shortage,
+              type: 'shortage',
+              notes: `Növbə #${activeShift.id} kəsiri`
+            }]),
+            supabase.from('expenses').insert([{
+              date: new Date().toISOString(),
+              category: 'Kassa Kəsiri',
+              amount: shortage,
+              description: `Növbə #${activeShift.id} kəsiri (Avtomatik tənzimləmə)`,
+              payment_method: 'cash',
+              user_id: activeShift.user_id,
+              shift_id: activeShift.id
+            }])
+          ]);
+        } else {
+          // It's an excess (artıq) -> Record as Income
+          const excess = Math.abs(shortage);
+          await supabase.from('incomes').insert([{
+            date: new Date().toISOString(),
+            category: 'Kassa Artığı',
+            amount: excess,
+            description: `Növbə #${activeShift.id} artığı (Avtomatik tənzimləmə)`,
+            payment_method: 'cash',
             user_id: activeShift.user_id,
-            shift_id: activeShift.id,
-            amount: shortage,
-            type: 'shortage',
-            notes: `Növbə #${activeShift.id} kəsiri`
+            shift_id: activeShift.id
           }]);
+        }
       }
 
       setActiveShift(null);
