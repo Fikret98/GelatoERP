@@ -173,7 +173,7 @@ export default function HR() {
       ] = await Promise.all([
         supabase.from('users').select('*, employees!employees_user_id_fkey(*)').order('name'),
         supabase.from('seller_bonuses_view').select('*'),
-        supabase.from('employee_debts').select('user_id, amount')
+        supabase.from('employee_debts').select('user_id, amount, type, created_at')
       ]);
 
       if (userErr) throw userErr;
@@ -183,6 +183,16 @@ export default function HR() {
         acc[curr.user_id] = (acc[curr.user_id] || 0) + curr.amount;
         return acc;
       }, {});
+
+      // Group CURRENT MONTH salary deductions by user
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const currentMonthDeductions = (debtsData || [])
+        .filter(d => d.type === 'salary_deduction' && d.created_at >= firstDayOfMonth)
+        .reduce((acc: any, curr: any) => {
+          acc[curr.user_id] = (acc[curr.user_id] || 0) + Math.abs(curr.amount);
+          return acc;
+        }, {});
 
       // Merge data: users with their nested employee data
       const merged = (usersData || []).map(u => {
@@ -197,6 +207,7 @@ export default function HR() {
           hire_date: emp?.hire_date || null,
           work_schedule: emp?.work_schedule || '',
           total_debt: debtMap[u.id] || 0,
+          current_month_deductions: currentMonthDeductions[u.id] || 0,
           isSystemUser: true
         };
       });
@@ -587,13 +598,37 @@ export default function HR() {
                 </span>
               </div>
               {employee.total_debt > 0 && (
-                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg flex justify-between items-center">
-                  <span className="text-xs font-bold text-red-700 dark:text-red-400">Cari Borc (Kəsirlər):</span>
-                  <span className="text-sm font-black text-red-600 dark:text-red-300">
+                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg flex justify-between items-center text-red-700 dark:text-red-400">
+                  <span className="text-xs font-bold">Cari Borc (Kəsirlər):</span>
+                  <span className="text-sm font-black">
                     {employee.total_debt.toFixed(2)} ₼
                   </span>
                 </div>
               )}
+              
+              <div className="mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800 shadow-sm relative overflow-hidden group/payable">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Ödəniləcək Cəmi</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 font-bold italic">Bu ay üçün</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-gray-500 font-bold">Maaş + Bonus - Çıxılan</span>
+                    {employee.current_month_deductions > 0 && (
+                      <span className="text-[10px] text-red-500 font-black mt-0.5 tracking-tight animate-pulse">
+                        -{employee.current_month_deductions.toFixed(2)} ₼ kəsilib
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-lg font-black text-indigo-700 dark:text-indigo-300">
+                    {(
+                      (employee.salary || 0) + 
+                      (bonuses.find(b => b.seller_name?.toLowerCase().trim() === employee.name?.toLowerCase().trim())?.total_bonus || 0) - 
+                      (employee.current_month_deductions || 0)
+                    ).toFixed(2)} ₼
+                  </span>
+                </div>
+              </div>
             </div>
           </motion.div>
         ))}
