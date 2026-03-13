@@ -551,15 +551,16 @@ export default function Reports() {
         )}
 
         {selectedTransaction && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm" onClick={() => setSelectedTransaction(null)}>
+          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[70] p-0 lg:p-4 backdrop-blur-sm" onClick={() => setSelectedTransaction(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl border border-gray-100 dark:border-gray-700"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar"
             >
-              <div className="flex justify-between items-start mb-8">
+              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
+              <div className="flex justify-between items-start mb-6 lg:mb-8">
                 <div>
                   <div className={cn(
                     "inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3",
