@@ -1,3 +1,4 @@
+```javascript
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, User, Calendar, DollarSign, Edit2, TrendingUp, History } from 'lucide-react';
 import { format } from 'date-fns';
@@ -5,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { cn } from '../lib/utils';
@@ -151,6 +153,22 @@ export default function HR() {
         }]);
 
       if (error) throw error;
+
+      // Deep Financial Linkage: If it's a manual (cash) payment, record it in incomes
+      if (type === 'manual_payment') {
+        await supabase
+          .from('incomes')
+          .insert([{
+            category: 'İşçi Borcu Ödənişi',
+            amount: amount,
+            description: `İşçi borc ödənişi: ${employee.name}`,
+            date: new Date().toISOString(),
+            user_id: user?.id,
+            payment_method: 'cash',
+            shift_id: activeShift?.id
+          }]);
+      }
+
       toast.success('Ödəniş qeyd olundu');
       fetchData();
       if (selectedDebtEmployee) {
