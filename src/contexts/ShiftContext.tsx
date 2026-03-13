@@ -76,73 +76,6 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (shiftErr) throw shiftErr;
       setActiveShift(newShift);
 
-      // 2. Detect transition discrepancy (Accountability between employees)
-      const lastShift = await getLastShift();
-      const lastClosing = lastShift?.actual_cash_balance || 0;
-      const lastUserName = lastShift?.users?.name || 'Naməlum';
-      const shiftDiff = openingBalance - lastClosing;
-
-      // 3. Identify if this is a "New" financial event or just aligning with an already-reduced Dashboard
-      const globalBalance = await getGlobalCashBalance();
-      const globalDiff = openingBalance - globalBalance;
-
-      // If there is ANY physical difference from the last shift, we need an Audit item in HR.
-      if (Math.abs(shiftDiff) > 0.01) {
-        const auditDesc = `Növbə arası fərq: Əvvəlki işçi: ${lastUserName}, Yeni işçi: ${user.item_name || user.name}. (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}, Sistem: ${globalBalance.toFixed(2)})`;
-        
-        if (shiftDiff < 0) {
-          // It's a shortage relative to last person's close
-          await supabase.from('expenses').insert([{
-            date: new Date().toISOString(),
-            category: 'Növbə Arası (Araşdırılır)',
-            amount: Math.abs(shiftDiff), 
-            description: auditDesc,
-            payment_method: 'cash',
-            user_id: userIdInt,
-            shift_id: newShift.id,
-            notes: JSON.stringify({ globalDiff, shiftDiff, type: 'audit_trigger' })
-          }]);
-        } else {
-          // It's an excess relative to last person's close
-          await supabase.from('incomes').insert([{
-            date: new Date().toISOString(),
-            category: 'Növbə Arası (Araşdırılır)',
-            amount: Math.abs(shiftDiff),
-            description: auditDesc,
-            payment_method: 'cash',
-            user_id: userIdInt,
-            shift_id: newShift.id,
-            notes: JSON.stringify({ globalDiff, shiftDiff, type: 'audit_trigger' })
-          }]);
-        }
-
-        // IMPORTANT: If the Dashboard already reflects this gap (globalDiff is 0), 
-        // recording the above transaction will UNFORTUNATELY change the Dashboard again.
-        if (Math.abs(globalDiff) < 0.01) {
-           if (shiftDiff < 0) {
-             // We added an expense, but Dashboard was correct. Offset with income.
-             await supabase.from('incomes').insert([{
-               category: 'Sistem Tənzimlənməsi (Sinxron)',
-               amount: Math.abs(shiftDiff),
-               description: 'Təkrarlanmanın qarşısını almaq üçün avtomatik tənzimləmə',
-               payment_method: 'cash',
-               user_id: userIdInt,
-               shift_id: newShift.id
-             }]);
-           } else {
-             // We added an income, but Dashboard was correct. Offset with expense.
-             await supabase.from('expenses').insert([{
-               category: 'Sistem Tənzimlənməsi (Sinxron)',
-               amount: Math.abs(shiftDiff),
-               description: 'Təkrarlanmanın qarşısını almaq üçün avtomatik tənzimləmə',
-               payment_method: 'cash',
-               user_id: userIdInt,
-               shift_id: newShift.id
-             }]);
-           }
-        }
-      }
-
       toast.success('Növbə açıldı');
     } catch (e: any) {
       toast.error('Növbə açılarkən xəta: ' + e.message);
@@ -203,42 +136,6 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      // 3. Record shortage/excess as financial adjustment to sync system balance
-      // We route this through "Növbə Arası (Araşdırılır)" so it appears in HR for approval
-      const shortage = expectedCash - actualBalance;
-      if (Math.abs(shortage) > 0.01) {
-        const auditDesc = `Növbə qapanış fərqi: İşçi: ${user.item_name || user.name}, Növbə: #${activeShift.id}. (Olmalı: ${expectedCash.toFixed(2)}, Faktiki: ${actualBalance.toFixed(2)})`;
-        const userIdInt = parseInt(user.id);
-        const shiftIdInt = parseInt(activeShift.id);
-
-        if (shortage > 0) {
-          // It's a shortage (kəsir) -> Record as Expense (Pending Audit)
-          await supabase.from('expenses').insert([{
-            date: new Date().toISOString(),
-            category: 'Növbə Arası (Araşdırılır)',
-            amount: Math.abs(shortage),
-            description: auditDesc,
-            payment_method: 'cash',
-            user_id: userIdInt,
-            shift_id: shiftIdInt,
-            notes: JSON.stringify({ type: 'closing_audit', expected: expectedCash, actual: actualBalance })
-          }]);
-        } else {
-          // It's an excess (artıq) -> Record as Income (Pending Audit)
-          const excess = Math.abs(shortage);
-          await supabase.from('incomes').insert([{
-            date: new Date().toISOString(),
-            category: 'Növbə Arası (Araşdırılır)',
-            amount: excess,
-            description: auditDesc,
-            payment_method: 'cash',
-            user_id: userIdInt,
-            shift_id: shiftIdInt,
-            notes: JSON.stringify({ type: 'closing_audit', expected: expectedCash, actual: actualBalance })
-          }]);
-        }
-      }
-
       setActiveShift(null);
       toast.success('Növbə bağlandı');
     } catch (e: any) {

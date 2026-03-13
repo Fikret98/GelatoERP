@@ -34,21 +34,7 @@ $$;
 
 -- 4. Robust RPC for frontend (SETOF/TABLE compatibility)
 CREATE OR REPLACE FUNCTION get_active_shift(p_user_id integer)
-RETURNS TABLE (
-    id bigint,
-    user_id integer,
-    opened_at timestamptz,
-    closed_at timestamptz,
-    opening_balance numeric,
-    actual_cash_balance numeric,
-    expected_cash_balance numeric,
-    cash_sales numeric,
-    card_sales numeric,
-    total_incomes numeric,
-    total_expenses numeric,
-    status text,
-    notes text
-)
+RETURNS SETOF public.shifts
 LANGUAGE sql
 SECURITY DEFINER
 AS $$

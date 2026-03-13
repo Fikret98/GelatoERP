@@ -127,11 +127,6 @@ export default function POS() {
 
   const handleCheckout = async () => {
     if (cart.length === 0 || !user) return;
-    if (!activeShift) {
-      toast.error('Növbə açılmayıb. Zəhmət olmasa növbəni açın.');
-      setShowShiftModal(true);
-      return;
-    }
 
     setLoading(true);
     try {
@@ -146,7 +141,7 @@ export default function POS() {
         p_items: saleItems,
         p_seller_id: parseInt(user.id),
         p_payment_method: paymentMethod,
-        p_shift_id: parseInt(activeShift.id)
+        p_shift_id: activeShift ? parseInt(activeShift.id) : null
       });
 
       if (rpcError) {
