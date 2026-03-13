@@ -20,6 +20,7 @@ interface ShiftContextType {
   refreshShift: () => Promise<void>;
   getExpectedCash: () => Promise<number>;
   getLastShift: () => Promise<any | null>;
+  getLastShiftClosingBalance: () => Promise<number>;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -259,7 +260,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       closeShift, 
       refreshShift,
       getExpectedCash,
-      getLastShift
+      getLastShift,
+      getLastShiftClosingBalance
     }}>
       {children}
     </ShiftContext.Provider>
