@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
-import { IceCream } from 'lucide-react';
+import { Coins, TrendingUp, Landmark } from 'lucide-react';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
@@ -8,36 +8,33 @@ interface PullToRefreshProps {
   className?: string;
 }
 
-// Dondurma üzərinə səpilən rəngli karamellər (Sprinkles) üçün
-const SPRINKLES = Array.from({ length: 12 });
-const SPRINKLE_COLORS = ['bg-pink-300', 'bg-cyan-300', 'bg-yellow-300', 'bg-green-300', 'bg-white'];
+const COIN_COUNT = 8;
+const COINS = Array.from({ length: COIN_COUNT });
 
-export default function GelatoPullToRefresh({ onRefresh, children, className }: PullToRefreshProps) {
+export default function FinancialPullToRefresh({ onRefresh, children, className }: PullToRefreshProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const hasVibrated = useRef(false);
-  const PULL_THRESHOLD = 140; 
+  const PULL_THRESHOLD = 120;
   
   const y = useMotionValue(0);
   
-  // Arxa fon və ümumi ölçülər (Çiyələkli dondurma rənglərinə uyğun)
-  const headerHeight = useTransform(y, [0, PULL_THRESHOLD], [0, 180]);
-  const headerOpacity = useTransform(y, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0, 0.7, 1]);
-  
-  // Dondurma ikonunun hərəkətləri
-  const iconScale = useTransform(y, [0, PULL_THRESHOLD], [0.2, 1.2]);
-  const iconY = useTransform(y, [0, PULL_THRESHOLD], [-40, 0]);
-  const textOpacity = useTransform(y, [PULL_THRESHOLD * 0.6, PULL_THRESHOLD], [0, 1]);
+  // Animation Transforms
+  const headerHeight = useTransform(y, [0, PULL_THRESHOLD], [0, 160]);
+  const headerOpacity = useTransform(y, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0, 0.5, 1]);
+  const iconScale = useTransform(y, [0, PULL_THRESHOLD], [0.5, 1]);
+  const iconRotate = useTransform(y, [0, PULL_THRESHOLD], [0, 360]);
+  const textOpacity = useTransform(y, [PULL_THRESHOLD * 0.5, PULL_THRESHOLD * 0.8], [0, 1]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Use a small buffer to ensure we are really at the top
-      if (el.scrollTop <= 2) {
+      // Use a strict buffer for top detection
+      if (el.scrollTop <= 1) {
         startY.current = e.touches[0].pageY;
       } else {
         startY.current = -1;
@@ -45,31 +42,29 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      // If user starts moving while not at top, ensure we stay disabled
-      if (el.scrollTop > 2) {
-        startY.current = -1;
-      }
-      
       if (startY.current === -1 || isRefreshing) return;
 
       const currentY = e.touches[0].pageY;
       const diff = currentY - startY.current;
 
+      // Only capture downward pull if exactly at top
       if (diff > 0 && el.scrollTop <= 0) {
         if (e.cancelable) e.preventDefault();
         
-        const distance = Math.min(diff * 0.5, PULL_THRESHOLD * 1.2);
+        // Resistance factor for smoother pull
+        const distance = Math.min(diff * 0.45, PULL_THRESHOLD * 1.5);
         setPullDistance(distance);
         y.set(distance);
 
-        // İstifadəçiyə hiss etdirmək üçün kiçik vibrasiyalar (Haptic feedback)
+        // Haptic feedback
         if (distance >= PULL_THRESHOLD && !hasVibrated.current) {
-          if (window.navigator?.vibrate) window.navigator.vibrate([15, 40, 15]);
+          if (window.navigator?.vibrate) window.navigator.vibrate(10);
           hasVibrated.current = true;
         } else if (distance < PULL_THRESHOLD) {
           hasVibrated.current = false;
         }
       } else if (diff < 0) {
+        // Reset if pulling up
         startY.current = -1;
         y.set(0);
         setPullDistance(0);
@@ -77,14 +72,19 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
     };
 
     const handleTouchEnd = async () => {
-      if (startY.current === -1 || isRefreshing) return;
+      if (startY.current === -1 || isRefreshing) {
+        startY.current = -1;
+        return;
+      }
 
-      if (pullDistance >= PULL_THRESHOLD) {
+      const finalDistance = pullDistance;
+      if (finalDistance >= PULL_THRESHOLD) {
         setIsRefreshing(true);
         y.set(PULL_THRESHOLD);
         try {
           await onRefresh();
         } finally {
+          // Cleanup
           setIsRefreshing(false);
           y.set(0);
           setPullDistance(0);
@@ -113,95 +113,90 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
       ref={containerRef} 
       className={`relative h-full overflow-y-auto overflow-x-hidden ${className || ''}`}
       style={{ 
-        isolation: 'isolate', 
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehaviorY: 'none'
+        isolation: 'isolate',
+        overscrollBehaviorY: 'contain',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
-      {/* Şirin Dondurma Mövzulu Arxa Fon */}
+      {/* Financial Background Header */}
       <motion.div
         style={{ 
-          height: isRefreshing ? 180 : headerHeight,
+          height: isRefreshing ? 140 : headerHeight,
           opacity: headerOpacity
         }}
-        className="absolute top-0 left-0 right-0 bg-gradient-to-b from-rose-400 to-pink-500 z-[0] overflow-hidden"
+        className="absolute top-0 left-0 right-0 bg-gradient-to-b from-indigo-600 to-indigo-800 z-[0] overflow-hidden flex items-center justify-center"
       >
-        {/* Yumşaq dalğalı alt kənar effekti */}
-        <div 
-          className="absolute bottom-[-30px] left-[-10%] right-[-10%] h-16 bg-pink-500 rounded-[50%] opacity-80"
-        />
-
-        {/* Yağan Rəngli Karamellər (Sprinkles) */}
+        {/* Decorative Grid Patterns */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
+        
+        {/* Falling Coins Animation */}
         <AnimatePresence>
-          {(pullDistance > 20 || isRefreshing) && SPRINKLES.map((_, i) => {
-            const randomColor = SPRINKLE_COLORS[i % SPRINKLE_COLORS.length];
-            return (
-              <motion.div
-                key={i}
-                initial={{ y: -50, x: `${5 + (i * 8)}%`, opacity: 0, rotate: i * 45 }}
-                animate={isRefreshing ? {
-                  y: [0, 250],
-                  opacity: [0, 1, 0],
-                  rotate: [i * 45, i * 45 + 180],
-                } : {
-                  y: (pullDistance / PULL_THRESHOLD) * (100 + (i % 3) * 20),
-                  opacity: (pullDistance / PULL_THRESHOLD) * 0.8,
-                }}
-                transition={isRefreshing ? {
-                  duration: 1 + Math.random() * 0.5,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: Math.random() * 0.5
-                } : { duration: 0 }}
-                className={`absolute pointer-events-none w-1.5 h-4 rounded-full ${randomColor}`}
-              />
-            );
-          })}
+          {(pullDistance > 10 || isRefreshing) && COINS.map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ y: -60, x: `${(i + 1) * (100 / (COIN_COUNT + 1))}%`, scale: 0, opacity: 0 }}
+              animate={isRefreshing ? {
+                y: [0, 200],
+                opacity: [0, 1, 0],
+                rotate: [0, 360],
+                scale: [0.5, 0.8, 0.5]
+              } : {
+                y: (pullDistance / PULL_THRESHOLD) * (80 + (i % 4) * 15),
+                scale: (pullDistance / PULL_THRESHOLD) * 0.8,
+                opacity: (pullDistance / PULL_THRESHOLD) * 0.6,
+                rotate: (pullDistance / PULL_THRESHOLD) * 180
+              }}
+              transition={isRefreshing ? {
+                duration: 1.2 + (i % 3) * 0.2,
+                repeat: Infinity,
+                ease: "linear",
+                delay: i * 0.1
+              } : { duration: 0 }}
+              className="absolute text-yellow-400/80 pointer-events-none"
+            >
+              <Coins className="w-5 h-5 drop-shadow-[0_0_8px_rgba(250,204,21,0.4)]" />
+            </motion.div>
+          ))}
         </AnimatePresence>
 
-        {/* Mərkəzi Dondurma Animasiyası */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+        {/* Central Refresh Icon Shell */}
+        <div className="relative z-10 flex flex-col items-center">
           <motion.div
-            style={{ scale: isRefreshing ? 1.2 : iconScale, y: isRefreshing ? 0 : iconY }}
+            style={{ 
+              scale: isRefreshing ? 1.1 : iconScale, 
+              rotate: isRefreshing ? 0 : iconRotate 
+            }}
             animate={isRefreshing ? {
-              rotate: [-10, 10, -10],
-              y: [-5, 5, -5]
-            } : { rotate: 0 }}
+              scale: [1, 1.15, 1],
+              rotate: [0, 10, -10, 0]
+            } : {}}
             transition={isRefreshing ? {
               repeat: Infinity,
-              duration: 0.8,
+              duration: 1.5,
               ease: "easeInOut"
             } : { duration: 0 }}
-            className="relative"
+            className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-xl"
           >
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full shadow-xl border-2 border-white/40 flex items-center justify-center">
-              <IceCream className="w-10 h-10 text-white drop-shadow-md" strokeWidth={2.5} />
-            </div>
-            
-            {/* Yenilənmə zamanı arxada parlayan halə */}
-            {isRefreshing && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.6, opacity: [0, 0.5, 0] }}
-                transition={{ repeat: Infinity, duration: 1.2 }}
-                className="absolute inset-0 bg-white rounded-full blur-md -z-10"
-              />
+            {isRefreshing ? (
+              <TrendingUp className="w-8 h-8 text-white animate-pulse" />
+            ) : (
+              <Landmark className="w-8 h-8 text-white" />
             )}
           </motion.div>
-
+          
           <motion.p
             style={{ opacity: isRefreshing ? 1 : textOpacity }}
-            className="text-white font-bold text-sm tracking-wider mt-4 drop-shadow-md font-sans"
+            className="text-white/90 font-black text-[10px] uppercase tracking-[0.2em] mt-4 drop-shadow-sm"
           >
-            {isRefreshing ? 'TƏZƏ GELATO YÜKLƏNİR...' : 'SƏRİNLƏMƏK ÜÇÜN DARTIN'}
+            {isRefreshing ? 'Məlumatlar Yenilənir...' : 'Yeniləmək üçün dartın'}
           </motion.p>
         </div>
       </motion.div>
 
-      {/* Əsas Kontent Area */}
+      {/* Main Content Area */}
       <motion.div 
-        style={{ y: isRefreshing ? 180 : y }}
-        className="relative z-[1] h-full bg-gray-50 dark:bg-gray-900 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.05)]"
+        style={{ y: isRefreshing ? 140 : y }}
+        className="relative z-[1] h-full bg-gray-50 dark:bg-gray-900 rounded-t-3xl shadow-[0_-12px_24px_rgba(0,0,0,0.06)]"
       >
         {children}
       </motion.div>
