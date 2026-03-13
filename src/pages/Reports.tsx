@@ -99,8 +99,8 @@ export default function Reports() {
       setTransactions(data || []);
       
       // Also fetch total COGS for Net Profit
-      const { data: cogsData } = await supabase.from('total_cogs_view').select('total_cogs').single();
-      if (cogsData) setTotalCogs(cogsData.total_cogs);
+      const { data: cogsData, error: cogsError } = await supabase.from('total_cogs_view').select('total_cogs').maybeSingle();
+      if (cogsData) setTotalCogs(cogsData.total_cogs || 0);
     } catch (e) {
       console.error(e);
       toast.error(t('pos.error'));
