@@ -40,7 +40,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const { data, error } = await supabase.rpc('get_active_shift', {
-        p_user_id: user.id
+        p_user_id: parseInt(user.id)
       });
 
       if (error) throw error;
