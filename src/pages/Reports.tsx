@@ -62,6 +62,24 @@ export default function Reports() {
       } finally {
         setIsLoadingDetails(false);
       }
+    } else if (transaction.type === 'expense' && transaction.category === 'Alış' && transaction.purchase_id) {
+      setIsLoadingDetails(true);
+      try {
+        const { data, error } = await supabase
+          .from('inventory_purchases')
+          .select('*, inventory(name)')
+          .eq('id', transaction.purchase_id)
+          .single();
+        
+        if (error) throw error;
+        setSaleDetails(data ? [data] : []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    } else {
+      setSaleDetails([]);
     }
   };
 
@@ -517,6 +535,36 @@ export default function Reports() {
                                 </div>
                                 <div className="text-right ml-4">
                                   <p className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">{(item.quantity * item.price).toFixed(2)} ₼</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedTransaction.type === 'expense' && selectedTransaction.category === 'Alış' && selectedTransaction.purchase_id && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                          <ShoppingBag className="w-4 h-4 text-indigo-500" />
+                          Alış Detalları
+                        </h3>
+                        {isLoadingDetails ? (
+                          <div className="py-12 flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
+                            <LoadingSpinner />
+                          </div>
+                        ) : (
+                          <div className="grid gap-3">
+                            {saleDetails.map((item, idx) => (
+                              <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-2xl flex items-center justify-between border border-gray-100 dark:border-gray-700 hover:border-indigo-500/20 transition-all shadow-sm">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm truncate">{item.inventory?.name}</p>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] sm:text-[10px] text-gray-400 font-bold">
+                                    <span>{item.quantity} {item.inventory?.unit || 'ədəd'} × {item.unit_price?.toFixed(2)} ₼</span>
+                                  </div>
+                                </div>
+                                <div className="text-right ml-4">
+                                  <p className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">{(item.quantity * item.unit_price).toFixed(2)} ₼</p>
                                 </div>
                               </div>
                             ))}
