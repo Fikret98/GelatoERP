@@ -450,13 +450,13 @@ export default function HR() {
           <div className="space-y-4">
             {pendingAudits.map((audit) => {
               // Parse user IDs from description if present
-              const prevUserMatch = audit.description?.match(/Əvvəlki işçi: ([^,]+)/);
-              const newUserMatch = audit.description?.match(/Yeni işçi: ([^,]+)/);
-              const prevUserId = prevUserMatch ? prevUserMatch[1] : null;
-              const newUserId = newUserMatch ? newUserMatch[1] : null;
+              const prevUserNameMatch = audit.description?.match(/Əvvəlki işçi: ([^,]+)/);
+              const newUserNameMatch = audit.description?.match(/Yeni işçi: ([^,]+)/);
+              const prevUserName = prevUserNameMatch ? prevUserNameMatch[1].trim() : null;
+              const newUserName = newUserNameMatch ? newUserNameMatch[1].trim() : null;
 
-              const prevEmployee = employees.find(e => e.id === prevUserId);
-              const newEmployee = employees.find(e => e.id === newUserId);
+              const prevEmployee = employees.find(e => e.name === prevUserName);
+              const newEmployee = employees.find(e => e.name === newUserName);
 
               return (
                 <div key={audit.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-amber-100 dark:border-amber-900/20 shadow-sm flex flex-col lg:flex-row justify-between gap-4">
@@ -479,16 +479,18 @@ export default function HR() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
-                      onClick={() => handleResolveAudit(audit, prevUserId, 'debt')}
-                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200"
+                      onClick={() => handleResolveAudit(audit, prevEmployee?.id || null, 'debt')}
+                      disabled={!prevEmployee}
+                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200 disabled:opacity-50"
                     >
-                      {prevEmployee ? prevEmployee.name : 'Əvvəlki işçi'}-ə yaz
+                      {prevEmployee ? prevEmployee.name : (prevUserName || 'Əvvəlki işçi')}-ə yaz
                     </button>
                     <button
-                      onClick={() => handleResolveAudit(audit, newUserId, 'debt')}
-                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200"
+                      onClick={() => handleResolveAudit(audit, newEmployee?.id || null, 'debt')}
+                      disabled={!newEmployee}
+                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200 disabled:opacity-50"
                     >
-                      {newEmployee ? newEmployee.name : 'Yeni işçi'}-ə yaz
+                      {newEmployee ? newEmployee.name : (newUserName || 'Yeni işçi')}-ə yaz
                     </button>
                     <button
                       onClick={() => handleResolveAudit(audit, null, audit.auditType === 'shortage' ? 'expense' : 'income')}
