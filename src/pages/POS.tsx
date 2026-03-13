@@ -237,20 +237,20 @@ export default function POS() {
               </div>
               
               <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden shrink-0">
-                <span className="text-2xl sm:text-3xl lg:text-4xl drop-shadow-sm select-none">
+                <span className="text-xl sm:text-2xl lg:text-3xl drop-shadow-sm select-none">
                   {product.category === 'dondurma' ? '🍦' : product.category === 'kokteyl' ? '🍹' : '🍰'}
                 </span>
               </div>
               
               <div className="flex-1 min-h-0 flex flex-col justify-between">
-                <h3 className="font-black text-gray-900 dark:text-white leading-tight text-xs sm:text-base lg:text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-8 sm:h-10 lg:h-12">{product.name}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white leading-tight text-xs sm:text-sm lg:text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-8 sm:h-10 lg:h-12">{product.name}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-widest font-black text-gray-400 dark:text-gray-500">{product.category}</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">{product.category}</span>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                <div className="text-base sm:text-xl font-black text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
+                <div className="text-sm sm:text-lg font-bold text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
                   {product.price.toFixed(2)} <span className="text-[10px] sm:text-xs">₼</span>
                 </div>
               </div>
@@ -381,7 +381,7 @@ export default function POS() {
 
           <div className="flex justify-between items-center px-1">
             <span className="text-gray-600 dark:text-gray-400 font-medium">{t('pos.total')}</span>
-            <span className="text-2xl font-black text-gray-900 dark:text-white">{total.toFixed(2)} ₼</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-white">{total.toFixed(2)} ₼</span>
           </div>
           
           <button
@@ -434,8 +434,8 @@ export default function POS() {
                     </label>
                     {expectedBalance !== null && (
                       <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 mb-4">
-                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Sistemdə olmalı olan məbləğ</p>
-                        <p className="text-2xl font-black text-indigo-700 dark:text-indigo-300">{expectedBalance.toFixed(2)} ₼</p>
+                        <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Sistemdə olmalı olan məbləğ</p>
+                        <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">{expectedBalance.toFixed(2)} ₼</p>
                       </div>
                     )}
                     <input
@@ -444,7 +444,7 @@ export default function POS() {
                       required
                       type="number"
                       step="0.01"
-                      className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-4 text-xl font-black text-indigo-600 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
+                      className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-4 text-lg font-bold text-indigo-600 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
                       placeholder="0.00"
                       value={actualBalance}
                       onChange={e => setActualBalance(e.target.value)}
@@ -469,8 +469,8 @@ export default function POS() {
                     </label>
                     {lastClosingBalance !== null && (
                       <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-4 mb-4">
-                        <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Sonuncu növbənin qapanış balansı</p>
-                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{lastClosingBalance.toFixed(2)} ₼</p>
+                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Sonuncu növbənin qapanış balansı</p>
+                        <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{lastClosingBalance.toFixed(2)} ₼</p>
                       </div>
                     )}
                     <input
@@ -479,7 +479,7 @@ export default function POS() {
                       required
                       type="number"
                       step="0.01"
-                      className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-4 text-xl font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
+                      className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-4 text-lg font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
                       placeholder="0.00"
                       value={openingBalance}
                       onChange={e => setOpeningBalance(e.target.value)}
