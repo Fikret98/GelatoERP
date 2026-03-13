@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { cn } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Inventory() {
@@ -241,24 +242,22 @@ export default function Inventory() {
             />
           </div>
         </div>
-        <div className="overflow-x-auto pb-4">
-          <table className="w-full text-left text-sm min-w-[600px]">
-            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 font-medium">
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 font-medium border-b border-gray-100 dark:border-gray-700">
               <tr>
-                <th className="px-4 lg:px-6 py-3">{t('common.name')}</th>
-                <th className="px-4 lg:px-6 py-3">{t('common.unit')}</th>
-                <th className="px-4 lg:px-6 py-3">{t('common.cost')}</th>
-                <th className="px-4 lg:px-6 py-3">{t('common.stock')}</th>
-                <th className="px-4 lg:px-6 py-3 text-right">{t('common.actions')}</th>
+                <th className="px-6 py-4">{t('common.name')}</th>
+                <th className="px-6 py-4">{t('common.unit')}</th>
+                <th className="px-6 py-4">{t('common.cost')}</th>
+                <th className="px-6 py-4">{t('common.stock')}</th>
+                <th className="px-6 py-4 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <motion.tbody 
               variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: { staggerChildren: 0.05 }
-                }
+                show: { transition: { staggerChildren: 0.05 } }
               }}
               initial="hidden"
               animate="show"
@@ -272,21 +271,26 @@ export default function Inventory() {
                     show: { opacity: 1, x: 0 }
                   }}
                   onClick={() => handleItemClick(item)}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors group"
                 >
-                  <td className="px-4 lg:px-6 py-4 font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">{item.name}</td>
-                  <td className="px-4 lg:px-6 py-4 text-gray-500 dark:text-gray-400">{item.unit}</td>
-                  <td className="px-4 lg:px-6 py-4 text-gray-500 dark:text-gray-400">{Number(item.unit_cost || 0).toFixed(2)} ₼</td>
-                  <td className={`px-4 lg:px-6 py-4 font-bold ${item.stock_quantity <= (item.critical_limit || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  <td className="px-6 py-4 font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 mt-1">{item.name}</td>
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{item.unit}</td>
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 font-mono">{Number(item.unit_cost || 0).toFixed(2)} ₼</td>
+                  <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span>{item.stock_quantity} {item.unit}</span>
+                      <span className={cn(
+                        "font-bold",
+                        item.stock_quantity <= (item.critical_limit || 0) ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
+                      )}>
+                        {item.stock_quantity} {item.unit}
+                      </span>
                       {item.stock_quantity <= (item.critical_limit || 0) && (
-                        <span className="text-[10px] uppercase tracking-wider font-black bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded mt-1 w-fit">KRITIK</span>
+                        <span className="text-[10px] uppercase tracking-wider font-black bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded mt-1 w-fit">KRITIK</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 lg:px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-1 lg:space-x-2">
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -301,20 +305,20 @@ export default function Inventory() {
                           });
                           setShowModal(true);
                         }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-700"
                         title={t('common.edit')}
                       >
-                        <Edit2 className="w-5 h-5" />
+                        <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openPurchaseModal(item);
                         }}
-                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-colors inline-flex items-center justify-center"
+                        className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors border border-emerald-100 dark:border-emerald-800"
                         title={t('common.newPurchase')}
                       >
-                        <ShoppingCart className="w-5 h-5" />
+                        <ShoppingCart className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -322,6 +326,90 @@ export default function Inventory() {
               ))}
             </motion.tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="sm:hidden grid grid-cols-1 divide-y divide-gray-100 dark:divide-gray-700">
+          {items.map((item) => (
+            <motion.div
+              layout
+              key={`mobile-${item.id}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-4 active:bg-gray-50 dark:active:bg-gray-700 transition-colors"
+              onClick={() => handleItemClick(item)}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1 min-w-0 pr-4">
+                  <h3 className="font-black text-gray-900 dark:text-white text-base leading-tight truncate">
+                    {item.name}
+                  </h3>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black mt-1">
+                    {item.unit}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingItem(item);
+                      setFormData({
+                        name: item.name,
+                        unit: item.unit,
+                        unit_cost: item.unit_cost.toString(),
+                        stock_quantity: item.stock_quantity.toString(),
+                        supplier_id: item.supplier_id ? item.supplier_id.toString() : '',
+                        critical_limit: (item.critical_limit || 0).toString()
+                      });
+                      setShowModal(true);
+                    }}
+                    className="p-2.5 bg-gray-50 dark:bg-gray-900/50 text-gray-400 rounded-xl border border-gray-100 dark:border-gray-700"
+                    title={t('common.edit')}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openPurchaseModal(item);
+                    }}
+                    className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/20"
+                    title={t('common.newPurchase')}
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Maya Dəyəri</p>
+                  <p className="text-sm font-black text-gray-900 dark:text-white">
+                    {Number(item.unit_cost || 0).toFixed(2)} ₼
+                  </p>
+                </div>
+                <div className={cn(
+                  "p-3 rounded-2xl border transition-colors",
+                  item.stock_quantity <= (item.critical_limit || 0) 
+                    ? "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/50" 
+                    : "bg-gray-50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700"
+                )}>
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Cari Stok</p>
+                  <div className="flex items-center gap-2">
+                    <p className={cn(
+                      "text-sm font-black",
+                      item.stock_quantity <= (item.critical_limit || 0) ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"
+                    )}>
+                      {item.stock_quantity}
+                    </p>
+                    {item.stock_quantity <= (item.critical_limit || 0) && (
+                      <span className="text-[8px] font-black bg-red-600 text-white px-1.5 rounded-sm uppercase">Kritik</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
 
