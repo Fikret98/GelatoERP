@@ -10,6 +10,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ShiftProvider } from './contexts/ShiftContext';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import SplashScreen from './components/SplashScreen';
@@ -83,9 +84,11 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <Router>
-            <MainContent />
-          </Router>
+          <ShiftProvider>
+            <Router>
+              <MainContent />
+            </Router>
+          </ShiftProvider>
           <Toaster 
             position="top-right" 
             toastOptions={{

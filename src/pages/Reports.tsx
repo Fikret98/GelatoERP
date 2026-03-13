@@ -17,8 +17,11 @@ export default function Reports() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'sale' | 'expense' | 'income'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'sale' | 'expense' | 'income' | 'shifts'>('all');
   const [dateFilters, setDateFilters] = useState({ start: '', end: '' });
+  const [shifts, setShifts] = useState<any[]>([]);
+  const [selectedShift, setSelectedShift] = useState<any | null>(null);
+  const [isLoadingShifts, setIsLoadingShifts] = useState(false);
   
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
@@ -69,11 +72,30 @@ export default function Reports() {
 
   useEffect(() => {
     fetchData();
+    fetchShifts();
   }, []);
+
+  const fetchShifts = async () => {
+    try {
+      setIsLoadingShifts(true);
+      const { data, error } = await supabase
+        .from('shifts')
+        .select('*, users(name)')
+        .order('opened_at', { ascending: false });
+      
+      if (error) throw error;
+      setShifts(data || []);
+    } catch (e) {
+      console.error(e);
+      toast.error('Növbə məlumatları yüklənərkən xəta');
+    } finally {
+      setIsLoadingShifts(false);
+    }
+  };
 
   // Body scroll lock for transactions modal
   useEffect(() => {
-    if (selectedTransaction || showExpenseModal || showIncomeModal) {
+    if (selectedTransaction || showExpenseModal || showIncomeModal || selectedShift) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -98,7 +120,7 @@ export default function Reports() {
       document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '';
     };
-  }, [selectedTransaction, showExpenseModal, showIncomeModal]);
+  }, [selectedTransaction, showExpenseModal, showIncomeModal, selectedShift]);
 
   const fetchData = async () => {
     try {
@@ -368,7 +390,7 @@ export default function Reports() {
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row gap-4">
         <div className="flex flex-wrap bg-gray-100 dark:bg-gray-900/50 p-1.5 rounded-2xl gap-1">
-          {(['all', 'sale', 'expense', 'income'] as const).map(tab => (
+          {(['all', 'sale', 'expense', 'income', 'shifts'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -379,7 +401,7 @@ export default function Reports() {
                   : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
               )}
             >
-              {tab === 'all' ? 'Hamısı' : tab === 'sale' ? 'Satışlar' : tab === 'expense' ? 'Xərclər' : 'Mədaxillər'}
+              {tab === 'all' ? 'Hamısı' : tab === 'sale' ? 'Satışlar' : tab === 'expense' ? 'Xərclər' : tab === 'income' ? 'Mədaxillər' : 'Növbələr'}
             </button>
           ))}
         </div>
@@ -419,74 +441,253 @@ export default function Reports() {
 
       {/* Transaction Feed */}
       <div className="space-y-4">
-        {filteredTransactions.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center border border-dashed border-gray-200 dark:border-gray-700">
-            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Info className="w-8 h-8 text-gray-300" />
+        {activeTab === 'shifts' ? (
+          shifts.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center border border-dashed border-gray-200 dark:border-gray-700">
+              <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Info className="w-8 h-8 text-gray-300" />
+              </div>
+              <p className="text-gray-400 font-medium">Heç bir növbə tapılmadı.</p>
             </div>
-            <p className="text-gray-400 font-medium">Bu kriteriyalara uyğun heç bir tranzaksiya tapılmadı.</p>
-          </div>
-        ) : (
-          filteredTransactions.map((t) => (
-            <motion.div
-              layout
-              key={`${t.type}-${t.id}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3 sm:gap-4"
-              onClick={() => handleTransactionClick(t)}
-            >
-              <div className={cn(
-                "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
-                t.type === 'sale' ? "bg-emerald-100 dark:bg-emerald-900/30" :
-                t.type === 'income' ? "bg-indigo-100 dark:bg-indigo-900/30" :
-                "bg-rose-100 dark:bg-rose-900/30"
-              )}>
-                {t.type === 'sale' ? (
-                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
-                ) : t.type === 'income' ? (
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 dark:text-rose-400" />
-                )}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-black text-gray-900 dark:text-white text-sm sm:text-base truncate">
-                    {t.type === 'sale' ? `Sifariş #${t.id}` : t.category}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-y-0.5 gap-x-3 text-[9px] sm:text-xs font-bold text-gray-400 dark:text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {format(new Date(t.date), 'dd.MM.yy HH:mm')}
-                  </span>
-                  <span className="flex items-center gap-1 uppercase tracking-tight">
-                    <User className="w-3 h-3" />
-                    {t.users?.name || '-'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <p className={cn(
-                  "text-base sm:text-xl font-black tabular-nums",
-                  (t.type === 'sale' || t.type === 'income') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+          ) : (
+            shifts.map((s) => (
+              <motion.div
+                layout
+                key={`shift-${s.id}`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-4"
+                onClick={() => setSelectedShift(s)}
+              >
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                  s.status === 'open' ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-gray-100 dark:bg-gray-700"
                 )}>
-                  {(t.type === 'expense' ? '-' : '+')}{t.amount.toFixed(2)} ₼
-                </p>
-                <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
-                  {t.type === 'sale' ? 'Nəğd Satış' : t.type === 'income' ? 'Kassa Mədaxil' : 'Məxaric'}
-                </p>
+                  <Briefcase className={cn("w-6 h-6", s.status === 'open' ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400")} />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-black text-gray-900 dark:text-white text-base truncate">
+                      Növbə #{s.id}
+                    </span>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest",
+                      s.status === 'open' ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30" : "bg-gray-100 text-gray-500"
+                    )}>
+                      {s.status === 'open' ? 'Aktiv' : 'Bağlı'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs font-bold text-gray-400 dark:text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {format(new Date(s.opened_at), 'dd.MM.yy HH:mm')}
+                    </span>
+                    <span className="flex items-center gap-1 uppercase tracking-tight">
+                      <User className="w-3 h-3" />
+                      {s.users?.name || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xl font-black tabular-nums text-indigo-600 dark:text-indigo-400">
+                    {((s.cash_sales || 0) + (s.card_sales || 0)).toFixed(2)} ₼
+                  </p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+                    Cəmi Satış
+                  </p>
+                </div>
+              </motion.div>
+            ))
+          )
+        ) : (
+          filteredTransactions.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center border border-dashed border-gray-200 dark:border-gray-700">
+              <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Info className="w-8 h-8 text-gray-300" />
               </div>
-            </motion.div>
-          ))
+              <p className="text-gray-400 font-medium">Bu kriteriyalara uyğun heç bir tranzaksiya tapılmadı.</p>
+            </div>
+          ) : (
+            filteredTransactions.map((t) => (
+              <motion.div
+                layout
+                key={`${t.type}-${t.id}`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3 sm:gap-4"
+                onClick={() => handleTransactionClick(t)}
+              >
+                <div className={cn(
+                  "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                  t.type === 'sale' ? "bg-emerald-100 dark:bg-emerald-900/30" :
+                  t.type === 'income' ? "bg-indigo-100 dark:bg-indigo-900/30" :
+                  "bg-rose-100 dark:bg-rose-900/30"
+                )}>
+                  {t.type === 'sale' ? (
+                    <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
+                  ) : t.type === 'income' ? (
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
+                  ) : (
+                    <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 dark:text-rose-400" />
+                  )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-black text-gray-900 dark:text-white text-sm sm:text-base truncate">
+                      {t.type === 'sale' ? `Sifariş #${t.id}` : t.category}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-y-0.5 gap-x-3 text-[9px] sm:text-xs font-bold text-gray-400 dark:text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {format(new Date(t.date), 'dd.MM.yy HH:mm')}
+                    </span>
+                    <span className="flex items-center gap-1 uppercase tracking-tight">
+                      <User className="w-3 h-3" />
+                      {t.users?.name || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className={cn(
+                    "text-base sm:text-xl font-black tabular-nums",
+                    (t.type === 'sale' || t.type === 'income') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                  )}>
+                    {(t.type === 'expense' ? '-' : '+')}{t.amount.toFixed(2)} ₼
+                  </p>
+                  <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+                    {t.type === 'sale' ? (t.payment_method === 'card' ? 'Kartla Satış' : 'Nağd Satış') : t.type === 'income' ? 'Kassa Mədaxil' : 'Məxaric'}
+                  </p>
+                </div>
+              </motion.div>
+            ))
+          )
         )}
       </div>
 
       {/* Modals */}
       <AnimatePresence>
+        {selectedShift && (
+          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[70] p-0 lg:p-4 backdrop-blur-sm" onClick={() => setSelectedShift(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[85vh] lg:max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar touch-pan-y pb-28 lg:pb-8"
+            >
+              <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 lg:hidden" />
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <div className={cn(
+                    "inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-3",
+                    selectedShift.status === 'open' ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-100 text-gray-500"
+                  )}>
+                    Z-Hesabat: Növbə #{selectedShift.id}
+                  </div>
+                  <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase">
+                    Növbə Detalları
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setSelectedShift(null)}
+                  className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all"
+                  title="Bağla"
+                >
+                  <X className="w-6 h-6 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Açılış</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-base">{format(new Date(selectedShift.opened_at), 'dd.MM.yy HH:mm')}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bağlanış</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-base">
+                      {selectedShift.closed_at ? format(new Date(selectedShift.closed_at), 'dd.MM.yy HH:mm') : 'Hələ də davam edir'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Açılış Balansı</p>
+                    <p className="text-xl font-black text-gray-900 dark:text-white">{selectedShift.opening_balance.toFixed(2)} ₼</p>
+                  </div>
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Cəmi Satış</p>
+                    <p className="text-xl font-black text-indigo-600 dark:text-indigo-400">{((selectedShift.cash_sales || 0) + (selectedShift.card_sales || 0)).toFixed(2)} ₼</p>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 space-y-4">
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2">Kassa Hərəkəti (Nağd)</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-gray-500">Açılış Balansı</span>
+                      <span className="text-gray-900 dark:text-white">+{selectedShift.opening_balance.toFixed(2)} ₼</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-gray-500">Nağd Satışlar</span>
+                      <span className="text-emerald-600">+{(selectedShift.cash_sales || 0).toFixed(2)} ₼</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-gray-500">Mədaxillər</span>
+                      <span className="text-emerald-600">+{(selectedShift.total_incomes || 0).toFixed(2)} ₼</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-gray-500">Xərclər</span>
+                      <span className="text-rose-600">-{(selectedShift.total_expenses || 0).toFixed(2)} ₼</span>
+                    </div>
+                    <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                      <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Gözlənilən Nağd</span>
+                      <span className="text-xl font-black text-gray-900 dark:text-white">
+                        {selectedShift.expected_cash_balance?.toFixed(2) || '0.00'} ₼
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Faktiki Nağd</span>
+                      <span className="text-xl font-black text-indigo-600">
+                        {selectedShift.actual_cash_balance?.toFixed(2) || '0.00'} ₼
+                      </span>
+                    </div>
+                    
+                    {selectedShift.status === 'closed' && (
+                      <div className={cn(
+                        "p-4 rounded-2xl flex justify-between items-center",
+                        (selectedShift.actual_cash_balance - selectedShift.expected_cash_balance) === 0 ? "bg-emerald-50 text-emerald-700" :
+                        (selectedShift.actual_cash_balance - selectedShift.expected_cash_balance) > 0 ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"
+                      )}>
+                        <span className="text-xs font-black uppercase tracking-widest">
+                          {(selectedShift.actual_cash_balance - selectedShift.expected_cash_balance) === 0 ? 'Dəqiqlik' :
+                           (selectedShift.actual_cash_balance - selectedShift.expected_cash_balance) > 0 ? 'Artıq' : 'Kəsir'}
+                        </span>
+                        <span className="text-lg font-black tabular-nums">
+                          {(selectedShift.actual_cash_balance - selectedShift.expected_cash_balance).toFixed(2)} ₼
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Qeydlər</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 italic">
+                    {selectedShift.notes || 'Qeyd yoxdur'}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {showExpenseModal && (
           <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
             <motion.div
@@ -588,7 +789,7 @@ export default function Reports() {
                   )}>
                     {selectedTransaction.type === 'sale' ? 'Satış' : selectedTransaction.type === 'income' ? 'Mədaxil' : 'Məxaric'}
                   </div>
-                  <h2 className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white">
+                  <h2 className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase">
                     {selectedTransaction.type === 'sale' ? `Sifariş #${selectedTransaction.id}` : selectedTransaction.category}
                   </h2>
                 </div>
@@ -631,7 +832,7 @@ export default function Reports() {
                     {isLoadingDetails ? (
                       <div className="py-8"><LoadingSpinner /></div>
                     ) : (
-                        <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
                         {saleDetails.map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 p-2.5 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700">
                             <div className="flex-1 min-w-0">

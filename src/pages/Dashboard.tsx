@@ -538,7 +538,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('dashboard.lowStock')}</h3>
                 </div>
-                <button onClick={() => setShowLowStockModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                <button onClick={() => setShowLowStockModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" title="Bağla">
                   <X className="w-5 h-5 text-gray-400" />
                 </button>
               </div>

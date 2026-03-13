@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
+import { cn } from '../lib/utils';
 
 export default function POS() {
   const { t } = useLanguage();
@@ -18,15 +20,20 @@ export default function POS() {
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [saleSuccess, setSaleSuccess] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
+  const { activeShift, openShift, closeShift, loading: shiftLoading } = useShift();
+  const [showShiftModal, setShowShiftModal] = useState(false);
+  const [openingBalance, setOpeningBalance] = useState('');
+  const [actualBalance, setActualBalance] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
 
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // Body scroll lock when mobile cart is open
+  // Body scroll lock when mobile cart or shift modal is open
   useEffect(() => {
-    if (showMobileCart) {
+    if (showMobileCart || showShiftModal) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -51,7 +58,7 @@ export default function POS() {
       document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '';
     };
-  }, [showMobileCart]);
+  }, [showMobileCart, showShiftModal]);
 
   const fetchProducts = async () => {
     try {
@@ -97,6 +104,12 @@ export default function POS() {
 
   const handleCheckout = async () => {
     if (cart.length === 0 || !user) return;
+    if (!activeShift) {
+      toast.error('Növbə açılmayıb. Zəhmət olmasa növbəni açın.');
+      setShowShiftModal(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const saleItems = cart.map(item => ({
@@ -108,7 +121,9 @@ export default function POS() {
       const { data: saleId, error: rpcError } = await supabase.rpc('process_sale', {
         p_total_amount: total,
         p_items: saleItems,
-        p_seller_id: parseInt(user.id)
+        p_seller_id: parseInt(user.id),
+        p_payment_method: paymentMethod,
+        p_shift_id: parseInt(activeShift.id)
       });
 
       if (rpcError) {
@@ -120,6 +135,7 @@ export default function POS() {
       }
 
       setCart([]);
+      setPaymentMethod('cash');
       toast.success(t('pos.success'));
     } catch (e: any) {
       console.error(e);
@@ -127,6 +143,20 @@ export default function POS() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenShift = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await openShift(parseFloat(openingBalance));
+    setShowShiftModal(false);
+    setOpeningBalance('');
+  };
+
+  const handleCloseShift = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await closeShift(parseFloat(actualBalance));
+    setShowShiftModal(false);
+    setActualBalance('');
   };
 
   return (
@@ -147,10 +177,23 @@ export default function POS() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.pos')}</h1>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] sm:text-sm font-medium text-gray-500 dark:text-gray-400">Giriş:</span>
-            <span className="text-[10px] sm:text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800">
-              {user?.name}
-            </span>
+            <span className="text-[10px] sm:text-sm font-medium text-gray-500 dark:text-gray-400">Növbə:</span>
+            {activeShift ? (
+              <button
+                onClick={() => setShowShiftModal(true)}
+                className="text-[10px] sm:text-sm font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800 flex items-center gap-1.5"
+              >
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                Aktiv
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowShiftModal(true)}
+                className="text-[10px] sm:text-sm font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-red-100 dark:border-red-800"
+              >
+                Bağlı
+              </button>
+            )}
           </div>
         </div>
         <motion.div 
@@ -299,21 +342,140 @@ export default function POS() {
           </AnimatePresence>
         </div>
 
-        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+4rem)] lg:pb-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
-          <div className="flex justify-between items-center mb-4">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+4rem)] lg:pb-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl space-y-4">
+          {/* Payment Method Toggle */}
+          <div className="flex bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <button
+              onClick={() => setPaymentMethod('cash')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all",
+                paymentMethod === 'cash' 
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+              )}
+            >
+              💵 Nağd
+            </button>
+            <button
+              onClick={() => setPaymentMethod('card')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all",
+                paymentMethod === 'card' 
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+              )}
+            >
+              💳 Kart
+            </button>
+          </div>
+
+          <div className="flex justify-between items-center px-1">
             <span className="text-gray-600 dark:text-gray-400 font-medium">{t('pos.total')}</span>
             <span className="text-2xl font-black text-gray-900 dark:text-white">{total.toFixed(2)} ₼</span>
           </div>
+          
           <button
             onClick={handleCheckout}
-            disabled={cart.length === 0 || loading}
-            className="w-full bg-indigo-600 text-white rounded-xl py-4 font-bold text-lg hover:bg-indigo-700 transition disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none"
-            title={t('pos.checkout')}
+            disabled={cart.length === 0 || loading || !activeShift}
+            className="w-full bg-indigo-600 text-white rounded-xl py-4 font-bold text-lg hover:bg-indigo-700 transition disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2"
           >
-            {loading ? '...' : t('pos.checkout')}
+            {loading ? '...' : (
+              <>
+                <CreditCard className="w-5 h-5" />
+                {t('pos.checkout')}
+              </>
+            )}
           </button>
+          {!activeShift && !loading && (
+            <p className="text-[10px] text-center text-red-500 font-bold uppercase tracking-widest mt-2 animate-pulse">
+              Satış üçün növbəni açın
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Shift Management Modal */}
+      <AnimatePresence>
+        {showShiftModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[300] flex items-end lg:items-center justify-center p-0 lg:p-4" onClick={() => setShowShiftModal(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-md shadow-2xl relative border border-gray-100 dark:border-gray-700 pb-[calc(2rem+env(safe-area-inset-bottom))] lg:pb-8"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
+              
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {activeShift ? 'Növbəni Bağla (Z-Hesabat)' : 'Növbəni Aç'}
+                </h2>
+                <button onClick={() => setShowShiftModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" title={t('common.cancel')}>
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              {activeShift ? (
+                <form onSubmit={handleCloseShift} className="space-y-6">
+                  <div>
+                    <label htmlFor="actual-balance" className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-widest">
+                      Kassada olan faktiki nağd məbləğ (₼)
+                    </label>
+                    <input
+                      id="actual-balance"
+                      title="Faktiki nağd məbləğ"
+                      required
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-4 text-xl font-black text-indigo-600 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
+                      placeholder="0.00"
+                      value={actualBalance}
+                      onChange={e => setActualBalance(e.target.value)}
+                    />
+                    <p className="mt-2 text-[10px] text-gray-500 font-medium">
+                      * Sistem kəsir və ya artıq məbləği avtomatik hesablayacaq.
+                    </p>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={shiftLoading}
+                    className="w-full bg-red-600 text-white rounded-2xl py-4 font-black text-lg hover:bg-red-700 transition shadow-lg shadow-red-200 dark:shadow-none"
+                  >
+                    {shiftLoading ? '...' : 'Növbəni Bağla'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleOpenShift} className="space-y-6">
+                  <div>
+                    <label htmlFor="opening-balance" className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-widest">
+                      Kassa Açılış Balansı (₼)
+                    </label>
+                    <input
+                      id="opening-balance"
+                      title="Açılış balansı"
+                      required
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-4 text-xl font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
+                      placeholder="0.00"
+                      value={openingBalance}
+                      onChange={e => setOpeningBalance(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={shiftLoading}
+                    className="w-full bg-emerald-600 text-white rounded-2xl py-4 font-black text-lg hover:bg-emerald-700 transition shadow-lg shadow-emerald-200 dark:shadow-none"
+                  >
+                    {shiftLoading ? '...' : 'Növbəni Aç'}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
         </>
       )}
     </motion.div>

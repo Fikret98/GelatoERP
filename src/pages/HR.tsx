@@ -393,16 +393,16 @@ export default function HR() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.fullName')}</label>
-                  <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                  <label htmlFor="hr-full-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.fullName')}</label>
+                  <input id="hr-full-name" title={t('hr.fullName')} required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vəzifə (Məs: Barista)</label>
-                  <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
+                  <label htmlFor="hr-job-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vəzifə (Məs: Barista)</label>
+                  <input id="hr-job-title" title="Vəzifə" required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">İş Qrafiki (Məs: 09:00 - 18:00)</label>
-                  <input type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} placeholder="09:00 - 18:00" />
+                  <label htmlFor="hr-work-schedule" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">İş Qrafiki (Məs: 09:00 - 18:00)</label>
+                  <input id="hr-work-schedule" title="İş Qrafiki" type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} placeholder="09:00 - 18:00" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -430,12 +430,12 @@ export default function HR() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                        <input required type="email" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="mammad@gelato.az" />
+                        <label htmlFor="hr-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input id="hr-email" title="Email" required type="email" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="mammad@gelato.az" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefon</label>
-                        <input type="tel" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+994" />
+                        <label htmlFor="hr-phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefon</label>
+                        <input id="hr-phone" title="Telefon" type="tel" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+994" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -453,8 +453,9 @@ export default function HR() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Satış Bonusu (%)</label>
+                        <label htmlFor="hr-bonus" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Satış Bonusu (%)</label>
                         <input
+                          id="hr-bonus"
                           required
                           type="number"
                           step="0.01"
