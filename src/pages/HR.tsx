@@ -1,4 +1,3 @@
-```javascript
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, User, Calendar, DollarSign, Edit2, TrendingUp, History } from 'lucide-react';
 import { format } from 'date-fns';
@@ -14,6 +13,7 @@ import { cn } from '../lib/utils';
 export default function HR() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { activeShift } = useShift();
   const [employees, setEmployees] = useState<any[]>([]);
   const [bonuses, setBonuses] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
