@@ -4,12 +4,14 @@ import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { cn } from '../lib/utils';
 
 export default function HR() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [employees, setEmployees] = useState<any[]>([]);
   const [bonuses, setBonuses] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -296,7 +298,7 @@ export default function HR() {
             new_role: newRole,
             change_type: oldRole !== newRole ? 'promotion' : 'salary_change',
             note: 'Manual update from HR module',
-            changed_by: (await supabase.auth.getUser()).data.user?.id || null 
+            changed_by: user?.id ? parseInt(user.id) : null
           }]);
         }
 

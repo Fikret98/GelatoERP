@@ -62,7 +62,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       // 1. Detect transition discrepancy (between shifts)
       const lastShift = await getLastShift();
       const lastClosing = lastShift?.actual_cash_balance || 0;
-      const lastUser = lastShift?.user_id;
+      const lastUserName = lastShift?.users?.name || 'Naməlum';
       const diff = openingBalance - lastClosing;
 
       if (diff !== 0) {
@@ -72,7 +72,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             date: new Date().toISOString(),
             category: 'Növbə Arası (Araşdırılır)',
             amount: Math.abs(diff),
-            description: `Keçid fərqi (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}). Əvvəlki işçi: ${lastUser || 'Naməlum'}, Yeni işçi: ${user.id}`,
+            description: `Keçid fərqi (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}). Əvvəlki işçi: ${lastUserName}, Yeni işçi: ${user.name}`,
             payment_method: 'cash',
             user_id: user.id
           }]);
@@ -82,7 +82,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             date: new Date().toISOString(),
             category: 'Növbə Arası (Araşdırılır)',
             amount: diff,
-            description: `Keçid fərqi (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}). Əvvəlki işçi: ${lastUser || 'Naməlum'}, Yeni işçi: ${user.id}`,
+            description: `Keçid fərqi (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}). Əvvəlki işçi: ${lastUserName}, Yeni işçi: ${user.name}`,
             payment_method: 'cash',
             user_id: user.id
           }]);
@@ -233,7 +233,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('shifts')
-        .select('*')
+        .select('*, users(name)')
         .eq('status', 'closed')
         .order('closed_at', { ascending: false })
         .limit(1)

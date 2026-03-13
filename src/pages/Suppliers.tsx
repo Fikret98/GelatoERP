@@ -3,12 +3,14 @@ import { Plus, Phone, Mail, X, History, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Suppliers() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [debts, setDebts] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -96,14 +98,13 @@ export default function Suppliers() {
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSupplier) return;
+    if (!selectedSupplier || !user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from('supplier_payments').insert([{
         supplier_id: selectedSupplier.id,
         amount: parseFloat(paymentData.amount),
         description: paymentData.description,
-        created_by: user?.id ? parseInt(user.id) : null
+        created_by: parseInt(user.id)
       }]);
 
       if (error) throw error;
