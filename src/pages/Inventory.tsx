@@ -31,12 +31,29 @@ export default function Inventory() {
   // Body scroll lock when modals are open
   useEffect(() => {
     if (showModal || selectedItem || showPurchaseModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100vw';
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
     };
   }, [showModal, selectedItem, showPurchaseModal]);
 
@@ -315,7 +332,7 @@ export default function Inventory() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl overflow-x-hidden"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl overflow-x-hidden touch-pan-y pb-28 lg:pb-8"
             >
             <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
@@ -399,7 +416,7 @@ export default function Inventory() {
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 30 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] lg:max-h-[90vh] shadow-2xl touch-pan-y pb-28 lg:pb-0"
             >
               <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
               <div className="p-4 lg:p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
@@ -482,7 +499,7 @@ export default function Inventory() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl touch-pan-y pb-28 lg:pb-8"
             >
             <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('inventory.newPurchaseTitle')}: {purchaseItem.name}</h2>

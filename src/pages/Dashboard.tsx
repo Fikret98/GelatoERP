@@ -112,12 +112,29 @@ export default function Dashboard() {
   // Body scroll lock when modals are open
   useEffect(() => {
     if (showLowStockModal || infoModal?.show) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100vw';
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
     };
   }, [showLowStockModal, infoModal]);
 
@@ -503,6 +520,55 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
+      {/* Low Stock Items Modal */}
+      <AnimatePresence>
+        {showLowStockModal && (
+          <div className="fixed inset-0 z-[110] flex items-end lg:items-center justify-center p-0 lg:p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowLowStockModal(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 lg:p-8 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 touch-pan-y pb-28 lg:pb-8"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('dashboard.lowStock')}</h3>
+                </div>
+                <button onClick={() => setShowLowStockModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              {lowStockItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">Bütün məhsullar kifayət qədərdir.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {lowStockItems.map(item => (
+                    <div key={item.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white">{item.name}</p>
+                        <p className="text-xs text-red-500 font-black uppercase mt-1">Kritik: {item.critical_limit || 0} {item.unit}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-black text-gray-900 dark:text-white">{item.stock_quantity} {item.unit}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Stokda</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Informational Modal */}
       <AnimatePresence>
         {infoModal?.show && (
@@ -512,7 +578,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-8 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-x-hidden touch-pan-y pb-28 lg:pb-8"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-indigo-600" />
               <button 

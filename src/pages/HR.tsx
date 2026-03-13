@@ -41,12 +41,29 @@ export default function HR() {
   // Body scroll lock when modals are open
   useEffect(() => {
     if (showModal || selectedHistoryEmployee) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100vw';
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
     };
   }, [showModal, selectedHistoryEmployee]);
 
@@ -358,7 +375,7 @@ export default function HR() {
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto overflow-x-hidden touch-pan-y pb-28 lg:pb-8"
           >
             <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
             <div className="flex justify-between items-center mb-4">
@@ -390,11 +407,11 @@ export default function HR() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.salary')} (₼)</label>
-                    <input required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
+                    <input id="hr-salary" title={t('hr.salary')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.hireDate')}</label>
-                    <input required type="date" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.hire_date} onChange={e => setFormData({ ...formData, hire_date: e.target.value })} />
+                    <label htmlFor="hr-hire-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.hireDate')}</label>
+                    <input id="hr-hire-date" title={t('hr.hireDate')} required type="date" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.hire_date} onChange={e => setFormData({ ...formData, hire_date: e.target.value })} />
                   </div>
                 </div>
 
@@ -403,12 +420,12 @@ export default function HR() {
                   <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">İstifadəçi adı</label>
-                        <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} placeholder="mammad" />
+                        <label htmlFor="hr-username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">İstifadəçi adı</label>
+                        <input id="hr-username" title="İstifadəçi adı" required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} placeholder="mammad" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Şifrə</label>
-                        <input required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="123456" />
+                        <label htmlFor="hr-password" title="Şifrə" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Şifrə</label>
+                        <input id="hr-password" title="Şifrə" required type="text" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder="123456" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -423,8 +440,10 @@ export default function HR() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sistem Rolu</label>
+                        <label htmlFor="hr-system-role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sistem Rolu</label>
                         <select
+                          id="hr-system-role"
+                          title="Sistem Rolu"
                           className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2"
                           value={formData.user_role}
                           onChange={e => setFormData({ ...formData, user_role: e.target.value as 'admin' | 'user' })}
@@ -479,7 +498,7 @@ export default function HR() {
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-lg shadow-2xl overflow-y-auto flex flex-col max-h-[85vh] lg:max-h-[80vh] touch-pan-y pb-28 lg:pb-8"
             >
               <div className="flex justify-between items-center mb-6">
                 <div>

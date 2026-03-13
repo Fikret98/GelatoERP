@@ -24,6 +24,35 @@ export default function Suppliers() {
   useEffect(() => {
     fetchData();
   }, []);
+  
+  // Body scroll lock when modals are open
+  useEffect(() => {
+    if (showModal || showPaymentModal || showHistoryModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100vw';
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+    };
+  }, [showModal, showPaymentModal, showHistoryModal]);
 
   const fetchData = async () => {
     try {
@@ -212,7 +241,7 @@ export default function Suppliers() {
                 <motion.div
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto touch-pan-y pb-28 lg:pb-8 shadow-2xl"
                 >
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
                   <div className="flex justify-between items-center mb-6">
@@ -250,7 +279,7 @@ export default function Suppliers() {
                 <motion.div
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto touch-pan-y pb-28 lg:pb-8 shadow-2xl"
                 >
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
                   <div className="flex justify-between items-center mb-6">
@@ -290,7 +319,7 @@ export default function Suppliers() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
+                  className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl w-full max-w-lg overflow-y-auto flex flex-col max-h-[85vh] lg:max-h-[90vh] shadow-2xl touch-pan-y pb-28 lg:pb-0"
                 >
                   <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
                     <div className="flex items-center gap-3">
