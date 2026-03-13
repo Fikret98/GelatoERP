@@ -21,6 +21,7 @@ interface ShiftContextType {
   getExpectedCash: () => Promise<number>;
   getLastShift: () => Promise<any | null>;
   getLastShiftClosingBalance: () => Promise<number>;
+  getGlobalCashBalance: () => Promise<number>;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -247,7 +248,23 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const getGlobalCashBalance = async (): Promise<number> => {
+    try {
+      const { data, error } = await supabase.rpc('get_current_cash_balance');
+      if (error) throw error;
+      return data || 0;
+    } catch (e) {
+      console.error('Error fetching global cash balance:', e);
+      return 0;
+    }
+  };
+
   const getLastShiftClosingBalance = async (): Promise<number> => {
+    // We prioritize the global system balance as the suggested opening balance
+    // This ensures all transactions (linked or unlinked) are accounted for
+    const globalBalance = await getGlobalCashBalance();
+    if (globalBalance > 0) return globalBalance;
+
     const lastShift = await getLastShift();
     return lastShift?.actual_cash_balance || 0;
   };
@@ -261,7 +278,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       refreshShift,
       getExpectedCash,
       getLastShift,
-      getLastShiftClosingBalance
+      getLastShiftClosingBalance,
+      getGlobalCashBalance
     }}>
       {children}
     </ShiftContext.Provider>

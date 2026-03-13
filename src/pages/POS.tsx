@@ -20,12 +20,13 @@ export default function POS() {
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [saleSuccess, setSaleSuccess] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
-  const { activeShift, openShift, closeShift, loading: shiftLoading, getExpectedCash, getLastShiftClosingBalance } = useShift();
+  const { activeShift, openShift, closeShift, loading: shiftLoading, getExpectedCash, getLastShiftClosingBalance, getGlobalCashBalance, getLastShift } = useShift();
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [openingBalance, setOpeningBalance] = useState('');
   const [actualBalance, setActualBalance] = useState('');
   const [expectedBalance, setExpectedBalance] = useState<number | null>(null);
   const [lastClosingBalance, setLastClosingBalance] = useState<number | null>(null);
+  const [globalSystemBalance, setGlobalSystemBalance] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
 
 
@@ -98,14 +99,26 @@ export default function POS() {
     }).filter(item => item.quantity > 0));
   };
   useEffect(() => {
-    if (showShiftModal) {
-      if (activeShift) {
-        getExpectedCash().then(setExpectedBalance);
-      } else {
-        getLastShiftClosingBalance().then(setLastClosingBalance);
+    const fetchData = async () => {
+      if (showShiftModal) {
+        if (activeShift) {
+          const expected = await getExpectedCash();
+          setExpectedBalance(expected);
+          setActualBalance(expected.toFixed(2));
+        } else {
+          const lastShift = await getLastShift();
+          setLastClosingBalance(lastShift?.actual_cash_balance || 0);
+          
+          const globalBal = await getGlobalCashBalance();
+          setGlobalSystemBalance(globalBal);
+          
+          // Suggest the global balance as opening balance
+          setOpeningBalance(globalBal.toFixed(2));
+        }
       }
-    }
-  }, [showShiftModal, activeShift]);
+    };
+    fetchData();
+  }, [showShiftModal, activeShift, getExpectedCash, getLastShift, getGlobalCashBalance]);
   const removeFromCart = (productId: number) => {
     setCart(cart.filter(item => item.product.id !== productId));
   };
@@ -468,9 +481,27 @@ export default function POS() {
                       Kassa Açılış Balansı (₼)
                     </label>
                     {lastClosingBalance !== null && (
-                      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-4 mb-4">
-                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Sonuncu növbənin qapanış balansı</p>
-                        <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{lastClosingBalance.toFixed(2)} ₼</p>
+                      <div className="space-y-3 mb-4">
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-4">
+                          <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Cari Sistem Balansı (Dashboard)</p>
+                          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{(globalSystemBalance || 0).toFixed(2)} ₼</p>
+                          <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/50 mt-1 font-medium leading-tight">
+                            * Bu məbləğ sistemdəki bütün nəğd hərəkətlərin (satış, xərc, borc) ümumi qalığıdır.
+                          </p>
+                        </div>
+
+                        {Math.abs((globalSystemBalance || 0) - (lastClosingBalance || 0)) > 0.01 && (
+                          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-2xl p-4">
+                            <div className="flex justify-between items-center mb-1">
+                              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Sonuncu növbədən qalan</p>
+                              <span className="text-[10px] font-black text-red-500">FƏRQ: {((globalSystemBalance || 0) - (lastClosingBalance || 0)).toFixed(2)} ₼</span>
+                            </div>
+                            <p className="text-base font-bold text-amber-700 dark:text-amber-300">{(lastClosingBalance || 0).toFixed(2)} ₼</p>
+                            <p className="text-[9px] text-amber-600/70 dark:text-amber-400/50 mt-1 font-medium leading-tight">
+                              * Növbədən kənar xərclər (məs: alışlar) səbəbilə sistem qalığı ilə son növbə fərqlənə bilər.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                     <input
