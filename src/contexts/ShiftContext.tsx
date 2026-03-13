@@ -204,39 +204,36 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       // 3. Record shortage/excess as financial adjustment to sync system balance
+      // We route this through "Növbə Arası (Araşdırılır)" so it appears in HR for approval
       const shortage = expectedCash - actualBalance;
-      if (shortage !== 0) {
+      if (Math.abs(shortage) > 0.01) {
+        const auditDesc = `Növbə qapanış fərqi: İşçi: ${user.item_name || user.name}, Növbə: #${activeShift.id}. (Olmalı: ${expectedCash.toFixed(2)}, Faktiki: ${actualBalance.toFixed(2)})`;
+        const userIdInt = parseInt(user.id);
+
         if (shortage > 0) {
-          // It's a shortage (kəsir) -> Record as Expense and Debt
-          await Promise.all([
-            supabase.from('employee_debts').insert([{
-              user_id: activeShift.user_id,
-              shift_id: activeShift.id,
-              amount: shortage,
-              type: 'shortage',
-              notes: `Növbə #${activeShift.id} kəsiri`
-            }]),
-            supabase.from('expenses').insert([{
-              date: new Date().toISOString(),
-              category: 'Kassa Kəsiri',
-              amount: shortage,
-              description: `Növbə #${activeShift.id} kəsiri (Avtomatik tənzimləmə)`,
-              payment_method: 'cash',
-              user_id: activeShift.user_id,
-              shift_id: activeShift.id
-            }])
-          ]);
+          // It's a shortage (kəsir) -> Record as Expense (Pending Audit)
+          await supabase.from('expenses').insert([{
+            date: new Date().toISOString(),
+            category: 'Növbə Arası (Araşdırılır)',
+            amount: Math.abs(shortage),
+            description: auditDesc,
+            payment_method: 'cash',
+            user_id: userIdInt,
+            shift_id: activeShift.id,
+            notes: JSON.stringify({ type: 'closing_audit', expected: expectedCash, actual: actualBalance })
+          }]);
         } else {
-          // It's an excess (artıq) -> Record as Income
+          // It's an excess (artıq) -> Record as Income (Pending Audit)
           const excess = Math.abs(shortage);
           await supabase.from('incomes').insert([{
             date: new Date().toISOString(),
-            category: 'Kassa Artığı',
+            category: 'Növbə Arası (Araşdırılır)',
             amount: excess,
-            description: `Növbə #${activeShift.id} artığı (Avtomatik tənzimləmə)`,
+            description: auditDesc,
             payment_method: 'cash',
-            user_id: activeShift.user_id,
-            shift_id: activeShift.id
+            user_id: userIdInt,
+            shift_id: activeShift.id,
+            notes: JSON.stringify({ type: 'closing_audit', expected: expectedCash, actual: actualBalance })
           }]);
         }
       }
