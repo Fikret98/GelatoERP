@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Plus, Download, FileText, FileSpreadsheet, X, ShoppingBag, Calendar, User } from 'lucide-react';
+import { Plus, Download, FileText, FileSpreadsheet, X, ShoppingBag, Calendar, User, Percent } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -10,7 +10,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { TrendingUp, TrendingDown, Coins, Briefcase, Tag, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, Coins, Briefcase, Tag, Info, Calculator } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function Reports() {
@@ -42,7 +42,22 @@ export default function Reports() {
           .eq('sale_id', transaction.id);
         
         if (error) throw error;
-        setSaleDetails(data || []);
+        
+        // Fetch costs for these products
+        const productIds = (data || []).map(item => item.product_id);
+        const { data: costData } = await supabase
+          .from('product_costs_view')
+          .select('*')
+          .in('product_id', productIds);
+        
+        const costMap = new Map((costData || []).map(c => [c.product_id, c.calculated_cost_price]));
+        
+        const itemsWithCost = (data || []).map(item => ({
+          ...item,
+          cost_price: costMap.get(item.product_id) || 0
+        }));
+
+        setSaleDetails(itemsWithCost);
       } catch (e) {
         console.error(e);
         toast.error('Detallar yüklənərkən xəta');
@@ -600,15 +615,62 @@ export default function Reports() {
                       <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
                         {saleDetails.map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-                            <div>
-                              <p className="font-bold text-gray-900 dark:text-white text-sm">{item.products?.name}</p>
-                              <p className="text-[10px] text-gray-400 font-bold">{item.quantity} ədəd × {item.price.toFixed(2)} ₼</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{item.products?.name}</p>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-400 font-bold">
+                                <span>{item.quantity} ədəd × {item.price.toFixed(2)} ₼</span>
+                                {item.cost_price > 0 && (
+                                  <>
+                                    <span className="text-gray-300 dark:text-gray-700">•</span>
+                                    <span className="text-emerald-500/80">Marja: {(((item.price - item.cost_price) / item.price) * 100).toFixed(0)}%</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                            <p className="font-black text-gray-900 dark:text-white">{(item.quantity * item.price).toFixed(2)} ₼</p>
+                            <div className="text-right ml-4">
+                              <p className="font-black text-gray-900 dark:text-white">{(item.quantity * item.price).toFixed(2)} ₼</p>
+                            </div>
                           </div>
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {selectedTransaction.type === 'sale' && !isLoadingDetails && (
+                  <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Maliyyə Göstəriciləri</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Calculator className="w-3.5 h-3.5 text-gray-400" />
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-tight">Maya</p>
+                        </div>
+                        <p className="font-bold text-gray-900 dark:text-white text-base">
+                          {saleDetails.reduce((sum, item) => sum + (item.cost_price * item.quantity), 0).toFixed(2)} <span className="text-xs">₼</span>
+                        </p>
+                      </div>
+                      <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100/50 dark:border-emerald-800/30">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                          <p className="text-[9px] font-black text-emerald-500 uppercase tracking-tight">Qazanc</p>
+                        </div>
+                        <p className="font-black text-emerald-600 dark:text-emerald-400 text-base">
+                          {(selectedTransaction.amount - saleDetails.reduce((sum, item) => sum + (item.cost_price * item.quantity), 0)).toFixed(2)} <span className="text-xs">₼</span>
+                        </p>
+                      </div>
+                      <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-2xl border border-indigo-100/50 dark:border-indigo-800/30 col-span-2 sm:col-span-1">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Percent className="w-3.5 h-3.5 text-indigo-500" />
+                          <p className="text-[9px] font-black text-indigo-500 uppercase tracking-tight">Ümumi Marja</p>
+                        </div>
+                        <p className="font-black text-indigo-600 dark:text-indigo-400 text-base">
+                          {selectedTransaction.amount > 0 
+                            ? (((selectedTransaction.amount - saleDetails.reduce((sum, item) => sum + (item.cost_price * item.quantity), 0)) / selectedTransaction.amount) * 100).toFixed(1)
+                            : 0}%
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
