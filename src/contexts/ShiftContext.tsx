@@ -60,51 +60,69 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     setLoading(true);
     try {
-      // 1. Detect and Resolve Financial Discrepancies (Sync with Global Dashboard)
-      // We only record a transaction if the opening balance differs from the Global System Balance.
-      // This prevents double-counting if the discrepancy was already recorded (e.g., as an unlinked expense).
-      const globalBalance = await getGlobalCashBalance();
-      const globalDiff = openingBalance - globalBalance;
-
-      if (Math.abs(globalDiff) > 0.01) {
-        if (globalDiff < 0) {
-          // System thought we had MORE. This is a NEW shortage.
-          await supabase.from('expenses').insert([{
-            date: new Date().toISOString(),
-            category: 'Kassa Tənzimlənməsi (Kəsir)',
-            amount: Math.abs(globalDiff),
-            description: `Sistem tənzimlənməsi (Dashboard: ${globalBalance.toFixed(2)}, Fiziki: ${openingBalance.toFixed(2)})`,
-            payment_method: 'cash',
-            user_id: user.id
-          }]);
-        } else {
-          // System thought we had LESS. This is a NEW excess.
-          await supabase.from('incomes').insert([{
-            date: new Date().toISOString(),
-            category: 'Kassa Tənzimlənməsi (Artıq)',
-            amount: globalDiff,
-            description: `Sistem tənzimlənməsi (Dashboard: ${globalBalance.toFixed(2)}, Fiziki: ${openingBalance.toFixed(2)})`,
-            payment_method: 'cash',
-            user_id: user.id
-          }]);
-        }
-      }
-
-      // 2. Inter-shift Audit trail (Accountability between employees)
-      // This logs if the new shift starts with a different amount than what the previous person physicaly closed with.
+      // 1. Detect transition discrepancy (Accountability between employees)
       const lastShift = await getLastShift();
       const lastClosing = lastShift?.actual_cash_balance || 0;
       const lastUserName = lastShift?.users?.name || 'Naməlum';
       const shiftDiff = openingBalance - lastClosing;
 
+      // 2. Identify if this is a "New" financial event or just aligning with an already-reduced Dashboard
+      const globalBalance = await getGlobalCashBalance();
+      const globalDiff = openingBalance - globalBalance;
+
+      // If there is ANY physical difference from the last shift, we need an Audit item in HR.
       if (Math.abs(shiftDiff) > 0.01) {
-        await supabase.from('employee_debts').insert([{
-          user_id: user.id,
-          amount: 0, // This is a non-financial audit record
-          type: 'shortage',
-          notes: `Keçid fərqi (Fiziki): Əvvəlki işçi ${lastClosing.toFixed(2)} ilə bağladı, Yeni işçi ${openingBalance.toFixed(2)} daxil etdi. Fərq: ${shiftDiff.toFixed(2)} ₼`,
-          status: 'paid' // Mark as resolved/audit only
-        }]);
+        const auditDesc = `Növbə arası fərq: Əvvəlki işçi: ${lastUserName}, Yeni işçi: ${user.item_name || user.name}. (Əvvəlki: ${lastClosing.toFixed(2)}, Yeni: ${openingBalance.toFixed(2)}, Sistem: ${globalBalance.toFixed(2)})`;
+        
+        if (shiftDiff < 0) {
+          // It's a shortage relative to last person's close
+          await supabase.from('expenses').insert([{
+            date: new Date().toISOString(),
+            category: 'Növbə Arası (Araşdırılır)',
+            amount: Math.abs(shiftDiff), 
+            description: auditDesc,
+            payment_method: 'cash',
+            user_id: user.id,
+            notes: JSON.stringify({ globalDiff, shiftDiff, type: 'audit_trigger' })
+          }]);
+        } else {
+          // It's an excess relative to last person's close
+          await supabase.from('incomes').insert([{
+            date: new Date().toISOString(),
+            category: 'Növbə Arası (Araşdırılır)',
+            amount: Math.abs(shiftDiff),
+            description: auditDesc,
+            payment_method: 'cash',
+            user_id: user.id,
+            notes: JSON.stringify({ globalDiff, shiftDiff, type: 'audit_trigger' })
+          }]);
+        }
+
+        // IMPORTANT: If the Dashboard already reflects this gap (globalDiff is 0), 
+        // recording the above transaction will UNFORTUNATELY change the Dashboard again.
+        // To fix this, if globalDiff is 0, we immediately record a counter-transaction 
+        // to keep the Dashboard balance stable while keeping the Audit record alive.
+        if (Math.abs(globalDiff) < 0.01) {
+           if (shiftDiff < 0) {
+             // We added an expense of shiftDiff, but Dashboard was already correct. Add income to offset.
+             await supabase.from('incomes').insert([{
+               category: 'Sistem Tənzimlənməsi (Sinxron)',
+               amount: Math.abs(shiftDiff),
+               description: 'Təkrarlanmanın qarşısını almaq üçün avtomatik tənzimləmə',
+               payment_method: 'cash',
+               user_id: user.id
+             }]);
+           } else {
+             // We added an income of shiftDiff, but Dashboard was already correct. Add expense to offset.
+             await supabase.from('expenses').insert([{
+               category: 'Sistem Tənzimlənməsi (Sinxron)',
+               amount: Math.abs(shiftDiff),
+               description: 'Təkrarlanmanın qarşısını almaq üçün avtomatik tənzimləmə',
+               payment_method: 'cash',
+               user_id: user.id
+             }]);
+           }
+        }
       }
 
       // 2. Create the new shift
