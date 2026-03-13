@@ -112,7 +112,11 @@ export default function GelatoPullToRefresh({ onRefresh, children, className }: 
     <div 
       ref={containerRef} 
       className={`relative h-full overflow-y-auto overflow-x-hidden ${className || ''}`}
-      style={{ isolation: 'isolate', WebkitOverflowScrolling: 'touch' }}
+      style={{ 
+        isolation: 'isolate', 
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorY: 'none'
+      }}
     >
       {/* Şirin Dondurma Mövzulu Arxa Fon */}
       <motion.div
