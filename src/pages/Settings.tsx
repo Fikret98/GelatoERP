@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { cn } from '../lib/utils';
 
 export default function Settings() {
   const { t } = useLanguage();
@@ -55,7 +56,8 @@ export default function Settings() {
         name: profile.name,
         email: profile.email,
         phone: profile.phone,
-        role: profile.role
+        // Only allow admin to change roles
+        ...(user?.role === 'admin' ? { role: profile.role } : {})
       }).eq('username', user?.username);
 
       if (error) throw error;
@@ -153,9 +155,13 @@ export default function Settings() {
                 <input
                   type="text"
                   required
+                  disabled={user?.role !== 'admin'}
                   value={profile.role}
                   onChange={e => setProfile({ ...profile, role: e.target.value })}
-                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                  className={cn(
+                    "w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow",
+                    user?.role !== 'admin' && "opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800"
+                  )}
                 />
               </div>
             </div>
