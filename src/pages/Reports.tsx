@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Plus, Download, FileText, FileSpreadsheet, X, ShoppingBag, Calendar, User, Percent } from 'lucide-react';
+import { Plus, Download, FileText, FileSpreadsheet, X, ShoppingBag, Calendar, User, Percent, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { TrendingUp, TrendingDown, Coins, Briefcase, Tag, Info, Calculator } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -16,6 +17,7 @@ import { cn } from '../lib/utils';
 export default function Reports() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { activeShift } = useShift();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'sale' | 'expense' | 'income' | 'shifts'>('all');
   const [dateFilters, setDateFilters] = useState({ start: '', end: '' });
@@ -25,8 +27,8 @@ export default function Reports() {
   
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
-  const [expenseData, setExpenseData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: '', amount: '', description: '' });
-  const [incomeData, setIncomeData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: 'Kassa mədaxil', amount: '', description: '' });
+  const [expenseData, setExpenseData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: '', amount: '', description: '', payment_method: 'cash' });
+  const [incomeData, setIncomeData] = useState({ date: format(new Date(), "yyyy-MM-dd'T'HH:mm"), category: 'Kassa mədaxil', amount: '', description: '', payment_method: 'cash' });
   
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
   const [saleDetails, setSaleDetails] = useState<any[]>([]);
@@ -223,8 +225,9 @@ export default function Reports() {
       const { error } = await supabase.from('expenses').insert([{
         ...expenseData,
         date: new Date(expenseData.date).toISOString(),
-        amount: amount,
-        user_id: user?.id ? parseInt(user.id) : null
+        amount: parseFloat(expenseData.amount),
+        user_id: user.id,
+        shift_id: activeShift?.id
       }]);
 
       if (error) throw error;
@@ -245,7 +248,8 @@ export default function Reports() {
         ...incomeData,
         date: new Date(incomeData.date).toISOString(),
         amount: parseFloat(incomeData.amount),
-        user_id: user?.id ? parseInt(user.id) : null
+        user_id: user.id,
+        shift_id: activeShift?.id
       }]);
 
       if (error) throw error;
@@ -559,8 +563,9 @@ export default function Reports() {
                   )}>
                     {(t.type === 'expense' ? '-' : '+')}{t.amount.toFixed(2)} ₼
                   </p>
-                  <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
-                    {t.type === 'sale' ? (t.payment_method === 'card' ? 'Kartla Satış' : 'Nağd Satış') : t.type === 'income' ? 'Kassa Mədaxil' : 'Məxaric'}
+                  <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5 flex items-center justify-end gap-1">
+                    {t.payment_method === 'card' ? <Coins className="w-2.5 h-2.5" /> : <DollarSign className="w-2.5 h-2.5" />}
+                    {t.type === 'sale' ? (t.payment_method === 'card' ? 'Kartla Satış' : 'Nağd Satış') : t.type === 'income' ? 'Mədaxil' : 'Məxaric'}
                   </p>
                 </div>
               </motion.div>
@@ -721,6 +726,37 @@ export default function Reports() {
                   <label htmlFor="expense-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
                   <textarea id="expense-desc" title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
                 </div>
+                <div>
+                  <label htmlFor="expense-payment-method" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ödəniş Üsulu</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setExpenseData({ ...expenseData, payment_method: 'cash' })}
+                      className={cn(
+                        "flex items-center justify-center gap-2 p-2 rounded-xl border font-bold text-xs transition-all",
+                        expenseData.payment_method === 'cash' 
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-900/20" 
+                          : "border-gray-200 dark:border-gray-700 text-gray-500"
+                      )}
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      Nağd
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpenseData({ ...expenseData, payment_method: 'card' })}
+                      className={cn(
+                        "flex items-center justify-center gap-2 p-2 rounded-xl border font-bold text-xs transition-all",
+                        expenseData.payment_method === 'card' 
+                          ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20" 
+                          : "border-gray-200 dark:border-gray-700 text-gray-500"
+                      )}
+                    >
+                      <Coins className="w-4 h-4" />
+                      Bank (Kart)
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-6">
                   <button type="button" onClick={() => setShowExpenseModal(false)} className="w-full lg:w-auto px-4 py-3 lg:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">{t('common.cancel')}</button>
                   <button type="submit" className="w-full lg:w-auto px-4 py-3 lg:py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">{t('common.save')}</button>
@@ -755,6 +791,37 @@ export default function Reports() {
                 <div>
                   <label htmlFor="income-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Məbləğ (₼)</label>
                   <input id="income-amount" required title="Məbləğ" placeholder="0.00" type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={incomeData.amount} onChange={e => setIncomeData({ ...incomeData, amount: e.target.value })} />
+                </div>
+                <div>
+                  <label htmlFor="income-payment-method" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ödəniş Üsulu</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIncomeData({ ...incomeData, payment_method: 'cash' })}
+                      className={cn(
+                        "flex items-center justify-center gap-2 p-2 rounded-xl border font-bold text-xs transition-all",
+                        incomeData.payment_method === 'cash' 
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-900/20" 
+                          : "border-gray-200 dark:border-gray-700 text-gray-500"
+                      )}
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      Nağd
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIncomeData({ ...incomeData, payment_method: 'card' })}
+                      className={cn(
+                        "flex items-center justify-center gap-2 p-2 rounded-xl border font-bold text-xs transition-all",
+                        incomeData.payment_method === 'card' 
+                          ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20" 
+                          : "border-gray-200 dark:border-gray-700 text-gray-500"
+                      )}
+                    >
+                      <Coins className="w-4 h-4" />
+                      Bank (Kart)
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="income-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>

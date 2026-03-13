@@ -83,8 +83,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       // 1. Get current totals for this shift
       const [{ data: salesData }, { data: expData }, { data: incData }] = await Promise.all([
         supabase.from('sales').select('total_amount, payment_method').eq('shift_id', activeShift.id),
-        supabase.from('expenses').select('amount').eq('shift_id', activeShift.id),
-        supabase.from('incomes').select('amount').eq('shift_id', activeShift.id)
+        supabase.from('expenses').select('amount, payment_method').eq('shift_id', activeShift.id),
+        supabase.from('incomes').select('amount, payment_method').eq('shift_id', activeShift.id)
       ]);
 
       const cashSales = (salesData || [])
@@ -93,10 +93,22 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       const cardSales = (salesData || [])
         .filter(s => s.payment_method === 'card')
         .reduce((sum, s) => sum + s.total_amount, 0);
-      const totalIncomes = (incData || []).reduce((sum, i) => sum + i.amount, 0);
-      const totalExpenses = (expData || []).reduce((sum, e) => sum + e.amount, 0);
+
+      const cashIncomes = (incData || [])
+        .filter(i => i.payment_method === 'cash')
+        .reduce((sum, i) => sum + i.amount, 0);
+      const cardIncomes = (incData || [])
+        .filter(i => i.payment_method === 'card')
+        .reduce((sum, i) => sum + i.amount, 0);
+
+      const cashExpenses = (expData || [])
+        .filter(e => e.payment_method === 'cash')
+        .reduce((sum, e) => sum + e.amount, 0);
+      const cardExpenses = (expData || [])
+        .filter(e => e.payment_method === 'card')
+        .reduce((sum, e) => sum + e.amount, 0);
       
-      const expectedCash = activeShift.opening_balance + cashSales + totalIncomes - totalExpenses;
+      const expectedCash = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
 
       // 2. Update the shift record
       const { error } = await supabase
@@ -108,14 +120,28 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
           expected_cash_balance: expectedCash,
           cash_sales: cashSales,
           card_sales: cardSales,
-          total_incomes: totalIncomes,
-          total_expenses: totalExpenses,
+          total_incomes: cashIncomes + cardIncomes,
+          total_expenses: cashExpenses + cardExpenses,
           notes: notes
         })
         .eq('id', activeShift.id);
 
       if (error) throw error;
       
+      // 3. Record shortage as debt if necessary
+      const shortage = expectedCash - actualBalance;
+      if (shortage > 0) {
+        await supabase
+          .from('employee_debts')
+          .insert([{
+            user_id: activeShift.user_id,
+            shift_id: activeShift.id,
+            amount: shortage,
+            type: 'shortage',
+            notes: `Növbə #${activeShift.id} kəsiri`
+          }]);
+      }
+
       setActiveShift(null);
       toast.success('Növbə bağlandı');
     } catch (e: any) {

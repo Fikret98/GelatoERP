@@ -28,6 +28,10 @@ export default function HR() {
     bonus_percentage: '0.8',
     work_schedule: ''
   });
+  const [employeeDebts, setEmployeeDebts] = useState<any[]>([]);
+  const [selectedDebtEmployee, setSelectedDebtEmployee] = useState<any | null>(null);
+  const [isLoadingDebts, setIsLoadingDebts] = useState(false);
+  const [debtRecords, setDebtRecords] = useState<any[]>([]);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedHistoryEmployee, setSelectedHistoryEmployee] = useState<any | null>(null);
@@ -40,7 +44,7 @@ export default function HR() {
 
   // Body scroll lock when modals are open
   useEffect(() => {
-    if (showModal || selectedHistoryEmployee) {
+    if (showModal || selectedHistoryEmployee || selectedDebtEmployee) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -87,18 +91,69 @@ export default function HR() {
     }
   };
 
+  const fetchDebtHistory = async (employee: any) => {
+    setSelectedDebtEmployee(employee);
+    setIsLoadingDebts(true);
+    try {
+      const { data, error } = await supabase
+        .from('employee_debts')
+        .select('*')
+        .eq('user_id', employee.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setDebtRecords(data || []);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Borc tarixçəsi yüklənərkən xəta');
+    } finally {
+      setIsLoadingDebts(false);
+    }
+  };
+
+  const handleSettleDebt = async (employeeId: number, amount: number, type: 'salary_deduction' | 'manual_payment') => {
+    try {
+      const { error } = await supabase
+        .from('employee_debts')
+        .insert([{
+          user_id: employeeId,
+          amount: -amount,
+          type: type,
+          notes: type === 'salary_deduction' ? 'Maaşdan çıxıldı' : 'Nəğd ödənildi',
+          status: 'paid'
+        }]);
+
+      if (error) throw error;
+      toast.success('Ödəniş qeyd olundu');
+      fetchData();
+      if (selectedDebtEmployee) {
+        fetchDebtHistory(selectedDebtEmployee);
+      }
+    } catch (e: any) {
+      toast.error('Xəta: ' + e.message);
+    }
+  };
+
   const fetchData = async () => {
     try {
       setIsLoadingPage(true);
       const [
         { data: usersData, error: userErr },
-        { data: bonusData }
+        { data: bonusData },
+        { data: debtsData }
       ] = await Promise.all([
         supabase.from('users').select('*, employees!employees_user_id_fkey(*)').order('name'),
-        supabase.from('seller_bonuses_view').select('*')
+        supabase.from('seller_bonuses_view').select('*'),
+        supabase.from('employee_debts').select('user_id, amount')
       ]);
 
       if (userErr) throw userErr;
+
+      // Group debts by user
+      const debtMap = (debtsData || []).reduce((acc: any, curr: any) => {
+        acc[curr.user_id] = (acc[curr.user_id] || 0) + curr.amount;
+        return acc;
+      }, {});
 
       // Merge data: users with their nested employee data
       const merged = (usersData || []).map(u => {
@@ -112,6 +167,7 @@ export default function HR() {
           salary: emp?.salary || 0,
           hire_date: emp?.hire_date || null,
           work_schedule: emp?.work_schedule || '',
+          total_debt: debtMap[u.id] || 0,
           isSystemUser: true
         };
       });
@@ -337,6 +393,16 @@ export default function HR() {
                   <History className="w-5 h-5" />
                 </button>
                 <button 
+                  onClick={() => fetchDebtHistory(employee)}
+                  className={cn(
+                    "p-2 transition-colors",
+                    employee.total_debt > 0 ? "text-red-500 hover:text-red-600" : "text-gray-400 hover:text-indigo-600"
+                  )}
+                  title="Borclara bax"
+                >
+                  <DollarSign className="w-5 h-5" />
+                </button>
+                <button 
                   onClick={() => handleEdit(employee)}
                   className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                   title={t('common.edit')}
@@ -364,6 +430,14 @@ export default function HR() {
                   {(bonuses.find(b => b.seller_name?.toLowerCase().trim() === employee.name?.toLowerCase().trim())?.total_bonus || 0).toFixed(2)} ₼
                 </span>
               </div>
+              {employee.total_debt > 0 && (
+                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg flex justify-between items-center">
+                  <span className="text-xs font-bold text-red-700 dark:text-red-400">Cari Borc (Kəsirlər):</span>
+                  <span className="text-sm font-black text-red-600 dark:text-red-300">
+                    {employee.total_debt.toFixed(2)} ₼
+                  </span>
+                </div>
+              )}
             </div>
           </motion.div>
         ))}
@@ -590,6 +664,92 @@ export default function HR() {
       </AnimatePresence>
         </>
       )}
+      <AnimatePresence>
+        {selectedDebtEmployee && (
+          <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-lg shadow-2xl overflow-y-auto flex flex-col max-h-[85vh] lg:max-h-[80vh] touch-pan-y pb-28 lg:pb-8"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Borc və Kəsir Tarixçəsi</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedDebtEmployee.name}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedDebtEmployee(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  title={t('common.cancel')}
+                >
+                  <Plus className="w-6 h-6 rotate-45" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-900/30">
+                  <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest mb-1">Cari Borc</p>
+                  <p className="text-2xl font-black text-red-700 dark:text-red-300">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => handleSettleDebt(selectedDebtEmployee.id, selectedDebtEmployee.total_debt, 'salary_deduction')}
+                    disabled={selectedDebtEmployee.total_debt <= 0}
+                    className="flex-1 bg-indigo-600 text-white rounded-xl text-[10px] font-bold hover:bg-indigo-700 py-2 disabled:opacity-50"
+                  >
+                    Maaşdan Çıx
+                  </button>
+                  <button
+                    onClick={() => handleSettleDebt(selectedDebtEmployee.id, selectedDebtEmployee.total_debt, 'manual_payment')}
+                    disabled={selectedDebtEmployee.total_debt <= 0}
+                    className="flex-1 border border-emerald-500 text-emerald-600 rounded-xl text-[10px] font-bold hover:bg-emerald-50 py-2 disabled:opacity-50"
+                  >
+                    Nəğd Ödəniş
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                {isLoadingDebts ? (
+                  <div className="py-12 flex justify-center">
+                    <LoadingSpinner message="Yüklənir..." />
+                  </div>
+                ) : debtRecords.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400 italic">
+                    Heç bir borc yazısı tapılmadı.
+                  </div>
+                ) : (
+                  debtRecords.map((record) => (
+                    <div key={record.id} className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 flex justify-between items-center transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={cn(
+                            "text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded",
+                            record.amount > 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
+                          )}>
+                            {record.type === 'shortage' ? 'Kəsir' : record.type === 'salary_deduction' ? 'Maaşdan Çıxılış' : 'Ödəniş'}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {format(new Date(record.created_at), 'dd.MM.yyyy')}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{record.notes}</p>
+                      </div>
+                      <span className={cn(
+                        "text-sm font-black tabular-nums",
+                        record.amount > 0 ? "text-red-600" : "text-emerald-600"
+                      )}>
+                        {record.amount > 0 ? '+' : ''}{record.amount.toFixed(2)} ₼
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
