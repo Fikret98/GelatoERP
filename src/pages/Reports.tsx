@@ -71,6 +71,18 @@ export default function Reports() {
     fetchData();
   }, []);
 
+  // Body scroll lock for transactions modal
+  useEffect(() => {
+    if (selectedTransaction || showExpenseModal || showIncomeModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedTransaction, showExpenseModal, showIncomeModal]);
+
   const fetchData = async () => {
     try {
       setIsLoadingPage(true);
@@ -557,7 +569,7 @@ export default function Reports() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar touch-pan-y"
             >
               <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
               <div className="flex justify-between items-start mb-6 lg:mb-8">
