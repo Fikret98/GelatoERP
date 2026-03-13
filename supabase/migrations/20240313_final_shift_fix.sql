@@ -105,6 +105,19 @@ $$;
 UPDATE public.expenses SET category = 'Növbə Arası (Araşdırılır)' WHERE category = 'Kassa Kəsiri' OR category = 'Növbə Arası';
 UPDATE public.incomes SET category = 'Növbə Arası (Araşdırılır)' WHERE category = 'Kassa Artığı' OR category = 'Növbə Arası';
 
--- 6. Grant execute permissions
+-- 6. Update get_active_shift to use integer user_id
+DROP FUNCTION IF EXISTS get_active_shift(uuid);
+DROP FUNCTION IF EXISTS get_active_shift(integer);
+CREATE OR REPLACE FUNCTION get_active_shift(p_user_id integer)
+RETURNS SETOF public.shifts
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+    SELECT * FROM public.shifts WHERE user_id = p_user_id AND status = 'open' LIMIT 1;
+$$;
+
+-- 7. Grant execute permissions
+GRANT EXECUTE ON FUNCTION get_active_shift(integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_active_shift(integer) TO anon;
 GRANT EXECUTE ON FUNCTION get_user_active_shift(integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_user_active_shift(integer) TO anon;
