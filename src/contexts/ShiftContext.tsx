@@ -58,6 +58,35 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     setLoading(true);
     try {
+      // 1. Detect transition discrepancy (between shifts)
+      const lastClosing = await getLastShiftClosingBalance();
+      const diff = openingBalance - lastClosing;
+
+      if (diff !== 0) {
+        if (diff < 0) {
+          // It's a shortage between shifts -> Record as Expense
+          await supabase.from('expenses').insert([{
+            date: new Date().toISOString(),
+            category: 'Növbə Arası Kəsir',
+            amount: Math.abs(diff),
+            description: `Yeni növbə açılışında aşkar olunan kəsir (Əvvəlki qapanış: ${lastClosing.toFixed(2)}, Yeni açılış: ${openingBalance.toFixed(2)})`,
+            payment_method: 'cash',
+            user_id: user.id
+          }]);
+        } else {
+          // It's an excess between shifts -> Record as Income
+          await supabase.from('incomes').insert([{
+            date: new Date().toISOString(),
+            category: 'Növbə Arası Artıq',
+            amount: diff,
+            description: `Yeni növbə açılışında aşkar olunan artıq (Əvvəlki qapanış: ${lastClosing.toFixed(2)}, Yeni açılış: ${openingBalance.toFixed(2)})`,
+            payment_method: 'cash',
+            user_id: user.id
+          }]);
+        }
+      }
+
+      // 2. Create the new shift
       const { data, error } = await supabase
         .from('shifts')
         .insert([{
