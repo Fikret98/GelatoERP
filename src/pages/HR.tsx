@@ -41,6 +41,7 @@ export default function HR() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [pendingAudits, setPendingAudits] = useState<any[]>([]);
   const [isLoadingAudits, setIsLoadingAudits] = useState(false);
+  const [debtPaymentAmount, setDebtPaymentAmount] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -112,15 +113,37 @@ export default function HR() {
       toast.error('Borc tarixçəsi yüklənərkən xəta');
     } finally {
       setIsLoadingDebts(false);
+      setDebtPaymentAmount(employee.total_debt?.toString() || '0');
     }
   };
 
-  const handleSettleDebt = async (employeeId: number, amount: number, type: 'salary_deduction' | 'manual_payment') => {
+  const handleSettleDebt = async (employee: any, type: 'salary_deduction' | 'manual_payment') => {
+    const amount = parseFloat(debtPaymentAmount);
+    if (!amount || amount <= 0) {
+      toast.error('Məbləğ düzgün daxil edilməyib');
+      return;
+    }
+
+    if (amount > employee.total_debt) {
+      toast.error('Ödəniş məbləği borcdan böyük ola bilməz');
+      return;
+    }
+
+    if (type === 'salary_deduction') {
+      const bonus = bonuses.find(b => b.seller_name?.toLowerCase().trim() === employee.name?.toLowerCase().trim())?.total_bonus || 0;
+      const totalPossible = (employee.salary || 0) + bonus;
+      
+      if (amount > totalPossible) {
+        toast.error(`Maaş/Bonus yetərli deyil. Max: ${totalPossible.toFixed(2)} ₼`);
+        return;
+      }
+    }
+
     try {
       const { error } = await supabase
         .from('employee_debts')
         .insert([{
-          user_id: employeeId,
+          user_id: employee.id,
           amount: -amount,
           type: type,
           notes: type === 'salary_deduction' ? 'Maaşdan çıxıldı' : 'Nəğd ödənildi',
@@ -131,7 +154,9 @@ export default function HR() {
       toast.success('Ödəniş qeyd olundu');
       fetchData();
       if (selectedDebtEmployee) {
-        fetchDebtHistory(selectedDebtEmployee);
+        const updatedEmployee = { ...selectedDebtEmployee, total_debt: selectedDebtEmployee.total_debt - amount };
+        setSelectedDebtEmployee(updatedEmployee);
+        fetchDebtHistory(updatedEmployee);
       }
     } catch (e: any) {
       toast.error('Xəta: ' + e.message);
@@ -818,25 +843,38 @@ export default function HR() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-900/30">
-                  <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest mb-1">Cari Borc</p>
-                  <p className="text-2xl font-black text-red-700 dark:text-red-300">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-900/30 flex justify-between items-center sm:block">
+                  <div>
+                    <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest mb-1">Cari Borc</p>
+                    <p className="text-2xl font-black text-red-700 dark:text-red-300">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</p>
+                  </div>
+                  <div className="mt-0 sm:mt-4 text-left sm:text-right">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Ödəniş Məbləği</p>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-24 border-b-2 border-red-200 dark:border-red-900 bg-transparent text-xl font-black text-red-700 dark:text-red-300 outline-none text-right"
+                      value={debtPaymentAmount}
+                      onChange={e => setDebtPaymentAmount(e.target.value)}
+                      title="Ödəniş məbləği"
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <button
-                    onClick={() => handleSettleDebt(selectedDebtEmployee.id, selectedDebtEmployee.total_debt, 'salary_deduction')}
-                    disabled={selectedDebtEmployee.total_debt <= 0}
+                    onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
+                    disabled={selectedDebtEmployee.total_debt <= 0 || !debtPaymentAmount}
                     className="flex-1 bg-indigo-600 text-white rounded-xl text-[10px] font-bold hover:bg-indigo-700 py-2 disabled:opacity-50"
                   >
                     Maaşdan Çıx
                   </button>
                   <button
-                    onClick={() => handleSettleDebt(selectedDebtEmployee.id, selectedDebtEmployee.total_debt, 'manual_payment')}
-                    disabled={selectedDebtEmployee.total_debt <= 0}
+                    onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
+                    disabled={selectedDebtEmployee.total_debt <= 0 || !debtPaymentAmount}
                     className="flex-1 border border-emerald-500 text-emerald-600 rounded-xl text-[10px] font-bold hover:bg-emerald-50 py-2 disabled:opacity-50"
                   >
-                    Nəğd Ödəniş
+                    Nağd Ödəniş
                   </button>
                 </div>
               </div>
