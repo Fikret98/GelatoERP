@@ -108,8 +108,7 @@ export default function POS() {
         p_total_amount: total,
         p_items: saleItems,
         p_seller_id: parseInt(user.id),
-        p_payment_method: paymentMethod,
-        p_shift_id: null
+        p_payment_method: paymentMethod
       });
 
       if (rpcError) throw rpcError;

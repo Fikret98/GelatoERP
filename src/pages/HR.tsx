@@ -546,11 +546,11 @@ export default function HR() {
                           Şəxsi Məlumatlar
                         </h3>
                         <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.name')}</label>
+                          <label htmlFor="emp-name" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.name')}</label>
                           <input id="emp-name" title={t('hr.name')} placeholder={t('hr.name')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.role')}</label>
+                          <label htmlFor="emp-role" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.role')}</label>
                           <input id="emp-role" title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
                         </div>
                         <div>

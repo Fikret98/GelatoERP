@@ -156,10 +156,22 @@ export default function Dashboard() {
         start.setHours(0, 0, 0, 0);
         startDate = start.toISOString();
       } else {
-        startDate = new Date(customRange.start).toISOString();
-        const end = new Date(customRange.end);
-        end.setHours(23, 59, 59, 999);
-        endDate = end.toISOString();
+        if (!customRange.start || !customRange.end) {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
+          startDate = start.toISOString();
+        } else {
+          try {
+            startDate = new Date(customRange.start).toISOString();
+            const end = new Date(customRange.end);
+            end.setHours(23, 59, 59, 999);
+            endDate = end.toISOString();
+          } catch (e) {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            startDate = start.toISOString();
+          }
+        }
       }
 
       const { data, error } = await supabase.rpc('get_advanced_analytics', {
