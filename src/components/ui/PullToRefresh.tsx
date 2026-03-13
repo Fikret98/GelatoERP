@@ -1,202 +1,178 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
-import { Coins, TrendingUp, Landmark } from 'lucide-react';
+import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { Coins, DollarSign, TrendingUp, ArrowDown } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
   children: React.ReactNode;
-  className?: string;
 }
 
-const COIN_COUNT = 8;
-const COINS = Array.from({ length: COIN_COUNT });
-
-export default function FinancialPullToRefresh({ onRefresh, children, className }: PullToRefreshProps) {
+export default function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
+  const [isPulling, setIsPulling] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
-  const hasVibrated = useRef(false);
-  const PULL_THRESHOLD = 120;
-  
-  const y = useMotionValue(0);
-  
-  // Animation Transforms
-  const headerHeight = useTransform(y, [0, PULL_THRESHOLD], [0, 160]);
-  const headerOpacity = useTransform(y, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0, 0.5, 1]);
-  const iconScale = useTransform(y, [0, PULL_THRESHOLD], [0.5, 1]);
-  const iconRotate = useTransform(y, [0, PULL_THRESHOLD], [0, 360]);
-  const textOpacity = useTransform(y, [PULL_THRESHOLD * 0.5, PULL_THRESHOLD * 0.8], [0, 1]);
+  const threshold = 120;
+  const maxPull = 180;
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Use a strict buffer for top detection
-      if (el.scrollTop <= 1) {
+      // Check if we are at the top and the container is scrollable
+      if (window.scrollY === 0) {
         startY.current = e.touches[0].pageY;
-      } else {
-        startY.current = -1;
+        setIsPulling(true);
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startY.current === -1 || isRefreshing) return;
+      if (!isPulling || isRefreshing) return;
 
       const currentY = e.touches[0].pageY;
       const diff = currentY - startY.current;
 
-      // Only capture downward pull if exactly at top
-      if (diff > 0 && el.scrollTop <= 0) {
-        if (e.cancelable) e.preventDefault();
+      if (diff > 0 && window.scrollY === 0) {
+        // Apply resistance
+        const newDistance = Math.min(diff * 0.4, maxPull);
+        setPullDistance(newDistance);
         
-        // Resistance factor for smoother pull
-        const distance = Math.min(diff * 0.45, PULL_THRESHOLD * 1.5);
-        setPullDistance(distance);
-        y.set(distance);
-
-        // Haptic feedback
-        if (distance >= PULL_THRESHOLD && !hasVibrated.current) {
-          if (window.navigator?.vibrate) window.navigator.vibrate(10);
-          hasVibrated.current = true;
-        } else if (distance < PULL_THRESHOLD) {
-          hasVibrated.current = false;
+        // Prevent default only when pulling down at the top
+        if (newDistance > 5 && e.cancelable) {
+          e.preventDefault();
         }
-      } else if (diff < 0) {
-        // Reset if pulling up
-        startY.current = -1;
-        y.set(0);
+      } else {
+        setIsPulling(false);
         setPullDistance(0);
       }
     };
 
     const handleTouchEnd = async () => {
-      if (startY.current === -1 || isRefreshing) {
-        startY.current = -1;
-        return;
-      }
+      if (!isPulling) return;
 
-      const finalDistance = pullDistance;
-      if (finalDistance >= PULL_THRESHOLD) {
+      if (pullDistance >= threshold) {
         setIsRefreshing(true);
-        y.set(PULL_THRESHOLD);
+        setPullDistance(80); // Snap to loading position
+        
         try {
           await onRefresh();
         } finally {
-          // Cleanup
-          setIsRefreshing(false);
-          y.set(0);
-          setPullDistance(0);
-          hasVibrated.current = false;
+          // The page reload usually handles this, but for safety:
+          setTimeout(() => {
+            setIsRefreshing(false);
+            setIsPulling(false);
+            setPullDistance(0);
+          }, 1000);
         }
       } else {
-        y.set(0);
+        setIsPulling(false);
         setPullDistance(0);
       }
-      startY.current = -1;
     };
 
-    el.addEventListener('touchstart', handleTouchStart, { passive: true });
-    el.addEventListener('touchmove', handleTouchMove, { passive: false });
-    el.addEventListener('touchend', handleTouchEnd);
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      el.removeEventListener('touchstart', handleTouchStart);
-      el.removeEventListener('touchmove', handleTouchMove);
-      el.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [onRefresh, isRefreshing, pullDistance, y]);
+  }, [isPulling, isRefreshing, pullDistance, onRefresh]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className={`relative h-full overflow-y-auto overflow-x-hidden ${className || ''}`}
-      style={{ 
-        isolation: 'isolate',
-        overscrollBehaviorY: 'contain',
-        WebkitOverflowScrolling: 'touch'
-      }}
-    >
-      {/* Financial Background Header */}
-      <motion.div
-        style={{ 
-          height: isRefreshing ? 140 : headerHeight,
-          opacity: headerOpacity
-        }}
-        className="absolute top-0 left-0 right-0 bg-gradient-to-b from-indigo-600 to-indigo-800 z-[0] overflow-hidden flex items-center justify-center"
+    <div ref={containerRef} className="relative min-h-full">
+      {/* Animation Area */}
+      <div 
+        className="absolute top-0 left-0 right-0 flex items-center justify-center overflow-hidden pointer-events-none"
+        style={{ height: pullDistance }}
       >
-        {/* Decorative Grid Patterns */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
-        
-        {/* Falling Coins Animation */}
         <AnimatePresence>
-          {(pullDistance > 10 || isRefreshing) && COINS.map((_, i) => (
+          {pullDistance > 10 && (
             <motion.div
-              key={i}
-              initial={{ y: -60, x: `${(i + 1) * (100 / (COIN_COUNT + 1))}%`, scale: 0, opacity: 0 }}
-              animate={isRefreshing ? {
-                y: [0, 200],
-                opacity: [0, 1, 0],
-                rotate: [0, 360],
-                scale: [0.5, 0.8, 0.5]
-              } : {
-                y: (pullDistance / PULL_THRESHOLD) * (80 + (i % 4) * 15),
-                scale: (pullDistance / PULL_THRESHOLD) * 0.8,
-                opacity: (pullDistance / PULL_THRESHOLD) * 0.6,
-                rotate: (pullDistance / PULL_THRESHOLD) * 180
-              }}
-              transition={isRefreshing ? {
-                duration: 1.2 + (i % 3) * 0.2,
-                repeat: Infinity,
-                ease: "linear",
-                delay: i * 0.1
-              } : { duration: 0 }}
-              className="absolute text-yellow-400/80 pointer-events-none"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative w-full h-full flex items-center justify-center"
             >
-              <Coins className="w-5 h-5 drop-shadow-[0_0_8px_rgba(250,204,21,0.4)]" />
+              {/* Background Glass Plate */}
+              <div className="absolute inset-x-8 top-4 bottom-4 bg-indigo-500/10 dark:bg-indigo-400/5 backdrop-blur-md rounded-3xl border border-indigo-500/20 dark:border-indigo-400/10 flex items-center justify-center">
+                
+                {/* Visual Indicators */}
+                {!isRefreshing ? (
+                  <div className="flex flex-col items-center">
+                    <motion.div
+                      style={{ 
+                        rotate: pullDistance >= threshold ? 180 : 0,
+                        color: pullDistance >= threshold ? '#10b981' : '#6366f1'
+                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <ArrowDown className="w-8 h-8" />
+                    </motion.div>
+                    <p className={cn(
+                      "text-[10px] font-black uppercase tracking-widest mt-2",
+                      pullDistance >= threshold ? "text-emerald-600 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"
+                    )}>
+                      {pullDistance >= threshold ? 'Yeniləmək üçün burax' : 'Yeniləmək üçün dart'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative flex flex-col items-center">
+                    {/* Professional Coin Animation */}
+                    <div className="relative w-16 h-16 flex items-center justify-center">
+                      <motion.div
+                        animate={{ 
+                          scale: [1, 1.2, 1],
+                          rotate: [0, 360]
+                        }}
+                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                        className="p-3 bg-indigo-600 text-white rounded-2xl shadow-xl z-10"
+                      >
+                        <TrendingUp className="w-8 h-8" />
+                      </motion.div>
+                      
+                      {/* Falling Coins */}
+                      {[...Array(6)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ y: -40, opacity: 0, x: (i - 2.5) * 15 }}
+                          animate={{ 
+                            y: [null, 40],
+                            opacity: [0, 1, 0],
+                          }}
+                          transition={{ 
+                            repeat: Infinity, 
+                            duration: 1.5, 
+                            delay: i * 0.2,
+                            ease: "easeIn" 
+                          }}
+                          className="absolute text-emerald-500"
+                        >
+                          {i % 2 === 0 ? <Coins className="w-5 h-5" /> : <DollarSign className="w-5 h-5" />}
+                        </motion.div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-3 animate-pulse">
+                      Məlumatlar Yenilənir...
+                    </p>
+                  </div>
+                )}
+              </div>
             </motion.div>
-          ))}
+          )}
         </AnimatePresence>
+      </div>
 
-        {/* Central Refresh Icon Shell */}
-        <div className="relative z-10 flex flex-col items-center">
-          <motion.div
-            style={{ 
-              scale: isRefreshing ? 1.1 : iconScale, 
-              rotate: isRefreshing ? 0 : iconRotate 
-            }}
-            animate={isRefreshing ? {
-              scale: [1, 1.15, 1],
-              rotate: [0, 10, -10, 0]
-            } : {}}
-            transition={isRefreshing ? {
-              repeat: Infinity,
-              duration: 1.5,
-              ease: "easeInOut"
-            } : { duration: 0 }}
-            className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-xl"
-          >
-            {isRefreshing ? (
-              <TrendingUp className="w-8 h-8 text-white animate-pulse" />
-            ) : (
-              <Landmark className="w-8 h-8 text-white" />
-            )}
-          </motion.div>
-          
-          <motion.p
-            style={{ opacity: isRefreshing ? 1 : textOpacity }}
-            className="text-white/90 font-black text-[10px] uppercase tracking-[0.2em] mt-4 drop-shadow-sm"
-          >
-            {isRefreshing ? 'Məlumatlar Yenilənir...' : 'Yeniləmək üçün dartın'}
-          </motion.p>
-        </div>
-      </motion.div>
-
-      {/* Main Content Area */}
-      <motion.div 
-        style={{ y: isRefreshing ? 140 : y }}
-        className="relative z-[1] h-full bg-gray-50 dark:bg-gray-900 rounded-t-3xl shadow-[0_-12px_24px_rgba(0,0,0,0.06)]"
+      {/* Content Wrapper */}
+      <motion.div
+        style={{ y: pullDistance }}
+        transition={isPulling ? { type: "just" } : { type: "spring", stiffness: 400, damping: 30 }}
+        className="w-full h-full bg-gray-50 dark:bg-gray-900"
       >
         {children}
       </motion.div>
