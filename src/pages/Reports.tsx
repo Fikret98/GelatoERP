@@ -416,61 +416,50 @@ export default function Reports() {
               key={`${t.type}-${t.id}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-4"
+              className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3 sm:gap-4"
               onClick={() => handleTransactionClick(t)}
             >
               <div className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
                 t.type === 'sale' ? "bg-emerald-100 dark:bg-emerald-900/30" :
                 t.type === 'income' ? "bg-indigo-100 dark:bg-indigo-900/30" :
                 "bg-rose-100 dark:bg-rose-900/30"
               )}>
                 {t.type === 'sale' ? (
-                  <ShoppingBag className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
                 ) : t.type === 'income' ? (
-                  <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
                 ) : (
-                  <TrendingDown className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+                  <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 dark:text-rose-400" />
                 )}
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-black text-gray-900 dark:text-white text-base">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-black text-gray-900 dark:text-white text-sm sm:text-base truncate">
                     {t.type === 'sale' ? `Sifariş #${t.id}` : t.category}
                   </span>
-                  {t.suppliers?.name && (
-                    <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tight">
-                      {t.suppliers.name}
-                    </span>
-                  )}
                 </div>
-                <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs font-bold text-gray-400 dark:text-gray-500">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {format(new Date(t.date), 'dd.MM.yyyy HH:mm')}
+                <div className="flex flex-wrap items-center gap-y-0.5 gap-x-3 text-[9px] sm:text-xs font-bold text-gray-400 dark:text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {format(new Date(t.date), 'dd.MM.yy HH:mm')}
                   </span>
-                  <span className="flex items-center gap-1.5 uppercase tracking-tight">
-                    <User className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1 uppercase tracking-tight">
+                    <User className="w-3 h-3" />
                     {t.users?.name || '-'}
                   </span>
-                  {t.description && (
-                    <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">•</span>
-                  )}
-                  {t.description && (
-                    <span className="truncate max-w-[200px] hidden sm:inline italic">{t.description}</span>
-                  )}
                 </div>
               </div>
 
               <div className="text-right">
                 <p className={cn(
-                  "text-xl font-black tabular-nums",
+                  "text-base sm:text-xl font-black tabular-nums",
                   (t.type === 'sale' || t.type === 'income') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                 )}>
                   {(t.type === 'expense' ? '-' : '+')}{t.amount.toFixed(2)} ₼
                 </p>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+                <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
                   {t.type === 'sale' ? 'Nəğd Satış' : t.type === 'income' ? 'Kassa Mədaxil' : 'Məxaric'}
                 </p>
               </div>
@@ -571,39 +560,39 @@ export default function Reports() {
               onClick={e => e.stopPropagation()}
               className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-3xl p-6 lg:p-8 w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar touch-pan-y"
             >
-              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6 lg:hidden" />
-              <div className="flex justify-between items-start mb-6 lg:mb-8">
+              <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 lg:hidden" />
+              <div className="flex justify-between items-start mb-4 lg:mb-8">
                 <div>
                   <div className={cn(
-                    "inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3",
+                    "inline-flex px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-1.5 sm:mb-3",
                     selectedTransaction.type === 'sale' ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
                     selectedTransaction.type === 'income' ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" :
                     "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
                   )}>
                     {selectedTransaction.type === 'sale' ? 'Satış' : selectedTransaction.type === 'income' ? 'Mədaxil' : 'Məxaric'}
                   </div>
-                  <h2 className="text-3xl font-black text-gray-900 dark:text-white">
+                  <h2 className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white">
                     {selectedTransaction.type === 'sale' ? `Sifariş #${selectedTransaction.id}` : selectedTransaction.category}
                   </h2>
                 </div>
                 <button
                   onClick={() => setSelectedTransaction(null)}
-                  className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all"
+                  className="p-2 sm:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all"
                   title="Bağla"
                 >
-                  <X className="w-6 h-6 text-gray-400" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tarix</p>
-                    <p className="font-bold text-gray-900 dark:text-white">{format(new Date(selectedTransaction.date), 'dd.MM.yyyy HH:mm')}</p>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-2 gap-4 sm:gap-8">
+                  <div className="space-y-0.5 sm:space-y-1">
+                    <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest">Tarix</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-base">{format(new Date(selectedTransaction.date), 'dd.MM.yy HH:mm')}</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">İcraçı</p>
-                    <p className="font-bold text-gray-900 dark:text-white">{selectedTransaction.users?.name || '-'}</p>
+                  <div className="space-y-0.5 sm:space-y-1">
+                    <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest">İcraçı</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-base">{selectedTransaction.users?.name || '-'}</p>
                   </div>
                 </div>
 
@@ -625,12 +614,12 @@ export default function Reports() {
                     {isLoadingDetails ? (
                       <div className="py-8"><LoadingSpinner /></div>
                     ) : (
-                      <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
                         {saleDetails.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                          <div key={idx} className="flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 p-2.5 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700">
                             <div className="flex-1 min-w-0">
-                              <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{item.products?.name}</p>
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-400 font-bold">
+                              <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm truncate">{item.products?.name}</p>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] sm:text-[10px] text-gray-400 font-bold">
                                 <span>{item.quantity} ədəd × {item.price.toFixed(2)} ₼</span>
                                 {item.cost_price > 0 && (
                                   <>
@@ -641,7 +630,7 @@ export default function Reports() {
                               </div>
                             </div>
                             <div className="text-right ml-4">
-                              <p className="font-black text-gray-900 dark:text-white">{(item.quantity * item.price).toFixed(2)} ₼</p>
+                              <p className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">{(item.quantity * item.price).toFixed(2)} ₼</p>
                             </div>
                           </div>
                         ))}
@@ -696,13 +685,13 @@ export default function Reports() {
                   </div>
                 )}
 
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                  <span className="font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest text-sm">Yekun Məbləğ</span>
+                <div className="pt-4 sm:pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <span className="font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest text-xs sm:text-sm">Yekun Məbləğ</span>
                   <span className={cn(
-                    "text-4xl font-black tabular-nums",
+                    "text-2xl sm:text-4xl font-black tabular-nums",
                     (selectedTransaction.type === 'sale' || selectedTransaction.type === 'income') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                   )}>
-                    {(selectedTransaction.type === 'expense' ? '-' : '+')}{selectedTransaction.amount.toFixed(2)} <span className="text-xl font-bold">₼</span>
+                    {(selectedTransaction.type === 'expense' ? '-' : '+')}{selectedTransaction.amount.toFixed(2)} <span className="text-base sm:text-xl font-bold">₼</span>
                   </span>
                 </div>
               </div>
