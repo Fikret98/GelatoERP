@@ -209,6 +209,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (Math.abs(shortage) > 0.01) {
         const auditDesc = `Növbə qapanış fərqi: İşçi: ${user.item_name || user.name}, Növbə: #${activeShift.id}. (Olmalı: ${expectedCash.toFixed(2)}, Faktiki: ${actualBalance.toFixed(2)})`;
         const userIdInt = parseInt(user.id);
+        const shiftIdInt = parseInt(activeShift.id);
 
         if (shortage > 0) {
           // It's a shortage (kəsir) -> Record as Expense (Pending Audit)
@@ -219,7 +220,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             description: auditDesc,
             payment_method: 'cash',
             user_id: userIdInt,
-            shift_id: activeShift.id,
+            shift_id: shiftIdInt,
             notes: JSON.stringify({ type: 'closing_audit', expected: expectedCash, actual: actualBalance })
           }]);
         } else {
@@ -232,7 +233,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             description: auditDesc,
             payment_method: 'cash',
             user_id: userIdInt,
-            shift_id: activeShift.id,
+            shift_id: shiftIdInt,
             notes: JSON.stringify({ type: 'closing_audit', expected: expectedCash, actual: actualBalance })
           }]);
         }
