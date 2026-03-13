@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar, Coins } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar, Coins, Percent, ArrowUpRight, ArrowDownLeft, Wallet, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useCountUp } from '../hooks/useCountUp';
+import { cn } from '../lib/utils';
 
 function AnimatedStat({ value, suffix = '', decimals = 2 }: { value: number; suffix?: string; decimals?: number }) {
   const count = useCountUp(value, 1200);
@@ -36,7 +37,9 @@ export default function Dashboard() {
     transactions: 0,
     inventoryValue: 0,
     totalSupplierDebt: 0,
-    totalFixedAssets: 0
+    totalFixedAssets: 0,
+    kassa: 0,
+    netProfit: 0
   });
 
   const [charts, setCharts] = useState({
@@ -54,13 +57,9 @@ export default function Dashboard() {
   const [infoModal, setInfoModal] = useState<{ show: boolean; title: string; content: string } | null>(null);
 
   const reportInfo = {
-    cash: {
-      title: 'Kassa (Nəğd)',
-      content: 'Kassadakı cari nəğd pul qalığı. Satışlardan gələn nəğd pullar ilə əl ilə edilən nağd alış-veriş və xərclər arasındakı fərqi göstərir.'
-    },
-    bank: {
-      title: 'Kassa(Bank Hesabı)',
-      content: 'Bank hesabınızdakı cari qalıq. Kartla edilən satışlar və bank köçürməsi ilə edilən mədaxil/məxaricləri göstərir.'
+    kassa: {
+      title: 'Kassa (Ümumi Qalıq)',
+      content: 'Kassadakı cari ümumi pul qalığı. Bütün satışlar, mədaxillər və məxariclər arasındakı fərqi göstərir.'
     },
     revenue: {
       title: 'Ümumi Gəlir',
@@ -89,10 +88,6 @@ export default function Dashboard() {
     totalFixedAssets: {
       title: 'Əsas Vəsaitlər',
       content: 'Biznesinizə aid olan avadanlıq, maşın və digər əsas vəsaitlərin ümumi maya dəyəri.'
-    },
-    salesTrend: {
-      title: 'Satış Trendi',
-      content: 'Günlər üzrə satış məbləğlərinin paylanması. Histogram formatı ən çox satış olan günləri vizual olaraq fərqləndirir.'
     }
   };
 
@@ -121,14 +116,12 @@ export default function Dashboard() {
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100vw';
       document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
       const scrollY = document.body.style.top;
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.width = '';
       document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '';
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY || '0') * -1);
       }
@@ -138,7 +131,6 @@ export default function Dashboard() {
       document.body.style.top = '';
       document.body.style.width = '';
       document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '';
     };
   }, [showLowStockModal, infoModal]);
 
@@ -146,7 +138,6 @@ export default function Dashboard() {
     try {
       let startDate: string;
       let endDate: string = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
-      const now = new Date();
 
       if (dateRange === 'today') {
         const start = new Date();
@@ -165,7 +156,6 @@ export default function Dashboard() {
         start.setHours(0, 0, 0, 0);
         startDate = start.toISOString();
       } else {
-        // Custom
         startDate = new Date(customRange.start).toISOString();
         const end = new Date(customRange.end);
         end.setHours(23, 59, 59, 999);
@@ -177,48 +167,39 @@ export default function Dashboard() {
         p_end_date: endDate
       });
 
-      if (error) {
-        console.error("RPC Error:", error);
-        toast.error("Məlumatlar gətirilərkən xəta: " + error.message);
-        return;
-      }
+      if (error) throw error;
 
       if (data) {
         setStats(data.stats);
         setCharts(data.charts);
 
-        // Fetch low stock items for the modal
         const { data: inventoryData, error: invError } = await supabase
           .from('inventory')
           .select('*');
 
         if (invError) throw invError;
-
         if (inventoryData) {
           const lowStock = inventoryData.filter(item => item.stock_quantity <= (item.critical_limit || 0));
           setLowStockItems(lowStock);
         }
       }
-
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch (error: any) {
+      console.error("Dashboard error:", error);
+      toast.error("Dashboard məlumatları yüklənərkən xəta: " + error.message);
     }
   };
-
-
 
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 
   const cards = [
-    { id: 'cash',           name: 'Kassa (Nəğd)',     rawValue: stats.kassa || 0,       suffix: ' ₼', decimals: 2, icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-    { id: 'bank',           name: 'Kassa(Bank Hesabı)',      rawValue: stats.bank_balance || 0, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { id: 'revenue',        name: t('dashboard.revenue'), rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: DollarSign, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
+    { id: 'kassa',          name: 'Kassa (Ümumi)',    rawValue: stats.kassa || 0,       suffix: ' ₼', decimals: 2, icon: Wallet, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    { id: 'revenue',        name: 'Ümumi Gəlir',     rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: ArrowUpRight, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
     { id: 'netProfit',      name: 'Xalis Mənfəət',   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
     { id: 'aov',            name: 'Orta Satış (AOV)', rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { id: 'inventoryValue', name: 'Anbar Dəyəri',     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-    { id: 'totalSupplierDebt', name: 'Təchizatçılara Borc', rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { id: 'totalFixedAssets', name: t('dashboard.fixedAssets'), rawValue: stats.totalFixedAssets, suffix: ' ₼', decimals: 2, icon: Package, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-    { id: 'lowStock',       name: t('dashboard.lowStock'), rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
+    { id: 'totalSupplierDebt', name: 'Təchizatçalara Borc', rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { id: 'totalFixedAssets', name: 'Əsas Vəsaitlər', rawValue: stats.totalFixedAssets, suffix: ' ₼', decimals: 2, icon: Package, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+    { id: 'lowStock',       name: 'Azalan Anbar',    rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
   ];
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -227,29 +208,31 @@ export default function Dashboard() {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="space-y-8"
+      className="space-y-8 pb-10"
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h1 className="text-lg sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.dashboard')}</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Biznesinizin cari vəziyyəti
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.dashboard')}</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2 font-medium">
+            <TrendingUp className="w-4 h-4 text-indigo-500" />
+            Biznesinizin cari maliyyə və anbar vəziyyəti
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner">
             {(['today', 'week', 'month', 'custom'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-2 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-200 ${dateRange === range
-                  ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm ring-1 ring-black/5'
-                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
+                className={cn(
+                  "px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-tight rounded-xl transition-all duration-200",
+                  dateRange === range
+                    ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm ring-1 ring-black/5"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                )}
               >
-                {range === 'today' ? 'Bugün' : range === 'week' ? 'Bu Həftə' : range === 'month' ? 'Bu Ay' : 'Manual'}
+                {range === 'today' ? 'Bugün' : range === 'week' ? 'Həftəlik' : range === 'month' ? 'Aylıq' : 'Manual'}
               </button>
             ))}
           </div>
@@ -258,12 +241,12 @@ export default function Dashboard() {
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 bg-white dark:bg-gray-800 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
             >
               <input 
                 type="date" 
                 title="Başlanğıc tarixi"
-                className="text-[10px] font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
+                className="text-xs font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
                 value={customRange.start}
                 onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
               />
@@ -271,7 +254,7 @@ export default function Dashboard() {
               <input 
                 type="date" 
                 title="Son tarix"
-                className="text-[10px] font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
+                className="text-xs font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
                 value={customRange.end}
                 onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
               />
@@ -285,12 +268,12 @@ export default function Dashboard() {
           hidden: { opacity: 0 },
           show: {
             opacity: 1,
-            transition: { staggerChildren: 0.1 }
+            transition: { staggerChildren: 0.05 }
           }
         }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4"
       >
         {cards.map((card) => (
           <motion.div
@@ -299,271 +282,142 @@ export default function Dashboard() {
               hidden: { opacity: 0, y: 20 },
               show: { opacity: 1, y: 0 }
             }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            onClick={() => {
-              if (card.id === 'lowStock') {
-                setShowLowStockModal(true);
-              } else {
-                const info = (reportInfo as any)[card.id];
-                if (info) setInfoModal({ show: true, ...info });
-              }
-            }}
-            className={`p-3 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300 cursor-pointer hover:shadow-md ${card.bg}`}
+            whileHover={{ y: -5 }}
+            className={cn(
+              "bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all cursor-pointer relative overflow-hidden group",
+              card.id === 'netProfit' && "shadow-lg shadow-indigo-500/5 ring-1 ring-indigo-500/10"
+            )}
+            onClick={() => card.isClickable ? setShowLowStockModal(true) : setInfoModal({ show: true, title: reportInfo[card.id as keyof typeof reportInfo].title, content: reportInfo[card.id as keyof typeof reportInfo].content })}
           >
-            <div className="flex flex-col gap-4">
-              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${card.bg}`}>
-                <card.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.color}`} aria-hidden="true" />
+            <div className="flex items-center justify-between mb-4">
+              <div className={cn("p-3 rounded-2xl", card.bg)}>
+                <card.icon className={cn("w-6 h-6", card.color)} />
               </div>
-              <dl>
-                <dt className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{card.name}</dt>
-                <dd className="text-base sm:text-2xl font-black text-gray-900 dark:text-white mt-1 leading-tight">
-                  <AnimatedStat value={card.rawValue} suffix={card.suffix} decimals={card.decimals} />
-                </dd>
-              </dl>
+              <Percent className="w-4 h-4 text-gray-200 dark:text-gray-700 group-hover:text-indigo-500 transition-colors" />
             </div>
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none mb-2">{card.name}</p>
+            <p className={cn("text-xl sm:text-2xl font-black tabular-nums tracking-tighter", card.id === 'lowStock' && card.rawValue > 0 ? "text-orange-600" : "text-gray-900 dark:text-white")}>
+              <AnimatedStat value={card.rawValue} suffix={card.suffix} decimals={card.decimals} />
+            </p>
           </motion.div>
         ))}
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Sales Trend */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
-        >
-          <button 
-            onClick={() => setInfoModal({ show: true, ...reportInfo.salesTrend })}
-            className="w-full text-left"
-          >
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-base sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-indigo-500" />
-                Satış Trendi
-              </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Chart */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-indigo-500" />
+              Satış Trendi
+            </h3>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={charts.salesData}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    fontWeight: 900,
+                    fontSize: '12px'
+                  }}
+                />
+                <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Expenses and Pie Charts */}
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                <PieChart className="w-4 h-4 text-emerald-500" />
+                Xərc Bölüşümü
+              </h3>
             </div>
-            <div className="h-80 w-full">
+            <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.salesData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dy={15} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dx={-15} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                    itemStyle={{ fontWeight: 'bold' }}
-                    cursor={{ fill: 'rgba(79, 70, 229, 0.1)' }}
-                  />
-                  <Bar dataKey="amount" fill="#4f46e5" radius={[8, 8, 0, 0]} barSize={40} />
-                </BarChart>
+                <RePieChart>
+                  <Pie
+                    data={charts.expensesByCategory}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="amount"
+                  >
+                    {charts.expensesByCategory.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </RePieChart>
               </ResponsiveContainer>
             </div>
-          </button>
-        </motion.div>
-
-        {/* Revenue by Category */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
-        >
-          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-2">
-            <PieChart className="w-5 h-5 text-pink-500" />
-            Bölmələr üzrə Gəlir
-          </h2>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RePieChart>
-                <Pie
-                  data={charts.revenueByCategory}
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {charts.revenueByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RePieChart>
-            </ResponsiveContainer>
           </div>
-          <div className="mt-4 space-y-2">
-            {charts.revenueByCategory.map((item: any, index) => (
-              <div key={item.name} className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">{item.name}</span>
-                </div>
-                <span className="font-bold text-gray-900 dark:text-white">{item.value.toFixed(2)} ₼</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Top Products */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
-        >
-          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-orange-500" />
-            Populyar Məhsullar
-          </h2>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts.topProducts} layout="vertical" margin={{ left: -20 }}>
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" hide />
-                <Tooltip cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={20}>
-                  {charts.topProducts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 space-y-3">
-            {charts.topProducts.map((item: any, index) => (
-              <div key={item.name} className="flex justify-between items-center">
-                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.name}</span>
-                <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-black text-indigo-600 dark:text-indigo-400">
-                  {item.value} ədəd
-                </span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Expenses Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="lg:col-span-1 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
-        >
-          <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-red-500" />
-            Xərclər
-          </h2>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts.expensesByCategory}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                <Tooltip contentStyle={{ borderRadius: '16px' }} />
-                <Bar dataKey="value" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={30} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        {/* ABC Analysis Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700"
-        >
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-purple-500" />
-              ABC Analiz
-            </h2>
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-              {(['revenue', 'profit'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setAbcMode(mode)}
-                  title={mode === 'revenue' ? 'Gəlirə görə ABC Analizini göstər' : 'Mənfəətə görə ABC Analizini göstər'}
-                  className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all duration-200 ${abcMode === mode
-                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  {mode === 'revenue' ? 'Gəlirə görə' : 'Mənfəətə görə'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(['A', 'B', 'C'] as const).map(group => (
-              <div key={group} className="space-y-4">
-                <div className={`p-3 rounded-2xl flex items-center justify-between ${group === 'A' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                  group === 'B' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' :
-                    'bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400'
-                  }`}>
-                  <span className="font-black text-lg">Qrup {group}</span>
-                  <span className="text-xs font-bold px-2 py-1 rounded-lg bg-white/50 dark:bg-black/20">
-                    {group === 'A' ? '70% Pay' : group === 'B' ? '20% Pay' : '10% Pay'}
-                  </span>
-                </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                  {((abcMode === 'revenue' ? charts.abcRevenue : charts.abcProfit) as any)[group].length === 0 ? (
-                    <p className="text-xs text-center py-4 text-gray-400 italic">Məlumat yoxdur</p>
-                  ) : (
-                    ((abcMode === 'revenue' ? charts.abcRevenue : charts.abcProfit) as any)[group].map((item: any) => (
-                      <div key={item.name} className="flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[100px]">{item.name}</span>
-                        <div className="text-right">
-                          <p className="text-[10px] font-black">{item.contribution.toFixed(1)}%</p>
-                          <p className="text-[8px] text-gray-400">{item.value.toFixed(2)} ₼</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Low Stock Items Modal */}
+      {/* Low Stock Modal */}
       <AnimatePresence>
         {showLowStockModal && (
-          <div className="fixed inset-0 z-[110] flex items-end lg:items-center justify-center p-0 lg:p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowLowStockModal(false)}>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm" onClick={() => setShowLowStockModal(false)}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 lg:p-8 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 touch-pan-y pb-28 lg:pb-8"
+              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar"
             >
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('dashboard.lowStock')}</h3>
-                </div>
-                <button onClick={() => setShowLowStockModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" title="Bağla">
-                  <X className="w-5 h-5 text-gray-400" />
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Kritik Stok Həddi</h2>
+                <button onClick={() => setShowLowStockModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
+                  <X className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
 
               {lowStockItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium">Bütün məhsullar kifayət qədərdir.</p>
-                </div>
+                <div className="py-12 text-center text-gray-400 font-bold italic">Bütün məhsulların stoku yetərlidir.</div>
               ) : (
-                <div className="space-y-3">
-                  {lowStockItems.map(item => (
-                    <div key={item.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white">{item.name}</p>
-                        <p className="text-xs text-red-500 font-black uppercase mt-1">Kritik: {item.critical_limit || 0} {item.unit}</p>
+                <div className="grid gap-3">
+                  {lowStockItems.map((item, idx) => (
+                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+                          <AlertTriangle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm">{item.name}</p>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kritik hədd: {item.critical_limit || 0}</p>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-black text-gray-900 dark:text-white">{item.stock_quantity} {item.unit}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Stokda</p>
+                        <p className="text-lg font-black text-orange-600 tabular-nums">{item.stock_quantity}</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.unit}</p>
                       </div>
                     </div>
                   ))}
@@ -574,40 +428,29 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Informational Modal */}
+      {/* Info Modal */}
       <AnimatePresence>
         {infoModal?.show && (
-          <div className="fixed inset-0 z-[100] flex items-end lg:items-center justify-center p-0 lg:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setInfoModal(null)}>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm" onClick={() => setInfoModal(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-8 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-x-hidden touch-pan-y pb-28 lg:pb-8"
+              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700"
             >
-              <div className="absolute top-0 left-0 w-full h-2 bg-indigo-600" />
-              <button 
-                onClick={() => setInfoModal(null)}
-                title="Bağla"
-                className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-              
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                  <Info className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 dark:text-white">{infoModal.title}</h3>
+                <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{infoModal.title}</h3>
               </div>
-              
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+              <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed mb-8">
                 {infoModal.content}
               </p>
-              
               <button 
                 onClick={() => setInfoModal(null)}
-                className="w-full mt-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black hover:opacity-90 transition-opacity"
+                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
               >
                 Anladım
               </button>
@@ -615,7 +458,6 @@ export default function Dashboard() {
           </div>
         )}
       </AnimatePresence>
-
     </motion.div>
   );
 }

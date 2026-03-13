@@ -112,8 +112,11 @@ export default function Settings() {
                   {t('hr.fullName')}
                 </label>
                 <input
+                  id="full-name"
                   type="text"
                   required
+                  placeholder={t('hr.fullName')}
+                  title={t('hr.fullName')}
                   value={profile.name}
                   onChange={e => setProfile({ ...profile, name: e.target.value })}
                   className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
@@ -126,8 +129,11 @@ export default function Settings() {
                   {t('suppliers.email')}
                 </label>
                 <input
+                  id="email-address"
                   type="email"
                   required
+                  placeholder={t('suppliers.email')}
+                  title={t('suppliers.email')}
                   value={profile.email}
                   onChange={e => setProfile({ ...profile, email: e.target.value })}
                   className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
@@ -140,7 +146,10 @@ export default function Settings() {
                   {t('settings.phone')}
                 </label>
                 <input
+                  id="phone-number"
                   type="tel"
+                  placeholder={t('settings.phone')}
+                  title={t('settings.phone')}
                   value={profile.phone}
                   onChange={e => setProfile({ ...profile, phone: e.target.value })}
                   className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
@@ -153,9 +162,12 @@ export default function Settings() {
                   {t('hr.role')}
                 </label>
                 <input
+                  id="user-role"
                   type="text"
                   required
                   disabled={user?.role !== 'admin'}
+                  placeholder={t('hr.role')}
+                  title={t('hr.role')}
                   value={profile.role}
                   onChange={e => setProfile({ ...profile, role: e.target.value })}
                   className={cn(
