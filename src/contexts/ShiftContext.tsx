@@ -60,13 +60,29 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     setLoading(true);
     try {
-      // 1. Detect transition discrepancy (Accountability between employees)
+      const userIdInt = parseInt(user.id);
+
+      // 1. Create the new shift first so we have an ID to link discrepancies to
+      const { data: newShift, error: shiftErr } = await supabase
+        .from('shifts')
+        .insert([{
+          user_id: userIdInt,
+          opening_balance: openingBalance,
+          status: 'open'
+        }])
+        .select()
+        .single();
+
+      if (shiftErr) throw shiftErr;
+      setActiveShift(newShift);
+
+      // 2. Detect transition discrepancy (Accountability between employees)
       const lastShift = await getLastShift();
       const lastClosing = lastShift?.actual_cash_balance || 0;
       const lastUserName = lastShift?.users?.name || 'Naməlum';
       const shiftDiff = openingBalance - lastClosing;
 
-      // 2. Identify if this is a "New" financial event or just aligning with an already-reduced Dashboard
+      // 3. Identify if this is a "New" financial event or just aligning with an already-reduced Dashboard
       const globalBalance = await getGlobalCashBalance();
       const globalDiff = openingBalance - globalBalance;
 
@@ -82,7 +98,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             amount: Math.abs(shiftDiff), 
             description: auditDesc,
             payment_method: 'cash',
-            user_id: user.id,
+            user_id: userIdInt,
+            shift_id: newShift.id,
             notes: JSON.stringify({ globalDiff, shiftDiff, type: 'audit_trigger' })
           }]);
         } else {
@@ -93,51 +110,39 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             amount: Math.abs(shiftDiff),
             description: auditDesc,
             payment_method: 'cash',
-            user_id: user.id,
+            user_id: userIdInt,
+            shift_id: newShift.id,
             notes: JSON.stringify({ globalDiff, shiftDiff, type: 'audit_trigger' })
           }]);
         }
 
         // IMPORTANT: If the Dashboard already reflects this gap (globalDiff is 0), 
         // recording the above transaction will UNFORTUNATELY change the Dashboard again.
-        // To fix this, if globalDiff is 0, we immediately record a counter-transaction 
-        // to keep the Dashboard balance stable while keeping the Audit record alive.
         if (Math.abs(globalDiff) < 0.01) {
            if (shiftDiff < 0) {
-             // We added an expense of shiftDiff, but Dashboard was already correct. Add income to offset.
+             // We added an expense, but Dashboard was correct. Offset with income.
              await supabase.from('incomes').insert([{
                category: 'Sistem Tənzimlənməsi (Sinxron)',
                amount: Math.abs(shiftDiff),
                description: 'Təkrarlanmanın qarşısını almaq üçün avtomatik tənzimləmə',
                payment_method: 'cash',
-               user_id: user.id
+               user_id: userIdInt,
+               shift_id: newShift.id
              }]);
            } else {
-             // We added an income of shiftDiff, but Dashboard was already correct. Add expense to offset.
+             // We added an income, but Dashboard was correct. Offset with expense.
              await supabase.from('expenses').insert([{
                category: 'Sistem Tənzimlənməsi (Sinxron)',
                amount: Math.abs(shiftDiff),
                description: 'Təkrarlanmanın qarşısını almaq üçün avtomatik tənzimləmə',
                payment_method: 'cash',
-               user_id: user.id
+               user_id: userIdInt,
+               shift_id: newShift.id
              }]);
            }
         }
       }
 
-      // 2. Create the new shift
-      const { data, error } = await supabase
-        .from('shifts')
-        .insert([{
-          user_id: user.id,
-          opening_balance: openingBalance,
-          status: 'open'
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      setActiveShift(data);
       toast.success('Növbə açıldı');
     } catch (e: any) {
       toast.error('Növbə açılarkən xəta: ' + e.message);
