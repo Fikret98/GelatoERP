@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, Trash2, CreditCard, X } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard, X, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -385,7 +385,14 @@ export default function POS() {
                   >
                     {shiftLoading ? '...' : 'Təhvil Ver'}
                   </button>
-                {isLoadingPage ? (
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {isLoadingPage ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner message="Satış ekranı yüklənir..." />
         </div>
@@ -599,14 +606,6 @@ export default function POS() {
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
             </span>
-          </div>
-          <span className="font-bold text-sm">Səbət</span>
-        </motion.button>
-      )}
-    </motion.div>
-  );
-}
->
           </div>
           <span className="font-bold text-sm">Səbət</span>
         </motion.button>

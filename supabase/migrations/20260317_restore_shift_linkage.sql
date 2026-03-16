@@ -26,7 +26,6 @@ SELECT
     p.name,
     p.category,
     p.price,
-    p.stock_quantity, -- Included for completeness
     COALESCE(cv.calculated_cost_price, 0) as cost_price
 FROM public.products p
 LEFT JOIN public.product_costs_view cv ON p.id = cv.product_id;
