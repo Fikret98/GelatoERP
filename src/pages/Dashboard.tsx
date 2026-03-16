@@ -158,7 +158,7 @@ export default function Dashboard() {
         startDate = start.toISOString();
       } else {
         const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime());
-        
+
         if (!isValidDate(customRange.start) || !isValidDate(customRange.end)) {
           const start = new Date();
           start.setHours(0, 0, 0, 0);
@@ -207,13 +207,13 @@ export default function Dashboard() {
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 
   const cards = [
-    { id: 'revenue',        name: t('dashboard.revenue'),     rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: ArrowUpRight, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
-    { id: 'netProfit',      name: t('dashboard.profit'),   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-    { id: 'aov',            name: t('dashboard.totalValue'), rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { id: 'inventoryValue', name: t('dashboard.fixedAssets'),     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    { id: 'revenue', name: t('dashboard.revenue'), rawValue: stats.revenue, suffix: ' ₼', decimals: 2, icon: ArrowUpRight, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
+    { id: 'netProfit', name: t('dashboard.profit'), rawValue: stats.netProfit || 0, suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { id: 'aov', name: t('dashboard.aov'), rawValue: aov, suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'inventoryValue', name: t('dashboard.inventoryValue'), rawValue: stats.inventoryValue, suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
     { id: 'totalSupplierDebt', name: t('common.totalDebt'), rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
     { id: 'totalFixedAssets', name: t('dashboard.fixedAssets'), rawValue: stats.totalFixedAssets, suffix: ' ₼', decimals: 2, icon: Package, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-    { id: 'lowStock',       name: t('dashboard.lowStock'),    rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
+    { id: 'lowStock', name: t('dashboard.lowStock'), rawValue: stats.lowStock, suffix: '', decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
   ];
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -252,21 +252,21 @@ export default function Dashboard() {
           </div>
 
           {dateRange === 'custom' && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
             >
-              <input 
-                type="date" 
+              <input
+                type="date"
                 title="Başlanğıc tarixi"
                 className="text-xs font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
                 value={customRange.start}
                 onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
               />
               <span className="text-gray-300 dark:text-gray-600">|</span>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 title="Son tarix"
                 className="text-xs font-bold bg-transparent border-none focus:ring-0 p-0 text-gray-600 dark:text-gray-400"
                 value={customRange.end}
@@ -285,7 +285,7 @@ export default function Dashboard() {
         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
           <Wallet className="w-32 h-32" />
         </div>
-        
+
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -383,27 +383,27 @@ export default function Dashboard() {
               <AreaChart data={charts.salesData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="date" 
-                  axisLine={false} 
-                  tickLine={false} 
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    borderRadius: '16px', 
-                    border: 'none', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    borderRadius: '16px',
+                    border: 'none',
                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                     fontWeight: 900,
                     fontSize: '12px'
@@ -514,7 +514,7 @@ export default function Dashboard() {
               <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed mb-8">
                 {infoModal.content}
               </p>
-              <button 
+              <button
                 onClick={() => setInfoModal(null)}
                 className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
               >

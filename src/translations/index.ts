@@ -65,7 +65,9 @@ export const translations = {
       fixedAssets: 'Əsas Vəsaitlər',
       cash: 'Nağd Kassa',
       bank: 'Bank Hesabı',
-      totalKassa: 'Ümumi Kassa'
+      totalKassa: 'Ümumi Kassa',
+      aov: 'Orta Satış (AOV)',
+      inventoryValue: 'Anbar Dəyəri'
     },
     reports: {
       exportExcel: 'Excel',
@@ -213,7 +215,9 @@ export const translations = {
       fixedAssets: 'Fixed Assets',
       cash: 'Cash Account',
       bank: 'Bank Account',
-      totalKassa: 'Total Cash'
+      totalKassa: 'Total Cash',
+      aov: 'Average Order Value',
+      inventoryValue: 'Inventory Value'
     },
     reports: {
       exportExcel: 'Excel',
