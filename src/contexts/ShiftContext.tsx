@@ -183,6 +183,73 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
+      // 3. Handle Discrepancy immediately if it exists
+      const difference = actualBalance - expectedCash;
+      if (Math.abs(difference) > 0.01) {
+        try {
+          // Insert Discrepancy record
+          const { data: discData, error: discErr } = await supabase
+            .from('shift_discrepancies')
+            .insert([{
+              shift_id: activeShift.id,
+              reported_by_id: parseInt(user.id),
+              system_expected: expectedCash,
+              seller_reported: actualBalance,
+              verifier_counted: actualBalance, // Seller is Verifier at this stage
+              difference: difference,
+              status: 'pending'
+            }])
+            .select()
+            .single();
+
+          if (discErr) throw discErr;
+
+          // Create Financial Transaction
+          if (difference < 0) {
+            // Shortage -> Expense
+            const { data: expData, error: expErr } = await supabase
+              .from('expenses')
+              .insert([{
+                category: 'Kassa Kəsiri',
+                amount: Math.abs(difference),
+                description: 'Növbə kəsiri (Araşdırılır)',
+                date: new Date().toISOString(),
+                payment_method: 'cash',
+                user_id: parseInt(user.id),
+                shift_id: activeShift.id
+              }])
+              .select()
+              .single();
+            
+            if (!expErr && expData) {
+              await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
+            }
+          } else {
+            // Surplus -> Income
+            const { data: incData, error: incErr } = await supabase
+              .from('incomes')
+              .insert([{
+                category: 'Kassa Artığı',
+                amount: difference,
+                description: 'Növbə artığı (Araşdırılır)',
+                date: new Date().toISOString(),
+                payment_method: 'cash',
+                user_id: parseInt(user.id)
+              }])
+              .select()
+              .single();
+            
+            if (!incErr && incData) {
+              await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
+            }
+          }
+          toast('Növbə kəsiri/artığı qeydə alındı.', { icon: '⚠️' });
+        } catch (discE: any) {
+          console.error('Discrepancy recording error:', discE);
+          toast.error('Uyğunsuzluq qeyd edilərkən xəta: ' + discE.message);
+        }
+      }
+
       setActiveShift(null);
       toast.success('Növbə bağlandı');
     } catch (e: any) {

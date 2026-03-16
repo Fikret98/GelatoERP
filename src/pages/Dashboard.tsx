@@ -176,9 +176,10 @@ export default function Dashboard() {
   const handleResolveDiscrepancy = async (id: string, status: 'resolved' | 'dismissed', notes: string = '') => {
     setIsResolving(true);
     try {
+      const disc = discrepancies.find(d => d.id === id);
       const { error } = await supabase.rpc('resolve_shift_discrepancy', {
         p_discrepancy_id: id,
-        p_responsible_user_id: null,
+        p_responsible_user_id: status === 'resolved' ? disc?.reported_by_id : null,
         p_admin_notes: notes,
         p_status: status
       });
@@ -535,10 +536,10 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Təhvil verdi:</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.reported_by?.full_name}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.reported_by?.name}</span>
                     <span className="text-gray-300 mx-1">/</span>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Təhvil aldı:</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.verified_by?.full_name}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.verified_by?.name}</span>
                   </div>
                   <div className="flex flex-wrap gap-4 mt-1">
                     <div className="text-xs font-medium text-gray-500">Sistem: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.system_expected.toFixed(2)} ₼</span></div>
