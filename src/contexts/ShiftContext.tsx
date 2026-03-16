@@ -15,13 +15,14 @@ interface Shift {
 interface ShiftContextType {
   activeShift: Shift | null;
   loading: boolean;
-  openShift: (openingBalance: number) => Promise<void>;
+  openShift: (openingBalance: number, verifiedLastBalance?: number) => Promise<void>;
   closeShift: (actualBalance: number, notes?: string) => Promise<void>;
   refreshShift: () => Promise<void>;
   getExpectedCash: () => Promise<number>;
   getLastShift: () => Promise<any | null>;
   getLastShiftClosingBalance: () => Promise<number>;
   getGlobalCashBalance: () => Promise<number>;
+  checkSecurityBlock: () => Promise<{ isBlocked: boolean, limit: number, currentDiscrepancy: number }>;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -56,13 +57,40 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     refreshShift();
   }, [user]);
 
-  const openShift = async (openingBalance: number) => {
+  const checkSecurityBlock = async () => {
+    try {
+      const [{ data: settings }, { data: pendingDiscrepancies }] = await Promise.all([
+        supabase.from('app_settings').select('value').eq('key', 'shift_security').single(),
+        supabase.from('shift_discrepancies').select('difference').eq('status', 'pending')
+      ]);
+
+      const limit = (settings?.value as any)?.critical_limit || 50;
+      const currentMaxDiscrepancy = Math.max(...(pendingDiscrepancies || []).map(d => Math.abs(d.difference)), 0);
+
+      return {
+        isBlocked: currentMaxDiscrepancy > limit,
+        limit,
+        currentDiscrepancy: currentMaxDiscrepancy
+      };
+    } catch (e) {
+      console.error('Error checking security block:', e);
+      return { isBlocked: false, limit: 50, currentDiscrepancy: 0 };
+    }
+  };
+
+  const openShift = async (openingBalance: number, verifiedLastBalance?: number) => {
     if (!user) return;
     setLoading(true);
     try {
       const userIdInt = parseInt(user.id);
 
-      // 1. Create the new shift first so we have an ID to link discrepancies to
+      // Check for security block first
+      const { isBlocked, limit } = await checkSecurityBlock();
+      if (isBlocked) {
+        throw new Error(`Limit (${limit} ₼) üzərində həll olunmamış kəsir tapıldı. Admin təsdiqi gözlənilir.`);
+      }
+
+      // 1. Create the new shift
       const { data: newShift, error: shiftErr } = await supabase
         .from('shifts')
         .insert([{
@@ -74,11 +102,30 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (shiftErr) throw shiftErr;
-      setActiveShift(newShift);
 
+      // 2. Handle discrepancy if verifier counted differently from previous seller
+      if (verifiedLastBalance !== undefined) {
+        const lastShift = await getLastShift();
+        if (lastShift && Math.abs(lastShift.actual_cash_balance - verifiedLastBalance) > 0.01) {
+          await supabase.from('shift_discrepancies').insert([{
+            shift_id: lastShift.id,
+            reported_by_id: lastShift.user_id,
+            verified_by_id: userIdInt,
+            system_expected: lastShift.expected_cash_balance,
+            seller_reported: lastShift.actual_cash_balance,
+            verifier_counted: verifiedLastBalance,
+            difference: verifiedLastBalance - lastShift.actual_cash_balance,
+            status: 'pending'
+          }]);
+          toast('Təhvil-təslimdə uyğunsuzluq qeyd edildi.', { icon: '⚠️' });
+        }
+      }
+
+      setActiveShift(newShift);
       toast.success('Növbə açıldı');
     } catch (e: any) {
       toast.error('Növbə açılarkən xəta: ' + e.message);
+      throw e;
     } finally {
       setLoading(false);
     }
@@ -214,7 +261,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       getExpectedCash,
       getLastShift,
       getLastShiftClosingBalance,
-      getGlobalCashBalance
+      getGlobalCashBalance,
+      checkSecurityBlock
     }}>
       {children}
     </ShiftContext.Provider>

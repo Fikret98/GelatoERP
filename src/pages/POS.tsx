@@ -6,21 +6,39 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
 import { cn } from '../lib/utils';
 
 export default function POS() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { activeShift, openShift, closeShift, getExpectedCash, getLastShiftClosingBalance, loading: shiftLoading } = useShift();
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<{ product: any, quantity: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
+  
+  // Shift Modals
+  const [showOpenModal, setShowOpenModal] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [openingBalance, setOpeningBalance] = useState<string>('');
+  const [suggestedBalance, setSuggestedBalance] = useState<number>(0);
+  const [closingActual, setClosingActual] = useState<string>('');
+  const [closingExpected, setClosingExpected] = useState<number>(0);
+  const [shiftNotes, setShiftNotes] = useState('');
 
   useEffect(() => {
     fetchProducts();
+    checkShiftStatus();
   }, []);
+
+  const checkShiftStatus = async () => {
+    const lastBalance = await getLastShiftClosingBalance();
+    setSuggestedBalance(lastBalance);
+    setOpeningBalance(lastBalance.toString());
+  };
 
   // Body scroll lock when mobile cart is open
   useEffect(() => {
@@ -98,7 +116,48 @@ export default function POS() {
 
   const total = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
+  const handleOpenShift = async () => {
+    try {
+      const balance = parseFloat(openingBalance);
+      if (isNaN(balance)) {
+        toast.error('Düzgün məbləğ daxil edin');
+        return;
+      }
+      await openShift(balance, suggestedBalance);
+      setShowOpenModal(false);
+    } catch (e) {
+      // Error handled in ShiftContext
+    }
+  };
+
+  const handleCloseShift = async () => {
+    try {
+      const balance = parseFloat(closingActual);
+      if (isNaN(balance)) {
+        toast.error('Düzgün məbləğ daxil edin');
+        return;
+      }
+      await closeShift(balance, shiftNotes);
+      setShowCloseModal(false);
+      setClosingActual('');
+      setShiftNotes('');
+    } catch (e) {
+      // Error handled in ShiftContext
+    }
+  };
+
+  const startClosingProcess = async () => {
+    const expected = await getExpectedCash();
+    setClosingExpected(expected);
+    setClosingActual(expected.toString());
+    setShowCloseModal(true);
+  };
   const handleCheckout = async () => {
+    if (!activeShift) {
+      toast.error('Zəhmət olmasa əvvəlcə növbəni açın!', { icon: '🔐' });
+      setShowOpenModal(true);
+      return;
+    }
     if (cart.length === 0 || !user || loading) return;
 
     setLoading(true);
@@ -113,7 +172,8 @@ export default function POS() {
         p_total_amount: total,
         p_items: saleItems,
         p_seller_id: parseInt(user.id),
-        p_payment_method: paymentMethod
+        p_payment_method: paymentMethod,
+        p_shift_id: activeShift.id
       });
 
       if (rpcError) throw rpcError;
@@ -131,11 +191,202 @@ export default function POS() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col lg:flex-row gap-6 h-full lg:h-[calc(100vh-8rem)] relative"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col gap-6 h-full lg:h-[calc(100vh-8rem)] relative"
     >
+      {/* Shift Ribbon */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className={cn(
+            "w-3 h-3 rounded-full animate-pulse",
+            activeShift ? "bg-green-500" : "bg-red-500"
+          )} />
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+              Növbə: {activeShift ? 'AÇIQ' : 'BAĞLI'}
+            </p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">
+              {activeShift ? `Başladı: ${new Date(activeShift.opened_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Növbəni açmağınız xahiş olunur'}
+            </p>
+          </div>
+        </div>
+        
+        <button
+          onClick={() => activeShift ? startClosingProcess() : setShowOpenModal(true)}
+          className={cn(
+            "px-6 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-200 dark:shadow-none",
+            activeShift 
+              ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 hover:bg-red-500 hover:text-white" 
+              : "bg-indigo-600 text-white hover:bg-indigo-700"
+          )}
+        >
+          {activeShift ? 'Növbəni Təhvil Ver' : 'Növbəni Aç'}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {/* Open Shift Modal */}
+        {showOpenModal && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => !shiftLoading && setShowOpenModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 p-8"
+            >
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl">
+                  <Plus className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Növbəni Aç</h3>
+                  <p className="text-sm text-gray-500">Kassa balansını təsdiqləyin</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Əvvəlki növbədən qalan (Gözlənilən)</p>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">{suggestedBalance.toFixed(2)} ₼</p>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Sizdə olan (Fiziki Məbləğ)</label>
+                  <input
+                    type="number"
+                    value={openingBalance}
+                    onChange={(e) => setOpeningBalance(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-4 text-xl font-black text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-0 transition-colors"
+                    placeholder="Məbləği daxil edin..."
+                    autoFocus
+                  />
+                  {Math.abs(parseFloat(openingBalance || '0') - suggestedBalance) > 0.01 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-bold mt-2 flex items-center gap-1">
+                      <X className="w-3 h-3" /> Fərq: {(parseFloat(openingBalance || '0') - suggestedBalance).toFixed(2)} ₼ (Dispute yaradılacaq)
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowOpenModal(false)}
+                    className="flex-1 py-4 rounded-2xl font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                  >
+                    Ləğv et
+                  </button>
+                  <button
+                    onClick={handleOpenShift}
+                    disabled={shiftLoading || !openingBalance}
+                    className="flex-2 py-4 rounded-2xl font-black bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {shiftLoading ? '...' : 'Növbəni Aç'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Handover Modal */}
+        {showCloseModal && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => !shiftLoading && setShowCloseModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 p-8"
+            >
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-2xl">
+                  <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Növbəni Təhvil Ver</h3>
+                  <p className="text-sm text-gray-500">Günü yekunlaşdırın</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gözlənilən</p>
+                    <p className="text-lg font-black text-gray-900 dark:text-white">{closingExpected.toFixed(2)} ₼</p>
+                  </div>
+                  <div className={cn(
+                    "p-4 rounded-2xl border flex flex-col justify-center",
+                    Math.abs(parseFloat(closingActual || '0') - closingExpected) < 0.01 
+                      ? "bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800"
+                      : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800"
+                  )}>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Fərq</p>
+                    <p className={cn(
+                      "text-lg font-black",
+                      Math.abs(parseFloat(closingActual || '0') - closingExpected) < 0.01 
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    )}>
+                      {(parseFloat(closingActual || '0') - closingExpected).toFixed(2)} ₼
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Təhvil verilən real məbləğ</label>
+                  <input
+                    type="number"
+                    value={closingActual}
+                    onChange={(e) => setClosingActual(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-4 text-xl font-black text-gray-900 dark:text-white focus:border-red-500 focus:ring-0 transition-colors"
+                    placeholder="Fiziki məbləği daxil edin..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Qeydlər</label>
+                  <textarea
+                    value={shiftNotes}
+                    onChange={(e) => setShiftNotes(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-3 text-sm font-medium text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-0 transition-colors"
+                    rows={2}
+                    placeholder="Varsa uyğunsuzluq səbəbini qeyd edin..."
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowCloseModal(false)}
+                    className="flex-1 py-4 rounded-2xl font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                  >
+                    Ləğv et
+                  </button>
+                  <button
+                    onClick={handleCloseShift}
+                    disabled={shiftLoading || !closingActual}
+                    className="flex-2 py-4 rounded-2xl font-black bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {shiftLoading ? '...' : 'Təhvil Ver'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {isLoadingPage ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner message="Satış ekranı yüklənir..." />

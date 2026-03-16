@@ -67,7 +67,16 @@ export const translations = {
       bank: 'Bank Hesabı',
       totalKassa: 'Ümumi Kassa',
       aov: 'Orta Satış (AOV)',
-      inventoryValue: 'Anbar Dəyəri'
+      inventoryValue: 'Anbar Dəyəri',
+      openShift: 'Növbəni Aç',
+      closeShift: 'Növbəni Bağla',
+      expectedBalance: 'Gözlənilən',
+      actualBalance: 'Fiziki',
+      difference: 'Fərq',
+      shiftStarted: 'Növbə başlama vaxtı',
+      enterOpeningBalance: 'Başlanğıc nağd məbləği daxil edin',
+      confirmLastBalance: 'Əvvəlki növbənin qalıq məbləğini təsdiqləyin',
+      shiftNotes: 'Növbə qeydləri (istəyə bağlı)'
     },
     reports: {
       exportExcel: 'Excel',
@@ -217,7 +226,16 @@ export const translations = {
       bank: 'Bank Account',
       totalKassa: 'Total Cash',
       aov: 'Average Order Value',
-      inventoryValue: 'Inventory Value'
+      inventoryValue: 'Inventory Value',
+      openShift: 'Open Shift',
+      closeShift: 'Hand Over Shift',
+      expectedBalance: 'Expected',
+      actualBalance: 'Actual',
+      difference: 'Difference',
+      shiftStarted: 'Shift Started',
+      enterOpeningBalance: 'Enter opening cash amount',
+      confirmLastBalance: 'Confirm last shift closing balance',
+      shiftNotes: 'Shift notes (optional)'
     },
     reports: {
       exportExcel: 'Excel',
