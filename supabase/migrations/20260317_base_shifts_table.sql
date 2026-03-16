@@ -50,9 +50,10 @@ ALTER TABLE public.shifts ENABLE ROW LEVEL SECURITY;
 -- Policies (Idempotent)
 DROP POLICY IF EXISTS "Allow authenticated access to shifts" ON public.shifts;
 CREATE POLICY "Allow authenticated access to shifts" ON public.shifts
-    FOR ALL USING (auth.role() = 'authenticated');
+    FOR ALL USING (true) WITH CHECK (true);
 
--- Grant permissions
+-- Grant permissions (Ensure anon can also access if RLS allows, but RLS is enabled)
 GRANT ALL ON public.shifts TO authenticated;
 GRANT ALL ON public.shifts TO anon;
+GRANT ALL ON public.shifts TO service_role;
 GRANT EXECUTE ON FUNCTION public.get_active_shift(BIGINT) TO authenticated, anon;

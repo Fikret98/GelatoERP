@@ -232,7 +232,7 @@ export default function POS() {
       <AnimatePresence>
         {/* Open Shift Modal */}
         {showOpenModal && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -301,7 +301,7 @@ export default function POS() {
 
         {/* Handover Modal */}
         {showCloseModal && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

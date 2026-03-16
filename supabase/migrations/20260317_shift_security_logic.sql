@@ -74,11 +74,13 @@ ALTER TABLE public.shift_discrepancies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
 -- Polices (Simplified for development, adjust as needed)
+DROP POLICY IF EXISTS "Allow authenticated access to shift_discrepancies" ON public.shift_discrepancies;
 CREATE POLICY "Allow authenticated access to shift_discrepancies" ON public.shift_discrepancies
-    FOR ALL USING (auth.role() = 'authenticated');
+    FOR ALL USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow authenticated access to app_settings" ON public.app_settings;
 CREATE POLICY "Allow authenticated access to app_settings" ON public.app_settings
-    FOR ALL USING (auth.role() = 'authenticated');
+    FOR ALL USING (true) WITH CHECK (true);
 
 -- Grant permissions
 GRANT ALL ON public.shift_discrepancies TO authenticated;
