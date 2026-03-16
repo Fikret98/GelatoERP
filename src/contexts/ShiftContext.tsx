@@ -91,11 +91,12 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 1. Create the new shift
+      const roundedOpening = Math.round(openingBalance * 100) / 100;
       const { data: newShift, error: shiftErr } = await supabase
         .from('shifts')
         .insert([{
           user_id: userIdInt,
-          opening_balance: openingBalance,
+          opening_balance: roundedOpening,
           status: 'open'
         }])
         .select()
@@ -103,21 +104,23 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (shiftErr) throw shiftErr;
 
-      // 2. Handle discrepancy if verifier counted differently from previous seller
-      const lastShift = await getLastShift();
-      const diff = openingBalance - (lastShift?.actual_cash_balance || 0);
+      // 2. Handle discrepancy if verifier counted differently from UNIFIED SYSTEM BALANCE
+      const globalBalance = await getGlobalCashBalance();
+      const roundedGlobal = Math.round(globalBalance * 100) / 100;
+      const diff = Math.round((roundedOpening - roundedGlobal) * 100) / 100;
       
-      if (lastShift && Math.abs(diff) > 0.01) {
+      if (Math.abs(diff) > 0.01) {
         try {
+          const lastShift = await getLastShift();
           const { data: discData, error: discErr } = await supabase
             .from('shift_discrepancies')
             .insert([{
-              shift_id: lastShift.id,
-              reported_by_id: lastShift.user_id,
+              shift_id: lastShift?.id || null,
+              reported_by_id: lastShift?.user_id || userIdInt,
               verified_by_id: userIdInt,
-              system_expected: lastShift.actual_cash_balance, // What should be there
-              seller_reported: lastShift.actual_cash_balance, // What they claimed
-              verifier_counted: openingBalance,
+              system_expected: roundedGlobal,
+              seller_reported: roundedGlobal,
+              verifier_counted: roundedOpening,
               difference: diff,
               status: 'pending'
             }])
@@ -211,6 +214,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         .reduce((sum, e) => sum + e.amount, 0);
       
       const expectedCash = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
+      const roundedActual = Math.round(actualBalance * 100) / 100;
+      const roundedExpected = Math.round(expectedCash * 100) / 100;
 
       // 2. Update the shift record
       const { error } = await supabase
@@ -218,8 +223,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         .update({
           closed_at: new Date().toISOString(),
           status: 'closed',
-          actual_cash_balance: actualBalance,
-          expected_cash_balance: expectedCash,
+          actual_cash_balance: roundedActual,
+          expected_cash_balance: roundedExpected,
           cash_sales: cashSales,
           card_sales: cardSales,
           total_incomes: cashIncomes + cardIncomes,
@@ -231,7 +236,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       // 3. Handle Discrepancy immediately if it exists
-      const difference = actualBalance - expectedCash;
+      const difference = Math.round((roundedActual - roundedExpected) * 100) / 100;
       if (Math.abs(difference) > 0.01) {
         try {
           // Insert Discrepancy record
@@ -240,9 +245,9 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             .insert([{
               shift_id: activeShift.id,
               reported_by_id: parseInt(user.id),
-              system_expected: expectedCash,
-              seller_reported: actualBalance,
-              verifier_counted: actualBalance, // Seller is Verifier at this stage
+              system_expected: roundedExpected,
+              seller_reported: roundedActual,
+              verifier_counted: roundedActual, // Seller is Verifier at this stage
               difference: difference,
               status: 'pending'
             }])
@@ -318,8 +323,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       const cashSales = (salesData || []).reduce((sum, s) => sum + s.total_amount, 0);
       const cashIncomes = (incData || []).reduce((sum, i) => sum + i.amount, 0);
       const cashExpenses = (expData || []).reduce((sum, e) => sum + e.amount, 0);
-      
-      return activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
+      const expected = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
+      return Math.round(expected * 100) / 100;
     } catch (e) {
       console.error('Error calculating expected cash:', e);
       return activeShift.opening_balance;

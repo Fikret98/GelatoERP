@@ -50,7 +50,7 @@ export default function POS() {
   const checkShiftStatus = async () => {
     const lastBalance = await getLastShiftClosingBalance();
     setSuggestedBalance(lastBalance);
-    setOpeningBalance(lastBalance.toString());
+    setOpeningBalance(lastBalance.toFixed(2));
   };
 
   const addToCart = (product: any) => {
