@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar, Coins, Percent, ArrowUpRight, ArrowDownLeft, Wallet, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar, Coins, Percent, ArrowUpRight, ArrowDownLeft, Wallet, Info, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -39,6 +39,7 @@ export default function Dashboard() {
     totalSupplierDebt: 0,
     totalFixedAssets: 0,
     kassa: 0,
+    bank_balance: 0,
     netProfit: 0
   });
 
@@ -58,8 +59,8 @@ export default function Dashboard() {
 
   const reportInfo = {
     kassa: {
-      title: 'Kassa (Ümumi Qalıq)',
-      content: 'Kassadakı cari ümumi pul qalığı. Bütün satışlar, mədaxillər və məxariclər arasındakı fərqi göstərir.'
+      title: 'Kassa (Nağd və Bank)',
+      content: 'Kassadakı cari pul qalığı. Nağd kassa və Bank hesabı üzrə ayrıca qalıqları və ümumi cəmi göstərir.'
     },
     revenue: {
       title: 'Ümumi Gəlir',
@@ -206,14 +207,13 @@ export default function Dashboard() {
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 
   const cards = [
-    { id: 'kassa',          name: 'Kassa (Ümumi)',    rawValue: stats.kassa || 0,       suffix: ' ₼', decimals: 2, icon: Wallet, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-    { id: 'revenue',        name: 'Ümumi Gəlir',     rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: ArrowUpRight, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
-    { id: 'netProfit',      name: 'Xalis Mənfəət',   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-    { id: 'aov',            name: 'Orta Satış (AOV)', rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { id: 'inventoryValue', name: 'Anbar Dəyəri',     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-    { id: 'totalSupplierDebt', name: 'Təchizatçalara Borc', rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { id: 'totalFixedAssets', name: 'Əsas Vəsaitlər', rawValue: stats.totalFixedAssets, suffix: ' ₼', decimals: 2, icon: Package, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-    { id: 'lowStock',       name: 'Azalan Anbar',    rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
+    { id: 'revenue',        name: t('dashboard.revenue'),     rawValue: stats.revenue,      suffix: ' ₼', decimals: 2, icon: ArrowUpRight, color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-100 dark:bg-green-900/30' },
+    { id: 'netProfit',      name: t('dashboard.profit'),   rawValue: stats.netProfit || 0,   suffix: ' ₼', decimals: 2, icon: TrendingUp, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { id: 'aov',            name: t('dashboard.totalValue'), rawValue: aov,                    suffix: ' ₼', decimals: 2, icon: ShoppingBag, color: 'text-blue-600 dark:text-blue-400',  bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'inventoryValue', name: t('dashboard.fixedAssets'),     rawValue: stats.inventoryValue,   suffix: ' ₼', decimals: 2, icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    { id: 'totalSupplierDebt', name: t('common.totalDebt'), rawValue: stats.totalSupplierDebt, suffix: ' ₼', decimals: 2, icon: Coins, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { id: 'totalFixedAssets', name: t('dashboard.fixedAssets'), rawValue: stats.totalFixedAssets, suffix: ' ₼', decimals: 2, icon: Package, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+    { id: 'lowStock',       name: t('dashboard.lowStock'),    rawValue: stats.lowStock,    suffix: '',   decimals: 0, icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', isClickable: true },
   ];
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -276,6 +276,58 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden group"
+      >
+        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <Wallet className="w-32 h-32" />
+        </div>
+        
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl">
+                <Wallet className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{t('dashboard.totalKassa')}</h3>
+                <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tabular-nums tracking-tighter">
+                  <AnimatedStat value={(stats.kassa || 0) + (stats.bank_balance || 0)} suffix=" ₼" />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-12 flex-1 max-w-2xl">
+            <div className="bg-gray-50/50 dark:bg-gray-900/30 p-6 rounded-3xl border border-gray-100/50 dark:border-gray-700/30 flex items-center justify-between group/cash hover:border-emerald-500/30 transition-colors">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">{t('dashboard.cash')}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                  <AnimatedStat value={stats.kassa || 0} suffix=" ₼" />
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center text-emerald-500 shadow-sm border border-gray-100 dark:border-gray-700 group-hover/cash:scale-110 transition-transform">
+                <DollarSign className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-gray-50/50 dark:bg-gray-900/30 p-6 rounded-3xl border border-gray-100/50 dark:border-gray-700/30 flex items-center justify-between group/bank hover:border-indigo-500/30 transition-colors">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">{t('dashboard.bank')}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                  <AnimatedStat value={stats.bank_balance || 0} suffix=" ₼" />
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center text-indigo-500 shadow-sm border border-gray-100 dark:border-gray-700 group-bank:scale-110 transition-transform">
+                <CreditCard className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       <motion.div
         variants={{

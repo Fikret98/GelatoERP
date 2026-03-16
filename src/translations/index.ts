@@ -62,7 +62,10 @@ export const translations = {
       employees: 'İşçilər',
       salesChart: 'Son 7 Günlük Satışlar',
       expenseChart: 'Xərclərin Bölgüsü',
-      fixedAssets: 'Əsas Vəsaitlər'
+      fixedAssets: 'Əsas Vəsaitlər',
+      cash: 'Nağd Kassa',
+      bank: 'Bank Hesabı',
+      totalKassa: 'Ümumi Kassa'
     },
     reports: {
       exportExcel: 'Excel',
@@ -207,7 +210,10 @@ export const translations = {
       employees: 'Employees',
       salesChart: 'Last 7 Days Sales',
       expenseChart: 'Expenses Breakdown',
-      fixedAssets: 'Fixed Assets'
+      fixedAssets: 'Fixed Assets',
+      cash: 'Cash Account',
+      bank: 'Bank Account',
+      totalKassa: 'Total Cash'
     },
     reports: {
       exportExcel: 'Excel',
