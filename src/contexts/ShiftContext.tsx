@@ -109,7 +109,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       const roundedGlobal = Math.round(globalBalance * 100) / 100;
       const diff = Math.round((roundedOpening - roundedGlobal) * 100) / 100;
 
-      if (Math.abs(diff) > 0.01) {
+      if (Math.abs(diff) > 0.005) {
         try {
           const lastShift = await getLastShift();
           const { data: discData, error: discErr } = await supabase
@@ -215,9 +215,9 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         .filter(e => e.payment_method === 'card')
         .reduce((sum, e) => sum + e.amount, 0);
 
-      const expectedCash = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
+      const expectedCash = Math.round((activeShift.opening_balance + cashSales + cashIncomes - cashExpenses) * 100) / 100;
       const roundedActual = Math.round(actualBalance * 100) / 100;
-      const roundedExpected = Math.round(expectedCash * 100) / 100;
+      const roundedExpected = expectedCash;
 
       // 2. Update the shift record
       const { error } = await supabase
@@ -238,8 +238,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       // 3. Handle Discrepancy immediately if it exists
-      const difference = Math.round((roundedActual - roundedExpected) * 100) / 100;
-      if (Math.abs(difference) > 0.01) {
+      const difference = Math.round((roundedActual - expectedCash) * 100) / 100;
+      if (Math.abs(difference) > 0.005) {
         try {
           // Insert Discrepancy record
           const { data: discData, error: discErr } = await supabase
@@ -330,6 +330,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       const cashExpenses = (expData || [])
         .filter(e => !(e.category === 'Kassa Kəsiri' && e.description?.includes('Təhvil-təslim')))
         .reduce((sum, e) => sum + e.amount, 0);
+      
       const expected = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
       return Math.round(expected * 100) / 100;
     } catch (e) {
