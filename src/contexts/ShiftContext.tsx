@@ -108,7 +108,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       const globalBalance = await getGlobalCashBalance();
       const roundedGlobal = Math.round(globalBalance * 100) / 100;
       const diff = Math.round((roundedOpening - roundedGlobal) * 100) / 100;
-      
+
       if (Math.abs(diff) > 0.01) {
         try {
           const lastShift = await getLastShift();
@@ -138,11 +138,12 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
                   description: 'Təhvil-təslim kəsiri (Araşdırılır)',
                   date: new Date().toISOString(),
                   payment_method: 'cash',
-                  user_id: userIdInt
+                  user_id: userIdInt,
+                  shift_id: newShift.id
                 }])
                 .select()
                 .single();
-              
+
               if (expData) {
                 await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
               }
@@ -155,11 +156,12 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
                   description: 'Təhvil-təslim artığı (Araşdırılır)',
                   date: new Date().toISOString(),
                   payment_method: 'cash',
-                  user_id: userIdInt
+                  user_id: userIdInt,
+                  shift_id: newShift.id
                 }])
                 .select()
                 .single();
-              
+
               if (incData) {
                 await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
               }
@@ -212,7 +214,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       const cardExpenses = (expData || [])
         .filter(e => e.payment_method === 'card')
         .reduce((sum, e) => sum + e.amount, 0);
-      
+
       const expectedCash = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
       const roundedActual = Math.round(actualBalance * 100) / 100;
       const roundedExpected = Math.round(expectedCash * 100) / 100;
@@ -234,7 +236,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         .eq('id', activeShift.id);
 
       if (error) throw error;
-      
+
       // 3. Handle Discrepancy immediately if it exists
       const difference = Math.round((roundedActual - roundedExpected) * 100) / 100;
       if (Math.abs(difference) > 0.01) {
@@ -272,7 +274,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
               }])
               .select()
               .single();
-            
+
             if (!expErr && expData) {
               await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
             }
@@ -286,11 +288,12 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
                 description: 'Növbə artığı (Araşdırılır)',
                 date: new Date().toISOString(),
                 payment_method: 'cash',
-                user_id: parseInt(user.id)
+                user_id: parseInt(user.id),
+                shift_id: activeShift.id
               }])
               .select()
               .single();
-            
+
             if (!incErr && incData) {
               await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
             }
@@ -371,11 +374,11 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ShiftContext.Provider value={{ 
-      activeShift, 
-      loading, 
-      openShift, 
-      closeShift, 
+    <ShiftContext.Provider value={{
+      activeShift,
+      loading,
+      openShift,
+      closeShift,
       refreshShift,
       getExpectedCash,
       getLastShift,
