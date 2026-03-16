@@ -397,9 +397,9 @@ export default function POS() {
           <LoadingSpinner message="Satış ekranı yüklənir..." />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden p-4 sm:p-6 lg:p-8">
           {/* Left Side: Products Grid */}
-          <div className="flex-1 flex flex-col min-h-0 bg-white/40 dark:bg-gray-800/20 rounded-[2.5rem] border border-white dark:border-gray-800 backdrop-blur-sm overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-800/50 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
             <div className="p-6 flex items-center justify-between border-b border-gray-100/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none">
@@ -437,8 +437,8 @@ export default function POS() {
                     <motion.button
                       key={product.id}
                       variants={{
-                        hidden: { opacity: 0, y: 10 },
-                        show: { opacity: 1, y: 0 }
+                        hidden: { opacity: 0, scale: 0.95 },
+                        show: { opacity: 1, scale: 1 }
                       }}
                       whileHover={{ y: -8, scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
@@ -473,20 +473,20 @@ export default function POS() {
             </div>
           </div>
 
-          {/* Right Side: Cart Section (Desktop: static side, Mobile: fixed) */}
+          {/* Right Side: Cart Section (Desktop: scrollable sidebar, Mobile: fixed overlay) */}
           <div className={`
             fixed lg:static inset-x-0 bottom-0 z-[200] lg:z-auto
-            h-[85vh] lg:h-full lg:w-[400px]
-            bg-white dark:bg-gray-800 lg:bg-white/60 dark:lg:bg-gray-800/40 lg:backdrop-blur-md
+            h-[85vh] lg:h-full lg:w-[450px]
+            bg-white dark:bg-gray-800 lg:bg-white dark:lg:bg-gray-800
             rounded-t-[3rem] lg:rounded-[2.5rem] 
-            shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] lg:shadow-none
+            shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] lg:shadow-xl lg:shadow-black/5
             border-t lg:border border-indigo-100/50 dark:border-gray-700/50 
             flex flex-col overflow-hidden
-            transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+            transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
             ${showMobileCart ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
           `}>
             {/* Cart Header */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50 flex items-center justify-between">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
                   <ShoppingCart className="w-5 h-5" />
@@ -504,49 +504,51 @@ export default function POS() {
             </div>
 
             {/* Cart Items List */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
               <AnimatePresence mode="popLayout" initial={false}>
                 {cart.length === 0 ? (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 text-center space-y-4"
+                    className="h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 text-center space-y-4"
                   >
-                    <div className="w-20 h-20 bg-gray-50 dark:bg-gray-900/50 rounded-full flex items-center justify-center">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-900/50 rounded-full flex items-center justify-center shadow-inner">
                       <ShoppingCart className="w-10 h-10 opacity-20" />
                     </div>
-                    <p className="font-bold italic">{t('pos.emptyCart')}</p>
+                    <p className="font-bold italic text-sm">{t('pos.emptyCart')}</p>
                   </motion.div>
                 ) : (
                   cart.map(item => (
                     <motion.div 
                       key={item.product.id}
                       layout
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      className="group flex flex-col p-4 bg-white dark:bg-gray-900/40 rounded-[1.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
+                      initial={{ opacity: 0, x: 50, scale: 0.9 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: -50, scale: 0.9 }}
+                      className="group flex flex-col p-4 bg-gray-50 dark:bg-gray-900/40 rounded-[1.5rem] border border-gray-100 dark:border-gray-800 hover:border-indigo-100 dark:hover:border-indigo-900/30 transition-all duration-300"
                     >
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-4">
                         <div className="flex-1 min-w-0 pr-2">
-                          <h4 className="font-black text-gray-900 dark:text-white truncate text-sm uppercase tracking-tight">{item.product.name}</h4>
-                          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{item.product.category}</div>
+                          <h4 className="font-black text-gray-900 dark:text-white truncate text-sm uppercase tracking-tight leading-tight">{item.product.name}</h4>
+                          <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{item.product.category}</div>
                         </div>
-                        <div className="text-sm font-black text-indigo-600 dark:text-indigo-400">{(item.product.price * item.quantity).toFixed(2)} ₼</div>
+                        <div className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                          {(item.product.price * item.quantity).toFixed(2)} ₼
+                        </div>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border border-gray-100 dark:border-gray-700">
-                          <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Azalt">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center bg-white dark:bg-gray-800 p-1.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                          <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Azalt">
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           <span className="font-black w-8 text-center text-gray-900 dark:text-white text-sm">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-indigo-500 transition-colors" title="Artır">
+                          <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-indigo-500 transition-colors" title="Artır">
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <button onClick={() => removeFromCart(item.product.id)} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all scale-90 group-hover:scale-100" title="Sil">
+                        <button onClick={() => removeFromCart(item.product.id)} className="p-2.5 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Sil">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -557,15 +559,15 @@ export default function POS() {
             </div>
 
             {/* Cart Footer */}
-            <div className="p-6 bg-white dark:bg-gray-900/80 border-t border-gray-100 dark:border-gray-700/50 space-y-6">
-              <div className="flex bg-gray-50 dark:bg-gray-800 p-1.5 rounded-[1.25rem] border border-gray-100 dark:border-gray-700 shadow-inner">
+            <div className="p-6 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 space-y-6">
+              <div className="flex bg-white dark:bg-gray-800 p-1.5 rounded-[1.5rem] border border-gray-100 dark:border-gray-700 shadow-sm">
                 <button
                   onClick={() => setPaymentMethod('cash')}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300",
                     paymentMethod === 'cash' 
-                      ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-xl shadow-black/5 scale-[1.02]" 
-                      : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                      ? "bg-indigo-600 text-white shadow-xl shadow-indigo-200 dark:shadow-none translate-y-[-2px]" 
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   )}
                 >
                   💵 Nağd
@@ -573,54 +575,53 @@ export default function POS() {
                 <button
                   onClick={() => setPaymentMethod('card')}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300",
                     paymentMethod === 'card' 
-                      ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-xl shadow-black/5 scale-[1.02]" 
-                      : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                      ? "bg-indigo-600 text-white shadow-xl shadow-indigo-200 dark:shadow-none translate-y-[-2px]" 
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   )}
                 >
                   💳 Kart
                 </button>
               </div>
 
-              <div className="flex justify-between items-end px-2">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{t('pos.total')}</span>
-                  <span className="text-3xl font-black text-gray-900 dark:text-white leading-none">{total.toFixed(2)} ₼</span>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('pos.total')}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter">{total.toFixed(2)} ₼</span>
+                    <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest mt-1">Gözlənilən Bonus: +{(total * 0.05).toFixed(2)}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-green-500 uppercase tracking-widest leading-none mb-1">Bonus</span>
-                  <span className="text-sm font-black text-green-500 leading-none">+{(total * 0.05).toFixed(2)}</span>
-                </div>
+                
+                <button
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0 || loading}
+                  className="group relative w-full h-16 bg-indigo-600 text-white rounded-[1.5rem] font-black text-lg uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-2xl shadow-indigo-500/30 overflow-hidden flex items-center justify-center"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  <div className="flex items-center gap-3">
+                    {loading ? (
+                      <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="w-6 h-6" />
+                        <span>{t('pos.checkout')}</span>
+                      </>
+                    )}
+                  </div>
+                </button>
               </div>
-              
-              <button
-                onClick={handleCheckout}
-                disabled={cart.length === 0 || loading}
-                className="group relative w-full h-16 bg-indigo-600 text-white rounded-[1.5rem] font-black text-lg uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-2xl shadow-indigo-500/30 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <div className="relative flex items-center justify-center gap-3">
-                  {loading ? (
-                    <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <CreditCard className="w-6 h-6" />
-                      <span>{t('pos.checkout')}</span>
-                    </>
-                  )}
-                </div>
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mobile Cart Floating Trigger */}
+      {/* Mobile Cart Button Trigger */}
       {cart.length > 0 && !showMobileCart && (
         <motion.button
-          initial={{ scale: 0, opacity: 0, y: 50 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
+          initial={{ scale: 0, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowMobileCart(true)}
           className="lg:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 z-[90] bg-indigo-600 text-white p-5 rounded-[2rem] shadow-2xl shadow-indigo-600/40 flex items-center gap-3"

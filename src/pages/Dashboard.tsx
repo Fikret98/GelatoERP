@@ -161,7 +161,7 @@ export default function Dashboard() {
         // Fetch shift discrepancies
         const { data: discData } = await supabase
           .from('shift_discrepancies')
-          .select('*, reported_by:reported_by_id(full_name), verified_by:verified_by_id(full_name)')
+          .select('*, reported_by:reported_by_id(name), verified_by:verified_by_id(name)')
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
         
@@ -256,7 +256,7 @@ export default function Dashboard() {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="space-y-8 pb-10"
+      className="space-y-8 pb-10 p-4 sm:p-6 lg:p-8"
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>

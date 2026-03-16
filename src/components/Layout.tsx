@@ -252,7 +252,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               window.location.reload();
             }}
           >
-            <div className="max-w-[1700px] mx-auto p-4 sm:p-6 lg:p-8 w-full h-full flex flex-col min-h-0">
+            <div className="max-w-[1700px] mx-auto w-full h-full flex flex-col min-h-0">
               {children}
             </div>
           </PullToRefresh>

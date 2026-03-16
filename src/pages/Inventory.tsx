@@ -211,7 +211,7 @@ export default function Inventory() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
+      className="space-y-6 p-4 sm:p-6 lg:p-8"
     >
       {isLoadingPage ? (
         <div className="flex items-center justify-center min-h-[60vh]">
