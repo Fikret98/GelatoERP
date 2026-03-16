@@ -475,9 +475,10 @@ export default function POS() {
           `} onClick={() => setShowMobileCart(false)} />
 
           {/* Cart Section (Desktop: static, Mobile: fixed) */}
+          {/* Cart Section (Desktop: sticky, Mobile: fixed) */}
           <div className={`
-            fixed bottom-0 left-0 right-0 z-[200] h-[85vh] lg:h-full
-            lg:static lg:w-96
+            fixed bottom-0 left-0 right-0 z-[200] h-[85vh] lg:h-[calc(100vh-180px)]
+            lg:sticky lg:top-6 lg:w-96
             bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl shadow-xl lg:shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col
             transition-transform duration-300 lg:transform-none
             ${showMobileCart ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
