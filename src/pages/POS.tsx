@@ -197,7 +197,7 @@ export default function POS() {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col gap-6 h-full lg:h-[calc(100vh-8rem)] relative"
+      className="flex flex-col gap-6 h-full relative"
     >
       {/* Shift Ribbon */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
@@ -385,23 +385,21 @@ export default function POS() {
                   >
                     {shiftLoading ? '...' : 'Təhvil Ver'}
                   </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-      {isLoadingPage ? (
+                {isLoadingPage ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner message="Satış ekranı yüklənir..." />
         </div>
       ) : (
-        <>
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
           {/* Products Grid */}
-          <div className="flex-1 overflow-y-auto w-full pr-0 lg:pr-2 pt-4">
-            <div className="flex items-center justify-between mb-6">
+          <div className="flex-1 overflow-y-auto w-full pr-0 lg:pr-2">
+            <div className="flex items-center justify-between mb-6 px-1">
               <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav.pos')}</h1>
+              <div className="text-xs text-gray-400 font-medium">
+                {products.length} {t('pos.items')} tapıldı
+              </div>
             </div>
+            
             <motion.div 
               variants={{
                 hidden: { opacity: 0 },
@@ -414,52 +412,62 @@ export default function POS() {
               animate="show"
               className="p-1 sm:p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 pb-20"
             >
-              {products.map(product => (
-                <motion.button
-                  key={product.id}
-                  variants={{
-                    hidden: { opacity: 0, scale: 0.95 },
-                    show: { opacity: 1, scale: 1 }
-                  }}
-                  whileHover={{ y: -4, shadow: "0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => addToCart(product)}
-                  className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all text-left flex flex-col h-full group relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 p-3 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
-                    <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200 dark:shadow-none">
-                      <Plus className="w-4 h-4" />
+              {products.length === 0 ? (
+                <div className="col-span-full py-20 text-center">
+                  <Package className="w-12 h-12 text-gray-300 mx-auto mb-4 opacity-20" />
+                  <p className="text-gray-400 font-bold italic">Məhsul tapılmadı.</p>
+                  <p className="text-xs text-gray-500 mt-2">Zəhmət olmasa "Anbar" bölməsindən məhsul əlavə edin və ya bazanı yoxlayın.</p>
+                </div>
+              ) : (
+                products.map(product => (
+                  <motion.button
+                    key={product.id}
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.95 },
+                      show: { opacity: 1, scale: 1 }
+                    }}
+                    whileHover={{ y: -4, shadow: "0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => addToCart(product)}
+                    className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all text-left flex flex-col h-full group relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 p-3 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
+                      <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200 dark:shadow-none">
+                        <Plus className="w-4 h-4" />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden shrink-0">
-                    <span className="text-xl sm:text-2xl lg:text-3xl drop-shadow-sm select-none">
-                      {product.category === 'dondurma' ? '🍦' : product.category === 'kokteyl' ? '🍹' : '🍰'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex-1 min-h-0 flex flex-col justify-between">
-                    <h3 className="font-bold text-gray-900 dark:text-white leading-tight text-xs sm:text-sm lg:text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-8 sm:h-10 lg:h-12">{product.name}</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">{product.category}</span>
+                    
+                    <div className="w-full aspect-square bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 rounded-2xl mb-4 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-800/20 group-hover:scale-105 transition-transform duration-300 overflow-hidden shrink-0">
+                      <span className="text-xl sm:text-2xl lg:text-3xl drop-shadow-sm select-none">
+                        {product.category === 'dondurma' ? '🍦' : product.category === 'kokteyl' ? '🍹' : '🍰'}
+                      </span>
                     </div>
-                  </div>
+                    
+                    <div className="flex-1 min-h-0 flex flex-col justify-between">
+                      <h3 className="font-bold text-gray-900 dark:text-white leading-tight text-xs sm:text-sm lg:text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 h-8 sm:h-10 lg:h-12">{product.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">{product.category}</span>
+                      </div>
+                    </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                    <div className="text-sm sm:text-lg font-bold text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
-                      {product.price.toFixed(2)} <span className="text-[10px] sm:text-xs">₼</span>
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                      <div className="text-sm sm:text-lg font-bold text-indigo-600 dark:text-indigo-400 flex items-baseline gap-0.5">
+                        {product.price.toFixed(2)} <span className="text-[10px] sm:text-xs">₼</span>
+                      </div>
                     </div>
-                  </div>
-                </motion.button>
-              ))}
+                  </motion.button>
+                ))
+              )}
             </motion.div>
           </div>
 
+          {/* Cart Section - Mobile Overlay */}
           <div className={`
             fixed inset-0 z-[100] bg-black/50 lg:hidden transition-opacity
             ${showMobileCart ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `} onClick={() => setShowMobileCart(false)} />
 
+          {/* Cart Section (Desktop: static, Mobile: fixed) */}
           <div className={`
             fixed bottom-0 left-0 right-0 z-[200] h-[85vh] lg:h-full
             lg:static lg:w-96
@@ -467,6 +475,7 @@ export default function POS() {
             transition-transform duration-300 lg:transform-none
             ${showMobileCart ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
           `}>
+            {/* Cart Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 rounded-t-3xl lg:rounded-t-2xl">
               <h2 className="text-lg font-bold flex items-center text-gray-900 dark:text-white">
                 <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />
@@ -482,6 +491,7 @@ export default function POS() {
               </div>
             </div>
 
+            {/* Cart Items */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <AnimatePresence mode="popLayout">
                 {cart.length === 0 ? (
@@ -526,6 +536,7 @@ export default function POS() {
               </AnimatePresence>
             </div>
 
+            {/* Cart Footer */}
             <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+4rem)] lg:pb-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl space-y-4">
               <div className="flex bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <button
@@ -571,7 +582,7 @@ export default function POS() {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Mobile Cart Floating Button */}
@@ -588,6 +599,14 @@ export default function POS() {
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
             </span>
+          </div>
+          <span className="font-bold text-sm">Səbət</span>
+        </motion.button>
+      )}
+    </motion.div>
+  );
+}
+>
           </div>
           <span className="font-bold text-sm">Səbət</span>
         </motion.button>
