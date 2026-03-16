@@ -521,7 +521,7 @@ export default function HR() {
 
           <AnimatePresence>
             {showModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -600,7 +600,7 @@ export default function HR() {
 
             {/* Salary History Modal */}
             {selectedHistoryEmployee && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setSelectedHistoryEmployee(null)}>
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setSelectedHistoryEmployee(null)}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9, y: 30 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -672,7 +672,7 @@ export default function HR() {
 
             {/* Debt History & Payment Modal */}
             {selectedDebtEmployee && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setSelectedDebtEmployee(null)}>
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setSelectedDebtEmployee(null)}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9, y: 30 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -75,6 +75,11 @@ export default function POS() {
     } else {
       setCart([...cart, { product, quantity: 1 }]);
     }
+    toast.success(`${product.name} səbətə əlavə edildi`, {
+      icon: '🛒',
+      position: 'bottom-center',
+      className: 'mb-24 lg:mb-0'
+    });
   };
 
   const updateQuantity = (productId: number, delta: number) => {
@@ -166,7 +171,7 @@ export default function POS() {
                   onClick={() => addToCart(product)}
                   className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all text-left flex flex-col h-full group relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-0 right-0 p-3 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
                     <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200 dark:shadow-none">
                       <Plus className="w-4 h-4" />
                     </div>
@@ -312,6 +317,25 @@ export default function POS() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Mobile Cart Floating Button */}
+      {cart.length > 0 && !showMobileCart && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowMobileCart(true)}
+          className="lg:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-[90] bg-indigo-600 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-2"
+        >
+          <div className="relative">
+            <ShoppingCart className="w-6 h-6" />
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
+              {cart.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          </div>
+          <span className="font-bold text-sm">Səbət</span>
+        </motion.button>
       )}
     </motion.div>
   );

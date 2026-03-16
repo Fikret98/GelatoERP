@@ -463,7 +463,7 @@ export default function Reports() {
 
           <AnimatePresence>
             {selectedTransaction && (
-              <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[70] p-0 lg:p-4 backdrop-blur-sm" onClick={() => setSelectedTransaction(null)}>
+              <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm" onClick={() => setSelectedTransaction(null)}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9, y: 30 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -635,7 +635,7 @@ export default function Reports() {
           </AnimatePresence>
 
           {showExpenseModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+            <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -677,7 +677,7 @@ export default function Reports() {
           )}
 
           {showIncomeModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[60] p-0 lg:p-4 backdrop-blur-sm">
+            <div className="fixed inset-0 bg-black/50 flex items-end lg:items-center justify-center z-[100] p-0 lg:p-4 backdrop-blur-sm">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
