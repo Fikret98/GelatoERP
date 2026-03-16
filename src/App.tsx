@@ -84,9 +84,11 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-            <Router>
-              <MainContent />
-            </Router>
+            <ShiftProvider>
+              <Router>
+                <MainContent />
+              </Router>
+            </ShiftProvider>
           <Toaster 
             position="top-right" 
             toastOptions={{
