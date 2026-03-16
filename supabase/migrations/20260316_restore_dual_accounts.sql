@@ -108,20 +108,20 @@ BEGIN
     ) t;
 
     SELECT COALESCE(json_agg(t), '[]'::json) INTO v_expenses_by_cat FROM (
-        SELECT category as name, SUM(amount) as value FROM public.expenses
+        SELECT category as name, SUM(amount) as amount FROM public.expenses
         WHERE date >= p_start_date AND date <= p_end_date GROUP BY category
     ) t;
 
     SELECT COALESCE(json_agg(t), '[]'::json) INTO v_revenue_by_cat FROM (
-        SELECT p.category as name, SUM(si.quantity * si.price) as value
+        SELECT p.category as name, SUM(si.quantity * si.price) as amount
         FROM public.sale_items si JOIN public.products p ON si.product_id = p.id JOIN public.sales s ON si.sale_id = s.id
         WHERE s.date >= p_start_date AND s.date <= p_end_date GROUP BY p.category
     ) t;
 
     SELECT COALESCE(json_agg(t), '[]'::json) INTO v_top_products FROM (
-        SELECT p.name, SUM(si.quantity) as value
+        SELECT p.name, SUM(si.quantity) as amount
         FROM public.sale_items si JOIN public.products p ON si.product_id = p.id JOIN public.sales s ON si.sale_id = s.id
-        WHERE s.date >= p_start_date AND s.date <= p_end_date GROUP BY p.name ORDER BY value DESC LIMIT 5
+        WHERE s.date >= p_start_date AND s.date <= p_end_date GROUP BY p.name ORDER BY amount DESC LIMIT 5
     ) t;
 
     -- Build JSON output

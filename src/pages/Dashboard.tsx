@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle,
 import { motion, AnimatePresence } from 'motion/react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, PieChart as RePieChart, Pie
+  BarChart, Bar, Cell, PieChart as RePieChart, Pie, Legend
 } from 'recharts';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -424,25 +424,55 @@ export default function Dashboard() {
                 Xərc Bölüşümü
               </h3>
             </div>
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RePieChart>
-                  <Pie
-                    data={charts.expensesByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="amount"
-                  >
-                    {charts.expensesByCategory.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RePieChart>
-              </ResponsiveContainer>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="h-[250px] w-full md:w-1/2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RePieChart>
+                    <Pie
+                      data={charts.expensesByCategory}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="amount"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {charts.expensesByCategory.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        borderRadius: '16px', 
+                        border: 'none', 
+                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                        fontWeight: 900,
+                        fontSize: '12px'
+                      }}
+                    />
+                  </RePieChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {charts.expensesByCategory.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/30 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">{item.name}</p>
+                      <p className="text-xs font-bold text-gray-900 dark:text-white">
+                        {item.amount.toFixed(2)} ₼
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {charts.expensesByCategory.length === 0 && (
+                  <div className="col-span-2 py-8 text-center text-gray-400 font-bold italic text-xs uppercase tracking-widest bg-gray-50 dark:bg-gray-900/30 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
+                    Məlumat yoxdur
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
