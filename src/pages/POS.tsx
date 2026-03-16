@@ -127,7 +127,7 @@ export default function POS() {
         toast.error('Düzgün məbləğ daxil edin');
         return;
       }
-      await openShift(balance, suggestedBalance);
+      await openShift(balance);
       setShowOpenModal(false);
     } catch (e) {
       // Error handled in ShiftContext

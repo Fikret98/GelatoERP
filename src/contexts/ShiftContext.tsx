@@ -78,7 +78,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const openShift = async (openingBalance: number, verifiedLastBalance?: number) => {
+  const openShift = async (openingBalance: number) => {
     if (!user) return;
     setLoading(true);
     try {
@@ -104,20 +104,67 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (shiftErr) throw shiftErr;
 
       // 2. Handle discrepancy if verifier counted differently from previous seller
-      if (verifiedLastBalance !== undefined) {
-        const lastShift = await getLastShift();
-        if (lastShift && Math.abs(lastShift.actual_cash_balance - verifiedLastBalance) > 0.01) {
-          await supabase.from('shift_discrepancies').insert([{
-            shift_id: lastShift.id,
-            reported_by_id: lastShift.user_id,
-            verified_by_id: userIdInt,
-            system_expected: lastShift.expected_cash_balance,
-            seller_reported: lastShift.actual_cash_balance,
-            verifier_counted: verifiedLastBalance,
-            difference: verifiedLastBalance - lastShift.actual_cash_balance,
-            status: 'pending'
-          }]);
+      const lastShift = await getLastShift();
+      const diff = openingBalance - (lastShift?.actual_cash_balance || 0);
+      
+      if (lastShift && Math.abs(diff) > 0.01) {
+        try {
+          const { data: discData, error: discErr } = await supabase
+            .from('shift_discrepancies')
+            .insert([{
+              shift_id: lastShift.id,
+              reported_by_id: lastShift.user_id,
+              verified_by_id: userIdInt,
+              system_expected: lastShift.actual_cash_balance, // What should be there
+              seller_reported: lastShift.actual_cash_balance, // What they claimed
+              verifier_counted: openingBalance,
+              difference: diff,
+              status: 'pending'
+            }])
+            .select()
+            .single();
+
+          if (!discErr && discData) {
+            // Immediate Financial Impact
+            if (diff < 0) {
+              const { data: expData } = await supabase
+                .from('expenses')
+                .insert([{
+                  category: 'Kassa Kəsiri',
+                  amount: Math.abs(diff),
+                  description: 'Təhvil-təslim kəsiri (Araşdırılır)',
+                  date: new Date().toISOString(),
+                  payment_method: 'cash',
+                  user_id: userIdInt
+                }])
+                .select()
+                .single();
+              
+              if (expData) {
+                await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
+              }
+            } else {
+              const { data: incData } = await supabase
+                .from('incomes')
+                .insert([{
+                  category: 'Kassa Artığı',
+                  amount: Math.abs(diff),
+                  description: 'Təhvil-təslim artığı (Araşdırılır)',
+                  date: new Date().toISOString(),
+                  payment_method: 'cash',
+                  user_id: userIdInt
+                }])
+                .select()
+                .single();
+              
+              if (incData) {
+                await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
+              }
+            }
+          }
           toast('Təhvil-təslimdə uyğunsuzluq qeyd edildi.', { icon: '⚠️' });
+        } catch (discE: any) {
+          console.error('Handover discrepancy error:', discE);
         }
       }
 
