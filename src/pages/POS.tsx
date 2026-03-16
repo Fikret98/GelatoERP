@@ -197,7 +197,7 @@ export default function POS() {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col gap-6 h-full relative"
+      className="flex-1 flex flex-col gap-6 min-h-0 relative"
     >
       {/* Shift Ribbon */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">

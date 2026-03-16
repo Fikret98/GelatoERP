@@ -85,7 +85,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   }, [isPulling, isRefreshing, pullDistance, onRefresh]);
 
   return (
-    <div ref={containerRef} className="relative min-h-full">
+    <div ref={containerRef} className="relative flex-1 flex flex-col min-h-0 min-w-0">
       {/* Animation Area */}
       <div 
         className="absolute top-0 left-0 right-0 flex items-center justify-center overflow-hidden pointer-events-none"
@@ -172,7 +172,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
       <motion.div
         style={{ y: pullDistance }}
         transition={isPulling ? { type: "just" } : { type: "spring", stiffness: 400, damping: 30 }}
-        className="w-full h-full bg-gray-50 dark:bg-gray-900"
+        className="w-full h-full bg-gray-50 dark:bg-gray-900 flex flex-col min-h-0 min-w-0"
       >
         {children}
       </motion.div>

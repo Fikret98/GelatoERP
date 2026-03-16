@@ -246,13 +246,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 text-gray-900 dark:text-white">
+        <main className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 text-gray-900 dark:text-white overflow-hidden">
           <PullToRefresh 
             onRefresh={async () => {
               window.location.reload();
             }}
           >
-            <div className="max-w-[1700px] mx-auto p-4 sm:p-6 lg:p-8 w-full">
+            <div className="max-w-[1700px] mx-auto p-4 sm:p-6 lg:p-8 w-full h-full flex flex-col min-h-0">
               {children}
             </div>
           </PullToRefresh>
