@@ -319,13 +319,17 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     try {
       const [{ data: salesData }, { data: expData }, { data: incData }] = await Promise.all([
         supabase.from('sales').select('total_amount').eq('shift_id', activeShift.id).eq('payment_method', 'cash'),
-        supabase.from('expenses').select('amount').eq('shift_id', activeShift.id).eq('payment_method', 'cash'),
-        supabase.from('incomes').select('amount').eq('shift_id', activeShift.id).eq('payment_method', 'cash')
+        supabase.from('expenses').select('amount, category, description').eq('shift_id', activeShift.id).eq('payment_method', 'cash'),
+        supabase.from('incomes').select('amount, category, description').eq('shift_id', activeShift.id).eq('payment_method', 'cash')
       ]);
 
       const cashSales = (salesData || []).reduce((sum, s) => sum + s.total_amount, 0);
-      const cashIncomes = (incData || []).reduce((sum, i) => sum + i.amount, 0);
-      const cashExpenses = (expData || []).reduce((sum, e) => sum + e.amount, 0);
+      const cashIncomes = (incData || [])
+        .filter(i => !(i.category === 'Kassa Artığı' && i.description?.includes('Təhvil-təslim')))
+        .reduce((sum, i) => sum + i.amount, 0);
+      const cashExpenses = (expData || [])
+        .filter(e => !(e.category === 'Kassa Kəsiri' && e.description?.includes('Təhvil-təslim')))
+        .reduce((sum, e) => sum + e.amount, 0);
       const expected = activeShift.opening_balance + cashSales + cashIncomes - cashExpenses;
       return Math.round(expected * 100) / 100;
     } catch (e) {
