@@ -94,70 +94,7 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-
-    const channel = supabase
-      .channel('dashboard-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sale_items' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_discrepancies' }, fetchDashboardData)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [dateRange, customRange]);
-
-  // Body scroll lock when modals are open
-  useEffect(() => {
-    if (showLowStockModal || infoModal?.show) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100vw';
-      document.body.style.overflow = 'hidden';
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
-    }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-    };
-  }, [showLowStockModal, infoModal]);
-
-  const handleResolveDiscrepancy = async (id: string, status: 'resolved' | 'dismissed', notes: string = '') => {
-    setIsResolving(true);
-    try {
-      const { error } = await supabase.rpc('resolve_shift_discrepancy', {
-        p_discrepancy_id: id,
-        p_responsible_user_id: null,
-        p_admin_notes: notes,
-        p_status: status
-      });
-
-      if (error) throw error;
-      toast.success(status === 'resolved' ? 'Uğurla həll edildi' : 'Ləğv edildi');
-      fetchDashboardData();
-    } catch (e: any) {
-      toast.error('Xəta: ' + e.message);
-    } finally {
-      setIsResolving(false);
-    }
-  };
-
+  // 1. Core Logic Functions
   const fetchDashboardData = async () => {
     try {
       let startDate: string;
@@ -235,6 +172,71 @@ export default function Dashboard() {
       toast.error("Dashboard məlumatları yüklənərkən xəta: " + error.message);
     }
   };
+
+  const handleResolveDiscrepancy = async (id: string, status: 'resolved' | 'dismissed', notes: string = '') => {
+    setIsResolving(true);
+    try {
+      const { error } = await supabase.rpc('resolve_shift_discrepancy', {
+        p_discrepancy_id: id,
+        p_responsible_user_id: null,
+        p_admin_notes: notes,
+        p_status: status
+      });
+
+      if (error) throw error;
+      toast.success(status === 'resolved' ? 'Uğurla həll edildi' : 'Ləğv edildi');
+      fetchDashboardData();
+    } catch (e: any) {
+      toast.error('Xəta: ' + e.message);
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
+  // 2. Lifecycle Effects
+  useEffect(() => {
+    fetchDashboardData();
+
+    const channel = supabase
+      .channel('dashboard-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sale_items' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_discrepancies' }, fetchDashboardData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dateRange, customRange]);
+
+  // Body scroll lock when modals are open
+  useEffect(() => {
+    if (showLowStockModal || infoModal?.show) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100vw';
+      document.body.style.overflow = 'hidden';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = 'unset';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = 'unset';
+    };
+  }, [showLowStockModal, infoModal]);
 
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 

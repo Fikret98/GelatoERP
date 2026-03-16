@@ -29,46 +29,7 @@ export default function POS() {
   const [closingExpected, setClosingExpected] = useState<number>(0);
   const [shiftNotes, setShiftNotes] = useState('');
 
-  useEffect(() => {
-    fetchProducts();
-    checkShiftStatus();
-  }, []);
-
-  const checkShiftStatus = async () => {
-    const lastBalance = await getLastShiftClosingBalance();
-    setSuggestedBalance(lastBalance);
-    setOpeningBalance(lastBalance.toString());
-  };
-
-  // Body scroll lock when mobile cart is open
-  useEffect(() => {
-    if (showMobileCart) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100vw';
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
-    }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '';
-    };
-  }, [showMobileCart]);
-
+  // 1. Data Fetching & Utility Functions
   const fetchProducts = async () => {
     try {
       setIsLoadingPage(true);
@@ -84,6 +45,12 @@ export default function POS() {
     } finally {
       setIsLoadingPage(false);
     }
+  };
+
+  const checkShiftStatus = async () => {
+    const lastBalance = await getLastShiftClosingBalance();
+    setSuggestedBalance(lastBalance);
+    setOpeningBalance(lastBalance.toString());
   };
 
   const addToCart = (product: any) => {
@@ -115,6 +82,43 @@ export default function POS() {
   };
 
   const total = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  // 2. Lifecycle Effects
+  useEffect(() => {
+    fetchProducts();
+    checkShiftStatus();
+  }, []);
+
+  // Body scroll lock when mobile cart is open
+  useEffect(() => {
+    if (showMobileCart) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100vw';
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+    };
+  }, [showMobileCart]);
+
+  // 3. Shift Management Functions
 
   const handleOpenShift = async () => {
     try {

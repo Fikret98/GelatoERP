@@ -49,7 +49,7 @@ BEGIN
         status = p_status,
         responsible_user_id = p_responsible_user_id,
         admin_notes = p_admin_notes,
-        resolved_at NOW()
+        resolved_at = NOW()
     WHERE id = p_discrepancy_id;
 
     IF p_status = 'resolved' THEN
