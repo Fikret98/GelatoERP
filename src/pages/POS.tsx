@@ -102,9 +102,9 @@ export default function POS() {
     checkShiftStatus();
   }, []);
 
-  // Body scroll lock when mobile cart is open
+  // Body scroll lock for all modals
   useEffect(() => {
-    if (showMobileCart) {
+    if (showMobileCart || showOpenModal || showCloseModal || inventoryError) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -129,7 +129,12 @@ export default function POS() {
       document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '';
     };
-  }, [showMobileCart]);
+  }, [showMobileCart, showOpenModal, showCloseModal, inventoryError]);
+
+  // Clear errors on shift status change
+  useEffect(() => {
+    setInventoryError(null);
+  }, [activeShift?.id]);
 
   // 3. Shift Management Functions
 
@@ -223,6 +228,8 @@ export default function POS() {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col gap-6 min-h-0 relative"
     >
       {/* Shift Ribbon */}
