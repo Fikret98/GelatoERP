@@ -113,3 +113,33 @@ CREATE TRIGGER on_shift_change
     AFTER INSERT OR UPDATE ON public.shifts
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_shift_notification();
+
+-- 5. Large Expense Notification (Part of 'Hesabatlar' preference)
+CREATE OR REPLACE FUNCTION public.handle_large_expense_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_admin_id BIGINT;
+    v_user_name TEXT;
+BEGIN
+    -- 500 AZN-dən yuxarı xərclər üçün bildiriş
+    IF NEW.amount >= 500 THEN
+        SELECT name INTO v_user_name FROM public.users WHERE id = NEW.user_id;
+        
+        FOR v_admin_id IN (SELECT id FROM public.users WHERE role = 'admin' AND notify_reports = TRUE) LOOP
+            PERFORM public.send_push_notification(
+                v_admin_id,
+                '📌 Böyük Xərc Qeydə Alındı',
+                v_user_name || ' tərəfindən ' || NEW.amount || ' ₼ məbləğində xərc qeydə alındı: ' || NEW.description,
+                '/reports'
+            );
+        END LOOP;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_large_expense ON public.expenses;
+CREATE TRIGGER on_large_expense
+    AFTER INSERT ON public.expenses
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_large_expense_notification();
