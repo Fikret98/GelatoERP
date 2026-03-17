@@ -144,11 +144,14 @@ export default function Reports() {
       if (!user) return;
       const amount = parseFloat(expenseData.amount);
       
-      const { data: balance, error: balanceErr } = await supabase.rpc('get_current_cash_balance');
+      const { data: balance, error: balanceErr } = await supabase.rpc(
+        expenseData.payment_method === 'cash' ? 'get_current_cash_balance' : 'get_current_bank_balance'
+      );
       if (balanceErr) throw balanceErr;
       
       if (amount > (balance || 0)) {
-        toast.error(`Kassada kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼`);
+        const accountName = expenseData.payment_method === 'cash' ? 'Kassada' : 'Bank hesabında';
+        toast.error(`${accountName} kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼`);
         return;
       }
 
@@ -667,6 +670,27 @@ export default function Reports() {
                     <label htmlFor="expense-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.description')}</label>
                     <textarea id="expense-desc" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={expenseData.description} onChange={e => setExpenseData({ ...expenseData, description: e.target.value })} />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ödəniş Üsulu</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['cash', 'bank'] as const).map((method) => (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => setExpenseData({ ...expenseData, payment_method: method })}
+                          className={cn(
+                            "py-3 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2",
+                            expenseData.payment_method === method
+                              ? "border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-400 dark:text-indigo-400"
+                              : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-200"
+                          )}
+                        >
+                          {method === 'cash' ? <DollarSign className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
+                          {method === 'cash' ? 'Nağd' : 'Bank'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setShowExpenseModal(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-3 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">{t('common.cancel')}</button>
                     <button type="submit" className="flex-1 bg-red-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20">{t('common.save')}</button>
@@ -702,6 +726,27 @@ export default function Reports() {
                   <div>
                     <label htmlFor="income-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.description')}</label>
                     <textarea id="income-desc" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" rows={3} value={incomeData.description} onChange={e => setIncomeData({ ...incomeData, description: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mədaxil Hesabı</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['cash', 'bank'] as const).map((method) => (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => setIncomeData({ ...incomeData, payment_method: method })}
+                          className={cn(
+                            "py-3 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2",
+                            incomeData.payment_method === method
+                              ? "border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-400 dark:text-indigo-400"
+                              : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-200"
+                          )}
+                        >
+                          {method === 'cash' ? <DollarSign className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
+                          {method === 'cash' ? 'Nağd Kassa' : 'Bank Hesabı'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setShowIncomeModal(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-3 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">{t('common.cancel')}</button>

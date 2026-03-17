@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Phone, Mail, X, History, User } from 'lucide-react';
+import { Plus, Phone, Mail, X, History, User, DollarSign, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -18,7 +18,7 @@ export default function Suppliers() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', contact: '', email: '' });
-  const [paymentData, setPaymentData] = useState({ amount: '', description: '' });
+  const [paymentData, setPaymentData] = useState({ amount: '', description: '', payment_method: 'cash' as 'cash' | 'bank' });
   const [history, setHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
@@ -104,7 +104,8 @@ export default function Suppliers() {
         supplier_id: selectedSupplier.id,
         amount: parseFloat(paymentData.amount),
         description: paymentData.description,
-        created_by: parseInt(user.id)
+        created_by: parseInt(user.id),
+        payment_method: paymentData.payment_method
       }]);
 
       if (error) throw error;
@@ -221,7 +222,7 @@ export default function Suppliers() {
                         <button
                           onClick={() => {
                             setSelectedSupplier(supplier);
-                            setPaymentData({ amount: currentDebt > 0 ? currentDebt.toString() : '', description: '' });
+                            setPaymentData({ amount: currentDebt > 0 ? currentDebt.toString() : '', description: '', payment_method: 'cash' });
                             setShowPaymentModal(true);
                           }}
                           className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
@@ -300,6 +301,27 @@ export default function Suppliers() {
                       <input required type="number" step="0.01" title={t('common.amountPaid')} placeholder="0.00" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold" value={paymentData.amount} onChange={e => setPaymentData({ ...paymentData, amount: e.target.value })} />
                     </div>
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ödəniş Hesabı</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {(['cash', 'bank'] as const).map((method) => (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() => setPaymentData({ ...paymentData, payment_method: method })}
+                            className={cn(
+                              "py-3 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2",
+                              paymentData.payment_method === method
+                                ? "border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-400 dark:text-indigo-400"
+                                : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-200"
+                            )}
+                          >
+                            {method === 'cash' ? <DollarSign className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
+                            {method === 'cash' ? 'Kassa' : 'Bank'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
                       <textarea title={t('reports.description')} placeholder={t('reports.description')} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2" value={paymentData.description} onChange={e => setPaymentData({ ...paymentData, description: e.target.value })} />
                     </div>
@@ -366,6 +388,9 @@ export default function Suppliers() {
                                 <User className="w-3 h-3 mr-1" />
                                 {payment.users?.name}
                               </div>
+                              <p className="text-[9px] font-black text-gray-400 mt-1 uppercase tracking-widest">
+                                {payment.payment_method === 'bank' ? 'Bank' : 'Nağd'}
+                              </p>
                             </div>
                           </div>
                         ))}

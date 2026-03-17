@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, X, Calendar, Package, Truck, ShoppingCart, Edit2 } from 'lucide-react';
+import { Plus, Search, X, Calendar, Package, Truck, ShoppingCart, Edit2, DollarSign, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -20,7 +20,7 @@ export default function Inventory() {
   const [formData, setFormData] = useState({ name: '', unit: 'kq', unit_cost: '', stock_quantity: '', supplier_id: '', critical_limit: '' });
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseItem, setPurchaseItem] = useState<any>(null);
-  const [purchaseForm, setPurchaseForm] = useState({ quantity: '', unit_cost: '', supplier_id: '', amount_paid: '' });
+  const [purchaseForm, setPurchaseForm] = useState({ quantity: '', unit_cost: '', supplier_id: '', amount_paid: '', payment_method: 'cash' as 'cash' | 'bank' });
   const [userId, setUserId] = useState<number | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
@@ -150,7 +150,8 @@ export default function Inventory() {
       quantity: '',
       unit_cost: item.unit_cost.toString(),
       supplier_id: item.supplier_id ? item.supplier_id.toString() : '',
-      amount_paid: ''
+      amount_paid: '',
+      payment_method: 'cash'
     });
     setShowPurchaseModal(true);
   };
@@ -162,12 +163,15 @@ export default function Inventory() {
       const unitCost = parseFloat(purchaseForm.unit_cost);
       const totalCost = q * unitCost;
 
-      // Validate cash balance
-      const { data: balance, error: balanceErr } = await supabase.rpc('get_current_cash_balance');
+      // Validate balance based on payment method
+      const { data: balance, error: balanceErr } = await supabase.rpc(
+        purchaseForm.payment_method === 'cash' ? 'get_current_cash_balance' : 'get_current_bank_balance'
+      );
       if (balanceErr) throw balanceErr;
 
       if (totalCost > (balance || 0)) {
-        toast.error(`Kassada kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼. Lazım olan: ${totalCost.toFixed(2)} ₼`);
+        const accountName = purchaseForm.payment_method === 'cash' ? 'Kassada' : 'Bank hesabında';
+        toast.error(`${accountName} kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼. Lazım olan: ${totalCost.toFixed(2)} ₼`);
         return;
       }
 
@@ -184,7 +188,8 @@ export default function Inventory() {
         unit_price: unitCost,
         supplier_id: purchaseForm.supplier_id ? parseInt(purchaseForm.supplier_id) : null,
         amount_paid: purchaseForm.amount_paid ? parseFloat(purchaseForm.amount_paid) : totalCost,
-        created_by: user?.id ? parseInt(user.id) : null
+        created_by: user?.id ? parseInt(user.id) : null,
+        payment_method: purchaseForm.payment_method
       }]);
 
       if (insertErr) throw insertErr;
@@ -615,9 +620,28 @@ export default function Inventory() {
                 }} />
               </div>
               <div>
-                <label htmlFor="p-paid" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.amountPaid')} (₼)</label>
-                <input id="p-paid" title={t('common.amountPaid')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold text-green-600 dark:text-green-400" value={purchaseForm.amount_paid} onChange={e => setPurchaseForm({ ...purchaseForm, amount_paid: e.target.value })} placeholder={(Number(purchaseForm.quantity || 0) * Number(purchaseForm.unit_cost || 0)).toFixed(2)} />
-                <p className="text-[10px] text-gray-500 mt-1 italic">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ödəniş Hesabı</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(['cash', 'bank'] as const).map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setPurchaseForm({ ...purchaseForm, payment_method: method })}
+                      className={cn(
+                        "py-3 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-2",
+                        purchaseForm.payment_method === method
+                          ? "border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-400 dark:text-indigo-400"
+                          : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-200"
+                      )}
+                    >
+                      {method === 'cash' ? <DollarSign className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
+                      {method === 'cash' ? 'Kassa' : 'Bank'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-2">
+                <p className="text-[10px] text-gray-500 italic">
                   Yekun: {(Number(purchaseForm.quantity || 0) * Number(purchaseForm.unit_cost || 0)).toFixed(2)} ₼
                 </p>
               </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, User, Calendar, DollarSign, Edit2, TrendingUp, TrendingDown, History, Shield, X, Trash2, ChevronRight, Calculator, Info, Percent } from 'lucide-react';
+import { Plus, Search, User, Calendar, DollarSign, Edit2, TrendingUp, TrendingDown, History, Shield, X, Trash2, ChevronRight, Calculator, Info, Percent, Coins } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
@@ -40,6 +40,7 @@ export default function HR() {
   const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState('');
+  const [debtPaymentMethod, setDebtPaymentMethod] = useState<'cash' | 'bank'>('cash');
 
   useEffect(() => {
     fetchData();
@@ -159,7 +160,7 @@ export default function HR() {
             description: `İşçi borc ödənişi: ${employee.name}`,
             date: new Date().toISOString(),
             user_id: user?.id,
-            payment_method: 'cash'
+            payment_method: debtPaymentMethod
           }]);
       }
 
@@ -710,12 +711,30 @@ export default function HR() {
                             value={debtPaymentAmount}
                             onChange={e => setDebtPaymentAmount(e.target.value)}
                           />
-                          <button 
-                            onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
-                            className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
-                          >
-                            ÖDƏ
-                          </button>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['cash', 'bank'] as const).map((method) => (
+                            <button
+                              key={method}
+                              type="button"
+                              onClick={() => setDebtPaymentMethod(method)}
+                              className={cn(
+                                "py-2 rounded-xl border font-bold text-[10px] transition-all flex items-center justify-center gap-1",
+                                debtPaymentMethod === method
+                                  ? "border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-400 dark:text-indigo-400"
+                                  : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-200"
+                              )}
+                            >
+                              {method === 'cash' ? <DollarSign className="w-3 h-3" /> : <Coins className="w-3 h-3" />}
+                              {method === 'cash' ? 'Nağd' : 'Bank'}
+                            </button>
+                          ))}
+                        </div>
+                        <button 
+                          onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
+                          className="w-full bg-indigo-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+                        >
+                          ÖDƏ
+                        </button>
                         </div>
                         <button 
                           onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
