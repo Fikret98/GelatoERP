@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Shield, Save, Bell, BellOff } from 'lucide-react';
+import { User, Mail, Phone, Shield, Save, Bell, BellOff, Package, Briefcase, FileText } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -15,7 +15,10 @@ export default function Settings() {
     name: '',
     email: '',
     phone: '',
-    role: ''
+    role: '',
+    notify_low_stock: true,
+    notify_shifts: true,
+    notify_reports: true
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -32,7 +35,10 @@ export default function Settings() {
           name: userData.name || '',
           email: userData.email || '',
           phone: userData.phone || '',
-          role: userData.role || ''
+          role: userData.role || '',
+          notify_low_stock: userData.notify_low_stock ?? true,
+          notify_shifts: userData.notify_shifts ?? true,
+          notify_reports: userData.notify_reports ?? true
         });
 
         const { data: bonusData } = await supabase
@@ -56,6 +62,9 @@ export default function Settings() {
         name: profile.name,
         email: profile.email,
         phone: profile.phone,
+        notify_low_stock: profile.notify_low_stock,
+        notify_shifts: profile.notify_shifts,
+        notify_reports: profile.notify_reports,
         // Only allow admin to change roles
         ...(user?.role === 'admin' ? { role: profile.role } : {})
       }).eq('username', user?.username);
@@ -175,6 +184,38 @@ export default function Settings() {
                     user?.role !== 'admin' && "opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800"
                   )}
                 />
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-indigo-500" />
+                Bildiriş Üstünlükləri
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { id: 'notify_low_stock', label: 'Azalan Stok', icon: Package },
+                  { id: 'notify_shifts', label: 'Növbələr', icon: Briefcase },
+                  { id: 'notify_reports', label: 'Hesabatlar', icon: FileText }
+                ].map((item: any) => (
+                  <label key={item.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-indigo-200 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:text-indigo-600 transition-colors">
+                        <item.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{item.label}</span>
+                    </div>
+                    <div className="relative inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={(profile as any)[item.id]}
+                        onChange={e => setProfile({ ...profile, [item.id]: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600"></div>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
 
