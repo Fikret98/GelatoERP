@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, Trash2, CreditCard, X, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'react-hot-toast';
+import toast, { useToasterStore } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -19,6 +19,14 @@ export default function POS() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
+  const { toasts } = useToasterStore();
+
+  // Limit toasts to max 2
+  useEffect(() => {
+    if (toasts.length > 2) {
+      toast.dismiss(toasts[0].id);
+    }
+  }, [toasts]);
   
   // Shift Modals
   const [showOpenModal, setShowOpenModal] = useState(false);
@@ -60,10 +68,9 @@ export default function POS() {
     } else {
       setCart([...cart, { product, quantity: 1 }]);
     }
-    toast.success(`${product.name} səbətə əlavə edildi`, {
+    toast.success(`${product.name}`, {
       icon: '🛒',
       position: 'bottom-center',
-      className: 'mb-24 lg:mb-0'
     });
   };
 

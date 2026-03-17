@@ -90,13 +90,18 @@ export default function App() {
               </Router>
             </ShiftProvider>
           <Toaster 
-            position="top-right" 
+            position="bottom-center" // Mobile-friendly position
+            gutter={8}
             toastOptions={{
-              className: 'dark:bg-gray-800 dark:text-white border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl',
-              duration: 4000,
+              className: 'dark:bg-gray-800 dark:text-white border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl text-sm font-medium',
+              duration: 2500,
+              style: {
+                maxWidth: '90vw',
+                margin: '0 auto 1rem',
+              }
             }}
             containerStyle={{
-              top: 'calc(env(safe-area-inset-top) + 1rem)',
+              bottom: 'calc(env(safe-area-inset-bottom) + 5rem)', // Stay above mobile nav
             }}
           />
         </AuthProvider>
