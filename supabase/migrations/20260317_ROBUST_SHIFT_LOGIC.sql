@@ -47,9 +47,11 @@ RETURNS VOID AS $$
 DECLARE
     v_diff DECIMAL(12, 2);
     v_shift_id UUID;
-    v_reported_by_id BIGINT;
+    v_related_exp_id UUID;
+    v_related_inc_id UUID;
 BEGIN
-    SELECT difference, shift_id, reported_by_id INTO v_diff, v_shift_id, v_reported_by_id
+    SELECT difference, shift_id, related_expense_id, related_income_id 
+    INTO v_diff, v_shift_id, v_related_exp_id, v_related_inc_id
     FROM public.shift_discrepancies
     WHERE id = p_discrepancy_id;
 
@@ -63,12 +65,35 @@ BEGIN
     WHERE id = p_discrepancy_id;
 
     IF p_status = 'resolved' THEN
-        IF v_diff < 0 THEN
-            INSERT INTO public.expenses (amount, category, description, date, payment_method, user_id, shift_id)
-            VALUES (ABS(v_diff), 'Kassa Kəsiri (Həll edildi)', 'Dispute resolution for shift ' || v_shift_id, NOW(), 'cash', p_responsible_user_id, v_shift_id);
-        ELSIF v_diff > 0 THEN
-            INSERT INTO public.incomes (amount, category, description, date, payment_method, user_id, shift_id)
-            VALUES (v_diff, 'Kassa Artığı (Həll edildi)', 'Dispute resolution for shift ' || v_shift_id, NOW(), 'cash', p_responsible_user_id, v_shift_id);
+        -- If already has an expense/income, just update its description
+        IF v_related_exp_id IS NOT NULL THEN
+            UPDATE public.expenses 
+            SET category = 'Kassa Kəsiri (Həll edildi)',
+                description = 'Təsdiqlənmiş növbə kəsiri. ' || COALESCE(p_admin_notes, ''),
+                user_id = p_responsible_user_id
+            WHERE id = v_related_exp_id;
+        ELSIF v_related_inc_id IS NOT NULL THEN
+            UPDATE public.incomes 
+            SET category = 'Kassa Artığı (Həll edildi)',
+                description = 'Təsdiqlənmiş növbə artığı. ' || COALESCE(p_admin_notes, ''),
+                user_id = p_responsible_user_id
+            WHERE id = v_related_inc_id;
+        ELSE
+            -- Create new if doesn't exist (shouldn't happen with current logic, but for safety)
+            IF v_diff < 0 THEN
+                INSERT INTO public.expenses (amount, category, description, date, payment_method, user_id, shift_id)
+                VALUES (ABS(v_diff), 'Kassa Kəsiri (Həll edildi)', 'Manual dispute resolution for shift ' || v_shift_id, NOW(), 'cash', p_responsible_user_id, v_shift_id);
+            ELSIF v_diff > 0 THEN
+                INSERT INTO public.incomes (amount, category, description, date, payment_method, user_id, shift_id)
+                VALUES (v_diff, 'Kassa Artığı (Həll edildi)', 'Manual dispute resolution for shift ' || v_shift_id, NOW(), 'cash', p_responsible_user_id, v_shift_id);
+            END IF;
+        END IF;
+    ELSIF p_status = 'dismissed' THEN
+        -- If dismissed, we MUST reverse the financial impact (delete or zero out the automated expense)
+        IF v_related_exp_id IS NOT NULL THEN
+            DELETE FROM public.expenses WHERE id = v_related_exp_id;
+        ELSIF v_related_inc_id IS NOT NULL THEN
+            DELETE FROM public.incomes WHERE id = v_related_inc_id;
         END IF;
     END IF;
 END;
