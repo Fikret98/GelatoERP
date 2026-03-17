@@ -1,12 +1,15 @@
 -- UNIFIED DISCREPANCY RESOLUTION FIX
 -- 1. Təmizlik: Köhnə və səhv versiyaları silirik
 DROP FUNCTION IF EXISTS public.resolve_shift_discrepancy(UUID, BIGINT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.resolve_shift_discrepancy(BIGINT, BIGINT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.resolve_shift_discrepancy_v2(UUID, BIGINT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.resolve_shift_discrepancy_v2(BIGINT, BIGINT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.resolve_shift_discrepancy_v3(UUID, BIGINT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.resolve_shift_discrepancy_v3(BIGINT, BIGINT, TEXT, TEXT);
 
 -- 2. Yeni və peşəkar versiyanı yaradırıq
 CREATE OR REPLACE FUNCTION public.resolve_shift_discrepancy_v3(
-    p_discrepancy_id UUID,
+    p_discrepancy_id BIGINT,
     p_responsible_user_id BIGINT,
     p_admin_notes TEXT,
     p_status TEXT -- 'resolved' və ya 'dismissed'
@@ -74,4 +77,4 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 3. İcazələri veririk
-GRANT EXECUTE ON FUNCTION public.resolve_shift_discrepancy_v3(UUID, BIGINT, TEXT, TEXT) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.resolve_shift_discrepancy_v3(BIGINT, BIGINT, TEXT, TEXT) TO authenticated, anon;
