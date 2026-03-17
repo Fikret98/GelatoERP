@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -125,10 +126,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <Link
             to="/"
-            className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 group transition-transform duration-300 hover:scale-105"
             onClick={() => setSidebarOpen(false)}
           >
-            Gelato ERP
+            <div className="relative">
+              <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative w-10 h-10 bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none group-hover:rotate-[-5deg] transition-transform duration-300">
+                <IceCream className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-black text-gray-900 dark:text-white leading-none tracking-tighter uppercase italic">
+                Gelato
+              </span>
+              <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 leading-none tracking-widest mt-1 uppercase">
+                ERP System
+              </span>
+            </div>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden" title="Bağla">
             <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
