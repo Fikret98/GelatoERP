@@ -20,13 +20,30 @@ BEGIN
     ALTER TABLE public.shift_discrepancies ALTER COLUMN related_income_id TYPE BIGINT;
     
     -- 4. Ensure shift identifiers are UUID
-    ALTER TABLE public.expenses ALTER COLUMN shift_id TYPE UUID USING shift_id::uuid;
-    ALTER TABLE public.incomes ALTER COLUMN shift_id TYPE UUID USING shift_id::uuid;
-    ALTER TABLE public.sales ALTER COLUMN shift_id TYPE UUID USING shift_id::uuid;
+    -- Bigint to UUID conversion is impossible, so we set old invalid values to NULL
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'employee_debts' AND column_name = 'shift_id' AND data_type = 'bigint') THEN
+        ALTER TABLE public.employee_debts ALTER COLUMN shift_id TYPE UUID USING NULL;
+    ELSE
+        ALTER TABLE public.employee_debts ALTER COLUMN shift_id TYPE UUID USING shift_id::uuid;
+    END IF;
+
+    -- Extra safety for other tables
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'expenses' AND column_name = 'shift_id' AND data_type != 'uuid') THEN
+        ALTER TABLE public.expenses ALTER COLUMN shift_id TYPE UUID USING NULL;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'incomes' AND column_name = 'shift_id' AND data_type != 'uuid') THEN
+        ALTER TABLE public.incomes ALTER COLUMN shift_id TYPE UUID USING NULL;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sales' AND column_name = 'shift_id' AND data_type != 'uuid') THEN
+        ALTER TABLE public.sales ALTER COLUMN shift_id TYPE UUID USING NULL;
+    END IF;
 
 END $$;
 
 -- 5. RECREATE all_transactions_view
+-- ... (rest of the code remains the same as previously fixed)
 CREATE OR REPLACE VIEW public.all_transactions_view AS
 SELECT 
     'sale'::text as type,
@@ -77,7 +94,7 @@ FROM public.users u
 JOIN public.sales s ON u.id = s.seller_id
 GROUP BY u.name, u.id;
 
--- 7. Recreate the resolution function with CORRECT INTERNAL TYPES (BIGINT for expenses/incomes)
+-- 7. Recreate the resolution function with HR DEBT INTEGRATION
 CREATE OR REPLACE FUNCTION public.resolve_shift_discrepancy_v3(
     p_discrepancy_id UUID,
     p_responsible_user_id BIGINT,
@@ -108,29 +125,37 @@ BEGIN
 
     -- 3. Handle Financial Impact
     IF p_status = 'resolved' THEN
-        -- If already has an automated expense/income, update it
-        IF v_related_exp_id IS NOT NULL THEN
-            UPDATE public.expenses 
-            SET category = 'Kassa Kəsiri (Həll edildi)',
-                description = 'Təsdiqlənmiş növbə kəsiri. ' || COALESCE(p_admin_notes, ''),
-                user_id = p_responsible_user_id
-            WHERE id = v_related_exp_id;
-        ELSIF v_related_inc_id IS NOT NULL THEN
-            UPDATE public.incomes 
-            SET category = 'Kassa Artığı (Həll edildi)',
-                description = 'Təsdiqlənmiş növbə artığı. ' || COALESCE(p_admin_notes, ''),
-                user_id = p_responsible_user_id
-            WHERE id = v_related_inc_id;
-        ELSE
-            -- Create new if doesn't exist
-            IF v_diff < 0 THEN
+        -- Shortage (difference < 0) -> Create Debt and ensure Expense exists
+        IF v_diff < 0 THEN
+            -- Create/Update HR Debt
+            INSERT INTO public.employee_debts (user_id, amount, type, notes, status, shift_id)
+            VALUES (p_responsible_user_id, ABS(v_diff), 'shortage', 'Növbə kəsiri. ' || COALESCE(p_admin_notes, ''), 'pending', v_shift_id);
+
+            IF v_related_exp_id IS NOT NULL THEN
+                UPDATE public.expenses 
+                SET category = 'Kassa Kəsiri (Həll edildi)',
+                    description = 'Təsdiqlənmiş növbə kəsiri. ' || COALESCE(p_admin_notes, ''),
+                    user_id = p_responsible_user_id
+                WHERE id = v_related_exp_id;
+            ELSE
                 INSERT INTO public.expenses (amount, category, description, date, payment_method, user_id, shift_id)
-                VALUES (ABS(v_diff), 'Kassa Kəsiri (Həll edildi)', 'Manual resolution for shift ' || v_shift_id::text, NOW(), 'cash', p_responsible_user_id, v_shift_id);
-            ELSIF v_diff > 0 THEN
+                VALUES (ABS(v_diff), 'Kassa Kəsiri (Həll edildi)', 'Dispute resolution ' || v_shift_id::text, NOW(), 'cash', p_responsible_user_id, v_shift_id);
+            END IF;
+
+        -- Surplus (difference > 0) -> Just ensure Income exists
+        ELSIF v_diff > 0 THEN
+            IF v_related_inc_id IS NOT NULL THEN
+                UPDATE public.incomes 
+                SET category = 'Kassa Artığı (Həll edildi)',
+                    description = 'Təsdiqlənmiş növbə artığı. ' || COALESCE(p_admin_notes, ''),
+                    user_id = p_responsible_user_id
+                WHERE id = v_related_inc_id;
+            ELSE
                 INSERT INTO public.incomes (amount, category, description, date, payment_method, user_id, shift_id)
-                VALUES (v_diff, 'Kassa Artığı (Həll edildi)', 'Manual resolution for shift ' || v_shift_id::text, NOW(), 'cash', p_responsible_user_id, v_shift_id);
+                VALUES (v_diff, 'Kassa Artığı (Həll edildi)', 'Dispute resolution ' || v_shift_id::text, NOW(), 'cash', p_responsible_user_id, v_shift_id);
             END IF;
         END IF;
+
     ELSIF p_status = 'dismissed' THEN
         -- Reverse financial impact if dismissed
         IF v_related_exp_id IS NOT NULL THEN
@@ -138,6 +163,8 @@ BEGIN
         ELSIF v_related_inc_id IS NOT NULL THEN
             DELETE FROM public.incomes WHERE id = v_related_inc_id;
         END IF;
+        -- Also delete any pending debts for this shift if dismissed
+        DELETE FROM public.employee_debts WHERE shift_id = v_shift_id AND status = 'pending' AND type = 'shortage';
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

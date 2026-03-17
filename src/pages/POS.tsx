@@ -397,9 +397,9 @@ export default function POS() {
           <LoadingSpinner message="Satış ekranı yüklənir..." />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 h-full min-h-0 overflow-hidden px-4 sm:px-6 lg:px-8 pb-4 lg:pb-8">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 h-full min-h-0 lg:overflow-hidden px-4 sm:px-6 lg:px-8 pb-4 lg:pb-8">
           {/* Left Side: Products Grid */}
-          <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm lg:overflow-hidden">
             <div className="p-5 flex items-center justify-between border-b border-gray-100/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none">
@@ -414,7 +414,7 @@ export default function POS() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700 custom-scrollbar">
               <motion.div 
                 variants={{
                   hidden: { opacity: 0 },
@@ -473,10 +473,10 @@ export default function POS() {
             </div>
           </div>
 
-          {/* Right Side: Cart Section - Narrower and strictly locked to viewport */}
+          {/* Right Side: Cart Section - Sticky in Viewport */}
           <div className={`
-            fixed lg:static inset-x-0 bottom-0 z-[200] lg:z-auto
-            h-[85vh] lg:h-full lg:w-[350px] lg:min-w-[350px]
+            fixed lg:sticky lg:top-0 inset-x-0 bottom-0 z-[200] lg:z-auto
+            h-[85vh] lg:h-[calc(100vh-12rem)] lg:w-[350px] lg:min-w-[350px]
             bg-white dark:bg-gray-800
             rounded-t-[2.5rem] lg:rounded-[2rem] 
             shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] lg:shadow-md
