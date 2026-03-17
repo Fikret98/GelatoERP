@@ -24,12 +24,10 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import PullToRefresh from './ui/PullToRefresh';
 import { cn } from '../lib/utils';
+import NotificationCenter from './NotificationCenter';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [showNotifications, setShowNotifications] = React.useState(false);
-  const notificationRef = React.useRef<HTMLDivElement>(null);
-  const [lowStockItems, setLowStockItems] = React.useState<any[]>([]);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
@@ -55,59 +53,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { nameKey: 'nav.settings', href: '/settings', icon: User },
   ].filter(item => !item.adminOnly || user?.role === 'admin');
 
-  React.useEffect(() => {
-    fetchLowStock();
-
-    // Subscribe to real-time inventory changes (e.g., from sales deductions)
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'inventory'
-        },
-        () => {
-          // Refetch low stock items whenever inventory changes
-          fetchLowStock();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // Click away listener for notifications
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-
-    if (showNotifications) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [showNotifications]);
-
-  const fetchLowStock = async () => {
-    const { data } = await supabase
-      .from('low_stock_view')
-      .select('*');
-
-    if (data) {
-      setLowStockItems(data);
-    }
-  };
+  // Low stock check removed from here as it is now handled via real-time notifications table
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex">
@@ -216,48 +162,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                title="Bildirişlər"
-              >
-                <Bell className="w-5 h-5" />
-                {lowStockItems.length > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"></span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 lg:right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-[90] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">Bildirişlər</h3>
-                    <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-black uppercase">
-                      {lowStockItems.length} KRİTİK
-                    </span>
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto">
-                    {lowStockItems.length === 0 ? (
-                      <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm italic">
-                        Yeni bildiriş yoxdur
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                        {lowStockItems.map((item, idx) => (
-                          <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">{item.name}</p>
-                            <div className="text-xs text-red-600 dark:text-red-400 flex justify-between">
-                              <span>Mövcud: {item.stock_quantity} {item.unit}</span>
-                              <span className="font-medium opacity-60">Limit: {item.critical_limit} {item.unit}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotificationCenter />
           </div>
         </header>
         <main className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 text-gray-900 dark:text-white overflow-hidden">
