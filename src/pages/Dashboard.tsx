@@ -58,6 +58,11 @@ export default function Dashboard() {
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [infoModal, setInfoModal] = useState<{ show: boolean; title: string; content: string } | null>(null);
+  const [resolutionModal, setResolutionModal] = useState<{ show: boolean; discrepancy: any } | null>(null);
+  const [resolutionForm, setResolutionForm] = useState({
+    responsibleUserId: '',
+    adminNotes: ''
+  });
 
   const reportInfo = {
     kassa: {
@@ -173,19 +178,19 @@ export default function Dashboard() {
     }
   };
 
-  const handleResolveDiscrepancy = async (id: string, status: 'resolved' | 'dismissed', notes: string = '') => {
+  const handleResolveDiscrepancy = async (id: string, userId: number | null, status: 'resolved' | 'dismissed', notes: string = '') => {
     setIsResolving(true);
     try {
-      const disc = discrepancies.find(d => d.id === id);
       const { error } = await supabase.rpc('resolve_shift_discrepancy', {
         p_discrepancy_id: id,
-        p_responsible_user_id: status === 'resolved' ? disc?.reported_by_id : null,
+        p_responsible_user_id: userId,
         p_admin_notes: notes,
         p_status: status
       });
 
       if (error) throw error;
       toast.success(status === 'resolved' ? 'Uğurla həll edildi' : 'Ləğv edildi');
+      setResolutionModal(null);
       fetchDashboardData();
     } catch (e: any) {
       toast.error('Xəta: ' + e.message);
@@ -215,7 +220,7 @@ export default function Dashboard() {
 
   // Body scroll lock when modals are open
   useEffect(() => {
-    if (showLowStockModal || infoModal?.show) {
+    if (showLowStockModal || infoModal?.show || resolutionModal?.show) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -237,7 +242,7 @@ export default function Dashboard() {
       document.body.style.width = '';
       document.body.style.overflow = 'unset';
     };
-  }, [showLowStockModal, infoModal]);
+  }, [showLowStockModal, infoModal, resolutionModal]);
 
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 
@@ -557,17 +562,16 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <button
                     disabled={isResolving}
-                    onClick={() => handleResolveDiscrepancy(disc.id, 'dismissed')}
-                    className="flex-1 md:flex-none px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
-                    Rədd et
-                  </button>
-                  <button
-                    disabled={isResolving}
-                    onClick={() => handleResolveDiscrepancy(disc.id, 'resolved')}
+                    onClick={() => {
+                      setResolutionModal({ show: true, discrepancy: disc });
+                      setResolutionForm({
+                        responsibleUserId: disc.reported_by_id?.toString() || '',
+                        adminNotes: ''
+                      });
+                    }}
                     className="flex-1 md:flex-none px-6 py-2 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 dark:shadow-none"
                   >
-                    Təsdiqlə (Kassaya işlə)
+                    Həll et
                   </button>
                 </div>
               </div>
@@ -617,6 +621,96 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Resolution Modal */}
+      <AnimatePresence>
+        {resolutionModal?.show && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm" onClick={() => setResolutionModal(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Uyğunsuzluğu həll et</h3>
+                </div>
+                <button onClick={() => setResolutionModal(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
+                  <X className="w-6 h-6 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-6 mb-8">
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Gözlənilən</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{resolutionModal.discrepancy.system_expected.toFixed(2)} ₼</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Fərq</span>
+                    <span className={cn("font-black tracking-tight", resolutionModal.discrepancy.difference < 0 ? "text-red-500" : "text-emerald-500")}>
+                      {resolutionModal.discrepancy.difference.toFixed(2)} ₼
+                    </span>
+                  </div>
+                </div>
+
+                {resolutionModal.discrepancy.difference < 0 && (
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Məsul Şəxs (Borc yazılacaq)</label>
+                    <select
+                      title="Məsul Şəxs"
+                      className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                      value={resolutionForm.responsibleUserId}
+                      onChange={e => setResolutionForm({ ...resolutionForm, responsibleUserId: e.target.value })}
+                    >
+                      <option value={resolutionModal.discrepancy.reported_by_id}>{resolutionModal.discrepancy.reported_by?.name} (Təhvil verən)</option>
+                      <option value={resolutionModal.discrepancy.verified_by_id}>{resolutionModal.discrepancy.verified_by?.name} (Təhvil alan)</option>
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Admin Qeydi</label>
+                  <textarea
+                    rows={3}
+                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+                    placeholder="Həll yolu barədə qeydlər..."
+                    value={resolutionForm.adminNotes}
+                    onChange={e => setResolutionForm({ ...resolutionForm, adminNotes: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => handleResolveDiscrepancy(resolutionModal.discrepancy.id, null, 'dismissed', resolutionForm.adminNotes)}
+                  disabled={isResolving}
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                >
+                  Borc yazmadan ləğv et
+                </button>
+                <button
+                  onClick={() => handleResolveDiscrepancy(
+                    resolutionModal.discrepancy.id,
+                    resolutionModal.discrepancy.difference < 0 ? parseInt(resolutionForm.responsibleUserId) : null,
+                    'resolved',
+                    resolutionForm.adminNotes
+                  )}
+                  disabled={isResolving}
+                  className="flex-[1.5] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50"
+                >
+                  {isResolving ? 'İşlənilir...' : 'Təsdiqlə və Borc yaz'}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
