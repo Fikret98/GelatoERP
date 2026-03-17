@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Suppliers() {
   const { t } = useLanguage();
+  const { activeShift } = useShift();
   const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [debts, setDebts] = useState<any[]>([]);
@@ -105,7 +107,8 @@ export default function Suppliers() {
         amount: parseFloat(paymentData.amount),
         description: paymentData.description,
         created_by: parseInt(user.id),
-        payment_method: paymentData.payment_method
+        payment_method: paymentData.payment_method,
+        shift_id: activeShift?.id
       }]);
 
       if (error) throw error;

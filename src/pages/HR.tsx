@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { cn } from '../lib/utils';
 
 export default function HR() {
   const { t } = useLanguage();
+  const { activeShift } = useShift();
   const { user } = useAuth();
   const [employees, setEmployees] = useState<any[]>([]);
   const [bonuses, setBonuses] = useState<any[]>([]);
@@ -146,7 +148,8 @@ export default function HR() {
           amount: -amount,
           type: type,
           notes: type === 'salary_deduction' ? 'Maaşdan çıxıldı' : 'Nəğd ödənildi',
-          status: 'paid'
+          status: 'paid',
+          shift_id: activeShift?.id
         }]);
 
       if (error) throw error;
@@ -160,7 +163,8 @@ export default function HR() {
             description: `İşçi borc ödənişi: ${employee.name}`,
             date: new Date().toISOString(),
             user_id: user?.id,
-            payment_method: debtPaymentMethod
+            payment_method: debtPaymentMethod,
+            shift_id: activeShift?.id
           }]);
       }
 
@@ -281,7 +285,8 @@ export default function HR() {
             new_role: newRole,
             change_type: oldSalary !== newSalary ? 'salary_change' : 'promotion',
             note: 'Manual update from HR module',
-            changed_by: user?.id ? parseInt(user.id) : null
+            created_by: user?.id ? parseInt(user.id) : null,
+            shift_id: activeShift?.id
           }]);
         }
 

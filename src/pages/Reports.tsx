@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useShift } from '../contexts/ShiftContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -14,6 +15,7 @@ import { cn } from '../lib/utils';
 
 export default function Reports() {
   const { t } = useLanguage();
+  const { activeShift } = useShift();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'sale' | 'expense' | 'income'>('all');
@@ -159,7 +161,8 @@ export default function Reports() {
         ...expenseData,
         date: new Date(expenseData.date).toISOString(),
         amount: parseFloat(expenseData.amount),
-        user_id: user.id
+        user_id: user.id,
+        shift_id: activeShift?.id
       }]);
 
       if (error) throw error;
@@ -181,7 +184,8 @@ export default function Reports() {
         ...incomeData,
         date: new Date(incomeData.date).toISOString(),
         amount: parseFloat(incomeData.amount),
-        user_id: user.id
+        user_id: user.id,
+        shift_id: activeShift?.id
       }]);
 
       if (error) throw error;

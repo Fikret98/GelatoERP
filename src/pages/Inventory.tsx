@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useShift } from '../contexts/ShiftContext';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -11,6 +12,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 export default function Inventory() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const { activeShift } = useShift();
   const [items, setItems] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -189,7 +191,8 @@ export default function Inventory() {
         supplier_id: purchaseForm.supplier_id ? parseInt(purchaseForm.supplier_id) : null,
         amount_paid: purchaseForm.amount_paid ? parseFloat(purchaseForm.amount_paid) : totalCost,
         created_by: user?.id ? parseInt(user.id) : null,
-        payment_method: purchaseForm.payment_method
+        payment_method: purchaseForm.payment_method,
+        shift_id: activeShift?.id
       }]);
 
       if (insertErr) throw insertErr;
