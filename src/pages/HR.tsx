@@ -302,7 +302,6 @@ export default function HR() {
         if (userErr) throw userErr;
 
         const { error: empErr } = await supabase.from('employees').update({
-          name: formData.name,
           job_title: formData.role,
           salary: newSalary,
           hire_date: formData.hire_date,
@@ -327,7 +326,6 @@ export default function HR() {
 
         const { error: empErr } = await supabase.from('employees').insert([{
           user_id: newUser.id,
-          name: formData.name,
           job_title: formData.role,
           salary: parseFloat(formData.salary),
           hire_date: formData.hire_date,
