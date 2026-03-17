@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, Trash2, CreditCard, X, Package } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard, X, Package, AlertTriangle, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast, { useToasterStore } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -36,6 +37,11 @@ export default function POS() {
   const [closingActual, setClosingActual] = useState<string>('');
   const [closingExpected, setClosingExpected] = useState<number>(0);
   const [shiftNotes, setShiftNotes] = useState('');
+  const [inventoryError, setInventoryError] = useState<{
+    itemName: string;
+    required: string;
+    available: string;
+  } | null>(null);
 
   // 1. Data Fetching & Utility Functions
   const fetchProducts = async () => {
@@ -194,7 +200,20 @@ export default function POS() {
       toast.success(t('pos.success'));
     } catch (e: any) {
       console.error(e);
-      toast.error(t('pos.errorPrefix') + (e.message || 'Unknown error'));
+      
+      // Check for inventory shortage error pattern
+      const message = e.message || '';
+      const inventoryMatch = message.match(/Anbar xətası: (.+) çatışmır \(Lazımdır: (.+), Mövcuddur: (.+)\)/);
+      
+      if (inventoryMatch) {
+        setInventoryError({
+          itemName: inventoryMatch[1],
+          required: inventoryMatch[2],
+          available: inventoryMatch[3]
+        });
+      } else {
+        toast.error(t('pos.errorPrefix') + (message || 'Unknown error'));
+      }
     } finally {
       setLoading(false);
     }
@@ -632,6 +651,73 @@ export default function POS() {
           <span className="font-black text-xs uppercase tracking-widest">Səbət</span>
         </motion.button>
       )}
+      {/* Inventory Shortage Modal */}
+      <AnimatePresence>
+        {inventoryError && (
+          <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setInventoryError(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-[32px] shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700"
+            >
+              <div className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter italic">Inqrediyent Çatışmır</h3>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest leading-none mt-1">Anbar Xətası</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-6 mb-8 border border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">
+                    Bu satışı tamamlamaq üçün <span className="font-bold text-gray-900 dark:text-white">{inventoryError.itemName}</span> çatışmır:
+                  </p>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Lazımdır</span>
+                      <span className="text-lg font-black text-red-600 dark:text-red-400 leading-none">{inventoryError.required}</span>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-gray-300" />
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mövcuddur</span>
+                      <span className="text-lg font-black text-gray-900 dark:text-white leading-none">{inventoryError.available}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {user?.role === 'admin' && (
+                    <Link
+                      to="/inventory"
+                      className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+                    >
+                      <Package className="w-4 h-4" />
+                      Anbara get və əlavə et
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => setInventoryError(null)}
+                    className="w-full py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-all flex items-center justify-center"
+                  >
+                    Anladım
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

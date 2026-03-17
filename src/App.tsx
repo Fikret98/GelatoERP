@@ -102,6 +102,7 @@ export default function App() {
             }}
             containerStyle={{
               bottom: 'calc(env(safe-area-inset-bottom) + 5rem)', // Stay above mobile nav
+              zIndex: 99999,
             }}
           />
         </AuthProvider>
