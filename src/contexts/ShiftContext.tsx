@@ -190,8 +190,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       // 1. Get current totals for this shift
       const [{ data: salesData }, { data: expData }, { data: incData }] = await Promise.all([
         supabase.from('sales').select('total_amount, payment_method').eq('shift_id', activeShift.id),
-        supabase.from('expenses').select('amount, payment_method').eq('shift_id', activeShift.id),
-        supabase.from('incomes').select('amount, payment_method').eq('shift_id', activeShift.id)
+        supabase.from('expenses').select('amount, payment_method, category, description').eq('shift_id', activeShift.id),
+        supabase.from('incomes').select('amount, payment_method, category, description').eq('shift_id', activeShift.id)
       ]);
 
       const cashSales = (salesData || [])
@@ -202,14 +202,14 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
         .reduce((sum, s) => sum + s.total_amount, 0);
 
       const cashIncomes = (incData || [])
-        .filter(i => i.payment_method === 'cash')
+        .filter(i => i.payment_method === 'cash' && !(i.category === 'Kassa Artığı' && i.description?.includes('Təhvil-təslim')))
         .reduce((sum, i) => sum + i.amount, 0);
       const cardIncomes = (incData || [])
         .filter(i => i.payment_method === 'card')
         .reduce((sum, i) => sum + i.amount, 0);
 
       const cashExpenses = (expData || [])
-        .filter(e => e.payment_method === 'cash')
+        .filter(e => e.payment_method === 'cash' && !(e.category === 'Kassa Kəsiri' && e.description?.includes('Təhvil-təslim')))
         .reduce((sum, e) => sum + e.amount, 0);
       const cardExpenses = (expData || [])
         .filter(e => e.payment_method === 'card')
