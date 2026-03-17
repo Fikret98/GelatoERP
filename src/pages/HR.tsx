@@ -705,41 +705,56 @@ export default function HR() {
                     {user?.role === 'admin' && selectedDebtEmployee.total_debt > 0 && (
                       <div className="space-y-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Borc Ödənişi</p>
-                        <div className="flex gap-2">
-                          <input 
-                            id="debt-payment"
-                            type="number" 
-                            step="0.01" 
-                            placeholder="Məbləğ"
-                            title="Ödəniş məbləği"
-                            className="flex-1 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-2 font-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                            value={debtPaymentAmount}
-                            onChange={e => setDebtPaymentAmount(e.target.value)}
-                          />
-                        <div className="grid grid-cols-2 gap-2">
-                          {(['cash', 'bank'] as const).map((method) => (
-                            <button
-                              key={method}
-                              type="button"
-                              onClick={() => setDebtPaymentMethod(method)}
-                              className={cn(
-                                "py-2 rounded-xl border font-bold text-[10px] transition-all flex items-center justify-center gap-1",
-                                debtPaymentMethod === method
-                                  ? "border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-400 dark:text-indigo-400"
-                                  : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-gray-200"
-                              )}
-                            >
-                              {method === 'cash' ? <DollarSign className="w-3 h-3" /> : <Coins className="w-3 h-3" />}
-                              {method === 'cash' ? 'Nağd' : 'Bank'}
-                            </button>
-                          ))}
-                        </div>
-                        <button 
-                          onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
-                          className="w-full bg-indigo-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
-                        >
-                          ÖDƏ
-                        </button>
+                        <div className="bg-gray-50/50 dark:bg-gray-900/30 p-6 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/30 space-y-6 flex-1">
+                          <div>
+                            <label htmlFor="debt-payment" className="text-[10px] font-black text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-[0.2em] block mb-3 text-center">Ödəniş Məbləği</label>
+                            <div className="relative">
+                              <input 
+                                id="debt-payment"
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                title="Ödəniş məbləği"
+                                className="w-full bg-white dark:bg-gray-800 border-2 border-indigo-50 dark:border-indigo-900/20 rounded-2xl px-6 py-5 font-black text-3xl text-indigo-600 dark:text-indigo-400 outline-none focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 transition-all text-center placeholder:opacity-20 shadow-inner"
+                                value={debtPaymentAmount}
+                                onChange={e => setDebtPaymentAmount(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block text-center">Ödəniş Metodu</label>
+                            <div className="grid grid-cols-2 gap-3">
+                              {(['cash', 'bank'] as const).map((method) => (
+                                <button
+                                  key={method}
+                                  type="button"
+                                  onClick={() => setDebtPaymentMethod(method)}
+                                  className={cn(
+                                    "py-4 rounded-2xl border-2 font-black text-[11px] uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden group",
+                                    debtPaymentMethod === method
+                                      ? "border-indigo-600 bg-indigo-600 text-white shadow-xl shadow-indigo-200 dark:shadow-none translate-y-[-2px]"
+                                      : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-indigo-200 dark:hover:border-indigo-800 bg-white dark:bg-gray-800"
+                                  )}
+                                >
+                                  <div className={cn(
+                                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                                    debtPaymentMethod === method ? "bg-white/20" : "bg-gray-50 dark:bg-gray-900"
+                                  )}>
+                                    {method === 'cash' ? <DollarSign className="w-5 h-5" /> : <Coins className="w-5 h-5" />}
+                                  </div>
+                                  {method === 'cash' ? 'Nağd Kassa' : 'Bank Hesabı'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
+                            className="w-full bg-indigo-600 text-white px-8 py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-3 active:scale-[0.97]"
+                          >
+                            TƏSDİQLƏ VƏ ÖDƏ
+                          </button>
                         </div>
                         <button 
                           onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
