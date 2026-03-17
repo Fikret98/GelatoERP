@@ -179,7 +179,7 @@ export default function Dashboard() {
   };
 
   const handleResolveDiscrepancy = async (id: string, userId: number | null, status: 'resolved' | 'dismissed', notes: string = '') => {
-    // Validate inputs to prevent 400 errors (like NaN)
+    // Validate inputs
     if (status === 'resolved' && (userId === null || isNaN(userId))) {
       toast.error("Zəhmət olmasa məsul şəxsi seçin");
       return;
