@@ -475,12 +475,12 @@ export default function POS() {
 
           {/* Right Side: Cart Section - Sticky in Viewport */}
           <div className={`
-            fixed lg:sticky lg:top-0 inset-x-0 bottom-0 z-[200] lg:z-auto
-            h-[85vh] lg:h-[calc(100vh-12rem)] lg:w-[350px] lg:min-w-[350px]
+            fixed lg:sticky lg:top-4 inset-x-0 bottom-0 z-[200] lg:z-auto
+            h-[85vh] lg:h-[calc(100vh-14rem)] lg:w-[380px] lg:min-w-[380px]
             bg-white dark:bg-gray-800
-            rounded-t-[2.5rem] lg:rounded-[2rem] 
-            shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] lg:shadow-md
-            border-t lg:border border-indigo-100/50 dark:border-gray-800
+            rounded-t-[2.5rem] lg:rounded-[2.5rem] 
+            shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] lg:shadow-xl lg:shadow-indigo-500/5
+            border-t lg:border border-indigo-100/50 dark:border-gray-700
             flex flex-col overflow-hidden
             transition-all duration-500
             ${showMobileCart ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
