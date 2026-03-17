@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Shield, Save, Bell, BellOff, Package, Briefcase, FileText } from 'lucide-react';
+import { User, Mail, Phone, Shield, Save, Bell, BellOff, Package, Briefcase, FileText, Send, TrendingUp, TrendingDown, DollarSign, X, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -25,6 +25,8 @@ export default function Settings() {
   const { isSupported, subscription, loading: pushLoading, subscribeUser, unsubscribeUser } = usePushNotifications();
 
   const [bonus, setBonus] = useState<number>(0);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcast, setBroadcast] = useState({ title: '', message: '' });
 
   useEffect(() => {
     const loadData = async () => {
@@ -54,6 +56,41 @@ export default function Settings() {
     if (user) loadData();
   }, [user]);
 
+  const handleSendBroadcast = async () => {
+    if (!broadcast.title || !broadcast.message) return;
+    setIsBroadcasting(true);
+    try {
+      const { data: secrets } = await supabase.from('secrets').select('*');
+      const url = secrets?.find((s: any) => s.name === 'SUPABASE_URL')?.value;
+      const key = secrets?.find((s: any) => s.name === 'SUPABASE_SERVICE_ROLE_KEY')?.value;
+
+      if (!url || !key) throw new Error('API keys not found in database');
+
+      const response = await fetch(`${url}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          title: broadcast.title,
+          body: broadcast.message,
+          broadcast: true,
+          url: '/dashboard'
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to send broadcast');
+      
+      toast.success('Bildiriş bütün işçilərə göndərildi');
+      setBroadcast({ title: '', message: '' });
+    } catch (e: any) {
+      toast.error('Xəta: ' + e.message);
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -65,7 +102,6 @@ export default function Settings() {
         notify_low_stock: profile.notify_low_stock,
         notify_shifts: profile.notify_shifts,
         notify_reports: profile.notify_reports,
-        // Only allow admin to change roles
         ...(user?.role === 'admin' ? { role: profile.role } : {})
       }).eq('username', user?.username);
 
@@ -303,6 +339,64 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Admin Broadcast Tool */}
+      {profile?.role === 'admin' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700 mt-8"
+        >
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+              <Bell className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Elan Göndər</h2>
+              <p className="text-sm font-medium text-gray-400">Bütün işçilərə dərhal push bildiriş göndərin</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Mesaj Başlığı</label>
+              <input
+                type="text"
+                placeholder="Məsələn: Təcili Elan"
+                className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                value={broadcast.title}
+                onChange={e => setBroadcast({ ...broadcast, title: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Mesaj Mətni</label>
+              <textarea
+                rows={3}
+                placeholder="Mesajınızı buraya yazın..."
+                className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"
+                value={broadcast.message}
+                onChange={e => setBroadcast({ ...broadcast, message: e.target.value })}
+              />
+            </div>
+
+            <button
+              onClick={handleSendBroadcast}
+              disabled={isBroadcasting || !broadcast.title || !broadcast.message}
+              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isBroadcasting ? (
+                <>İşlənilir...</>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Bildirişi Göndər
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

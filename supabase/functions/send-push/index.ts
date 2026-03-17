@@ -14,10 +14,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, body, url, icon, image, actions, user_id } = await req.json()
-    console.log(`[send-push] Processing for user: ${user_id}`)
-
-    if (!user_id) throw new Error('user_id is required')
+    const { title, body, url, icon, image, actions, user_id, role, broadcast } = await req.json()
+    console.log(`[send-push] Processing notification: ${title}`)
 
     // Initialize Supabase
     const supabase = createClient(
@@ -25,40 +23,43 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Identify target user IDs
+    let targetUserIds: string[] = []
+    if (user_id) {
+      targetUserIds = [user_id]
+    } else if (role) {
+      const { data: users } = await supabase.from('users').select('id').eq('role', role)
+      targetUserIds = users?.map(u => u.id) || []
+    } else if (broadcast) {
+      const { data: users } = await supabase.from('users').select('id')
+      targetUserIds = users?.map(u => u.id) || []
+    }
+
+    if (targetUserIds.length === 0) {
+      return new Response(JSON.stringify({ message: 'No target users found' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
     // Setup VAPID
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY')
     const privateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-
-    console.log(`[send-push] VAPID Public Key length: ${publicKey?.length || 0}`)
-    console.log(`[send-push] VAPID Private Key length: ${privateKey?.length || 0}`)
 
     if (!publicKey || !privateKey) {
       throw new Error('VAPID keys are missing from environment variables')
     }
 
-    try {
-      webpush.setVapidDetails(
-        'mailto:admin@gelato.az',
-        publicKey,
-        privateKey
-      )
-    } catch (vapidError) {
-      console.error('[send-push] VAPID initialization failed:', vapidError.message)
-      throw new Error(`VAPID Init Error: ${vapidError.message}`)
-    }
+    webpush.setVapidDetails('mailto:admin@gelato.az', publicKey, privateKey)
 
-    // Get user subscriptions
+    // Get subscriptions for all target users
     const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
       .select('*')
-      .eq('user_id', user_id)
+      .in('user_id', targetUserIds)
 
-    if (error) {
-      console.error('Database error:', error)
-      throw error
-    }
-
-    console.log(`[send-push] Found ${subscriptions?.length || 0} subscriptions`)
+    if (error) throw error
+    console.log(`[send-push] Sending to ${subscriptions?.length || 0} subscriptions for ${targetUserIds.length} users`)
 
     const results = await Promise.all((subscriptions || []).map(async (sub) => {
       try {
