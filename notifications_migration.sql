@@ -43,22 +43,22 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- 3. Low Stock Trigger
+-- 3. Low Stock Trigger (Fixed for Inventory table)
 CREATE OR REPLACE FUNCTION public.handle_low_stock_notification()
 RETURNS TRIGGER AS $$
 DECLARE
     v_admin_id BIGINT;
 BEGIN
     -- Check if stock fell below threshold
-    IF NEW.stock <= NEW.min_stock AND (OLD.stock > OLD.min_stock OR OLD.stock IS NULL) THEN
+    IF NEW.stock_quantity <= NEW.critical_limit AND (OLD.stock_quantity > OLD.critical_limit OR OLD.stock_quantity IS NULL) THEN
         -- Notify all admins who have notify_low_stock enabled
         FOR v_admin_id IN (SELECT id FROM public.users WHERE role = 'admin' AND notify_low_stock = TRUE) LOOP
             PERFORM public.send_push_notification(
                 v_admin_id,
                 '⚠️ Azalan Stok: ' || NEW.name,
-                NEW.name || ' məhsulunun stoku ' || NEW.stock || ' ədədə düşdü. Zəhmət olmasa tədarük edin.',
+                NEW.name || ' məhsulunun ehtiyatı ' || NEW.stock_quantity || ' ' || NEW.unit || ' səviyyəsinə düşdü. Zəhmət olmasa tədarük edin.',
                 '/inventory',
-                NEW.image_url,
+                NULL, -- Inventory table doesn't have image_url
                 jsonb_build_array(jsonb_build_object('action', 'view_inventory', 'title', 'Anbara Bax'))
             );
         END LOOP;
@@ -67,11 +67,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS on_low_stock ON public.products;
+DROP TRIGGER IF EXISTS on_low_stock ON public.inventory;
 CREATE TRIGGER on_low_stock
-    AFTER UPDATE ON public.products
+    AFTER UPDATE ON public.inventory
     FOR EACH ROW
-    WHEN (NEW.stock <= NEW.min_stock)
+    WHEN (NEW.stock_quantity <= NEW.critical_limit)
     EXECUTE FUNCTION public.handle_low_stock_notification();
 
 -- 4. Shift Opening/Closing Trigger
