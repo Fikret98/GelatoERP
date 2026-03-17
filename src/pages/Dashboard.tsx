@@ -179,6 +179,12 @@ export default function Dashboard() {
   };
 
   const handleResolveDiscrepancy = async (id: string, userId: number | null, status: 'resolved' | 'dismissed', notes: string = '') => {
+    // Validate inputs to prevent 400 errors (like NaN)
+    if (status === 'resolved' && (userId === null || isNaN(userId))) {
+      toast.error("Zəhmət olmasa məsul şəxsi seçin");
+      return;
+    }
+
     setIsResolving(true);
     try {
       const { error } = await supabase.rpc('resolve_shift_discrepancy_v3', {
@@ -188,12 +194,17 @@ export default function Dashboard() {
         p_status: status
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("RPC Error:", error);
+        throw error;
+      }
+      
       toast.success(status === 'resolved' ? 'Uğurla həll edildi' : 'Ləğv edildi');
       setResolutionModal(null);
       fetchDashboardData();
     } catch (e: any) {
-      toast.error('Xəta: ' + e.message);
+      console.error("Detailed Discrepancy Error:", e);
+      toast.error('Xəta: ' + (e.details || e.message || 'Bilinməyən xəta'));
     } finally {
       setIsResolving(false);
     }
