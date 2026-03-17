@@ -28,8 +28,18 @@ CREATE POLICY "Users can update their own notifications"
 -- Qeyd: Yuxarıdakı siyasətlərdə auth.uid() ilə username-i müqayisə edirik. 
 -- Çünki mövcud sistemdə auth.uid() çox vaxt username-ə bərabərdir (və ya ona bağlıdır).
 
--- 4. Enable Realtime for notifications
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+-- 4. Enable Realtime for notifications (Safe way)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND schemaname = 'public' 
+        AND tablename = 'notifications'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+    END IF;
+END $$;
 
 -- 5. Update send_push_notification to sync with the table
 CREATE OR REPLACE FUNCTION public.send_push_notification(
