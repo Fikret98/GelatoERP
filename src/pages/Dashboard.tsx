@@ -181,7 +181,7 @@ export default function Dashboard() {
   const handleResolveDiscrepancy = async (id: string, userId: number | null, status: 'resolved' | 'dismissed', notes: string = '') => {
     setIsResolving(true);
     try {
-      const { error } = await supabase.rpc('resolve_shift_discrepancy', {
+      const { error } = await supabase.rpc('resolve_shift_discrepancy_v3', {
         p_discrepancy_id: id,
         p_responsible_user_id: userId,
         p_admin_notes: notes,

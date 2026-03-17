@@ -1,32 +1,24 @@
--- Refined Shift Discrepancy Logic
--- 1. Add linkage columns to shift_discrepancies
-ALTER TABLE public.shift_discrepancies ADD COLUMN IF NOT EXISTS related_expense_id BIGINT;
-ALTER TABLE public.shift_discrepancies ADD COLUMN IF NOT EXISTS related_income_id BIGINT;
-
--- 2. Update resolve_shift_discrepancy function
-CREATE OR REPLACE FUNCTION public.resolve_shift_discrepancy(
+-- Rename the function to avoid ANY caching or overload conflicts
+CREATE OR REPLACE FUNCTION public.resolve_shift_discrepancy_v3(
     p_discrepancy_id UUID,
     p_responsible_user_id BIGINT,
     p_admin_notes TEXT,
-    p_status TEXT -- 'resolved' or 'dismissed'
+    p_status TEXT -- resolved, dismissed
 )
 RETURNS VOID AS $$
 DECLARE
     v_diff DECIMAL(12, 2);
-    v_expense_id BIGINT;
-    v_income_id BIGINT;
-    v_user_name TEXT;
+    v_shift_id UUID;
+    v_related_exp_id UUID;
+    v_related_inc_id UUID;
 BEGIN
-    -- Get discrepancy details
-    SELECT difference, related_expense_id, related_income_id 
-    INTO v_diff, v_expense_id, v_income_id
+    -- 1. Get current discrepancy state
+    SELECT difference, shift_id, related_expense_id, related_income_id 
+    INTO v_diff, v_shift_id, v_related_exp_id, v_related_inc_id
     FROM public.shift_discrepancies
     WHERE id = p_discrepancy_id;
 
-    -- Get responsible user name
-    SELECT name INTO v_user_name FROM public.users WHERE id = p_responsible_user_id;
-
-    -- Update discrepancy status
+    -- 2. Update discrepancy status
     UPDATE public.shift_discrepancies
     SET 
         status = p_status,
@@ -35,31 +27,41 @@ BEGIN
         resolved_at = NOW()
     WHERE id = p_discrepancy_id;
 
-    -- If admin confirms the discrepancy
+    -- 3. Handle Financial Impact
     IF p_status = 'resolved' THEN
-        -- Shortage (difference < 0)
-        IF v_diff < 0 THEN
-            -- 1. Create HR Debt record
-            -- Note: We assume employee_debts table exists as it is used in HR.tsx
-            INSERT INTO public.employee_debts (user_id, amount, type, notes, status)
-            VALUES (p_responsible_user_id, ABS(v_diff), 'shortage', 'Növbə kəsiri (ID: ' || p_discrepancy_id || ')', 'pending');
-            
-            -- 2. Update Expense Description (the one created during shift close)
-            IF v_expense_id IS NOT NULL THEN
-                UPDATE public.expenses 
-                SET description = 'Növbə kəsiri (' || ABS(v_diff) || ' ₼) - Məsul şəxs: ' || COALESCE(v_user_name, 'Qeyd olunmayıb')
-                WHERE id = v_expense_id;
+        -- If already has an automated expense/income, update it
+        IF v_related_exp_id IS NOT NULL THEN
+            UPDATE public.expenses 
+            SET category = 'Kassa Kəsiri (Həll edildi)',
+                description = 'Təsdiqlənmiş növbə kəsiri. ' || COALESCE(p_admin_notes, ''),
+                user_id = p_responsible_user_id
+            WHERE id = v_related_exp_id;
+        ELSIF v_related_inc_id IS NOT NULL THEN
+            UPDATE public.incomes 
+            SET category = 'Kassa Artığı (Həll edildi)',
+                description = 'Təsdiqlənmiş növbə artığı. ' || COALESCE(p_admin_notes, ''),
+                user_id = p_responsible_user_id
+            WHERE id = v_related_inc_id;
+        ELSE
+            -- Create new if doesn't exist
+            IF v_diff < 0 THEN
+                INSERT INTO public.expenses (amount, category, description, date, payment_method, user_id, shift_id)
+                VALUES (ABS(v_diff), 'Kassa Kəsiri (Həll edildi)', 'Manual dispute resolution for shift ' || v_shift_id::text, NOW(), 'cash', p_responsible_user_id, v_shift_id);
+            ELSIF v_diff > 0 THEN
+                INSERT INTO public.incomes (amount, category, description, date, payment_method, user_id, shift_id)
+                VALUES (v_diff, 'Kassa Artığı (Həll edildi)', 'Manual dispute resolution for shift ' || v_shift_id::text, NOW(), 'cash', p_responsible_user_id, v_shift_id);
             END IF;
-            
-        -- Surplus (difference > 0)
-        ELSIF v_diff > 0 THEN
-            -- Update Income Description
-            IF v_income_id IS NOT NULL THEN
-                UPDATE public.incomes 
-                SET description = 'Növbə artığı (' || v_diff || ' ₼) - Təsdiqləndi'
-                WHERE id = v_income_id;
-            END IF;
+        END IF;
+    ELSIF p_status = 'dismissed' THEN
+        -- Reverse financial impact if dismissed
+        IF v_related_exp_id IS NOT NULL THEN
+            DELETE FROM public.expenses WHERE id = v_related_exp_id;
+        ELSIF v_related_inc_id IS NOT NULL THEN
+            DELETE FROM public.incomes WHERE id = v_related_inc_id;
         END IF;
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant permissions to the new function
+GRANT EXECUTE ON FUNCTION public.resolve_shift_discrepancy_v3(UUID, BIGINT, TEXT, TEXT) TO authenticated, anon;
