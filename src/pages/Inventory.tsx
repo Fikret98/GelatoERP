@@ -171,11 +171,12 @@ export default function Inventory() {
       );
       if (balanceErr) throw balanceErr;
 
-      if (totalCost > (balance || 0)) {
+      /* Validation removed to allow 0 AZN or debt purchases as per user request */
+      /* if (totalCost > (balance || 0)) {
         const accountName = purchaseForm.payment_method === 'cash' ? 'Kassada' : 'Bank hesabında';
         toast.error(`${accountName} kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼. Lazım olan: ${totalCost.toFixed(2)} ₼`);
         return;
-      }
+      } */
 
       if (!purchaseForm.supplier_id) {
         toast.error('Zəhmət olmasa təchizatçı seçin');
@@ -624,7 +625,18 @@ export default function Inventory() {
               </div>
               <div>
                 <label htmlFor="p-paid" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.amountPaid')} (₼)</label>
-                <input id="p-paid" title={t('common.amountPaid')} required type="number" step="0.01" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold text-green-600 dark:text-green-400" value={purchaseForm.amount_paid} onChange={e => setPurchaseForm({ ...purchaseForm, amount_paid: e.target.value })} placeholder={(Number(purchaseForm.quantity || 0) * Number(purchaseForm.unit_cost || 0)).toFixed(2)} />
+                <input 
+                  id="p-paid" 
+                  title={t('common.amountPaid')} 
+                  required 
+                  type="number" 
+                  step="0.01" 
+                  min="0"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 font-bold text-green-600 dark:text-green-400" 
+                  value={purchaseForm.amount_paid} 
+                  onChange={e => setPurchaseForm({ ...purchaseForm, amount_paid: e.target.value })} 
+                  placeholder={(Number(purchaseForm.quantity || 0) * Number(purchaseForm.unit_cost || 0)).toFixed(2)} 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ödəniş Hesabı</label>

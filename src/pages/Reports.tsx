@@ -69,8 +69,24 @@ export default function Reports() {
       try {
         const { data, error } = await supabase
           .from('inventory_purchases')
-          .select('*, inventory(name)')
+          .select('*, inventory(name), suppliers(name)')
           .eq('id', transaction.purchase_id)
+          .single();
+        
+        if (error) throw error;
+        setSaleDetails(data ? [data] : []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    } else if (transaction.type === 'expense' && transaction.category === 'Əsas Vəsait Alışı' && transaction.asset_id) {
+      setIsLoadingDetails(true);
+      try {
+        const { data, error } = await supabase
+          .from('fixed_assets')
+          .select('*, suppliers(name)')
+          .eq('id', transaction.asset_id)
           .single();
         
         if (error) throw error;
@@ -563,15 +579,71 @@ export default function Reports() {
                         ) : (
                           <div className="grid gap-3">
                             {saleDetails.map((item, idx) => (
-                              <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-2xl flex items-center justify-between border border-gray-100 dark:border-gray-700 hover:border-indigo-500/20 transition-all shadow-sm">
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm truncate">{item.inventory?.name}</p>
-                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] sm:text-[10px] text-gray-400 font-bold">
-                                    <span>{item.quantity} {item.inventory?.unit || 'ədəd'} × {item.unit_price?.toFixed(2)} ₼</span>
+                              <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm truncate">{item.inventory?.name}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Təchizatçı: {item.suppliers?.name || '-'}</p>
+                                  </div>
+                                  <div className="text-right ml-4">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Məbləğ</p>
+                                    <p className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">{(item.quantity * item.unit_price).toFixed(2)} ₼</p>
                                   </div>
                                 </div>
-                                <div className="text-right ml-4">
-                                  <p className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">{(item.quantity * item.unit_price).toFixed(2)} ₼</p>
+                                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-50 dark:border-gray-700/50">
+                                  <div>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Kəmiyyət</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white">{item.quantity} {item.inventory?.unit || 'ədəd'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Vahid Qiymət</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white">{item.unit_price?.toFixed(2)} ₼</p>
+                                  </div>
+                                </div>
+                                <div className="mt-4 p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-800/30 flex justify-between items-center">
+                                  <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Ödənilən Məbləğ</p>
+                                  <p className="font-black text-indigo-600 dark:text-indigo-400">{item.amount_paid?.toFixed(2)} ₼</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedTransaction.type === 'expense' && selectedTransaction.category === 'Əsas Vəsait Alışı' && selectedTransaction.asset_id && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-indigo-500" />
+                          Əsas Vəsait Detalları
+                        </h3>
+                        {isLoadingDetails ? (
+                          <div className="py-12 flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900/30 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
+                            <LoadingSpinner />
+                          </div>
+                        ) : (
+                          <div className="grid gap-3">
+                            {saleDetails.map((item, idx) => (
+                              <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm truncate">{item.name}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Təchizatçı: {item.suppliers?.name || '-'}</p>
+                                  </div>
+                                  <div className="text-right ml-4">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Məbləğ</p>
+                                    <p className="font-black text-gray-900 dark:text-white text-xs sm:text-sm">{item.cost?.toFixed(2)} ₼</p>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-50 dark:border-gray-700/50">
+                                  <div>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Kəmiyyət</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white">{item.quantity} ədəd</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Vahid Qiymət</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white">{item.unit_price?.toFixed(2) || (item.cost / item.quantity).toFixed(2)} ₼</p>
+                                  </div>
                                 </div>
                               </div>
                             ))}

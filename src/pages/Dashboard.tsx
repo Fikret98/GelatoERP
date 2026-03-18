@@ -169,7 +169,7 @@ export default function Dashboard() {
           .select('*, reported_by:reported_by_id(name), verified_by:verified_by_id(name)')
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
-        
+
         setDiscrepancies(discData || []);
       }
     } catch (error: any) {
@@ -198,7 +198,7 @@ export default function Dashboard() {
         console.error("RPC Error:", error);
         throw error;
       }
-      
+
       toast.success(status === 'resolved' ? 'Uğurla həll edildi' : 'Ləğv edildi');
       setResolutionModal(null);
       fetchDashboardData();
@@ -493,10 +493,10 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '16px', 
-                        border: 'none', 
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '16px',
+                        border: 'none',
                         boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                         fontWeight: 900,
                         fontSize: '12px'
@@ -505,7 +505,7 @@ export default function Dashboard() {
                   </RePieChart>
                 </ResponsiveContainer>
               </div>
-              
+
               <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {charts.expensesByCategory.map((item: any, index: number) => (
                   <div key={index} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/30 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">

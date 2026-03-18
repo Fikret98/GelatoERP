@@ -16,18 +16,34 @@ export default function FixedAssets() {
   const [editingAsset, setEditingAsset] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     name: '',
     purchase_date: new Date().toISOString().split('T')[0],
     cost: '',
     status: 'active',
-    description: ''
+    description: '',
+    supplier_id: '',
+    quantity: '1',
+    unit_price: '',
+    payment_method: 'cash'
   });
 
   useEffect(() => {
     fetchAssets();
+    fetchSuppliers();
   }, []);
+
+  const fetchSuppliers = async () => {
+    try {
+      const { data, error } = await supabase.from('suppliers').select('*').order('name');
+      if (error) throw error;
+      setSuppliers(data || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Body scroll lock when modals are open
   useEffect(() => {
@@ -82,6 +98,9 @@ export default function FixedAssets() {
       const payload = {
         ...formData,
         cost: parseFloat(formData.cost),
+        quantity: parseFloat(formData.quantity || '1'),
+        unit_price: formData.unit_price ? parseFloat(formData.unit_price) : null,
+        supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : null,
         created_by: authUser?.id ? parseInt(authUser.id) : null
       };
 
@@ -131,7 +150,10 @@ export default function FixedAssets() {
       purchase_date: new Date().toISOString().split('T')[0],
       cost: '',
       status: 'active',
-      description: ''
+      supplier_id: '',
+      quantity: '1',
+      unit_price: '',
+      payment_method: 'cash'
     });
     setEditingAsset(null);
   };
@@ -210,7 +232,18 @@ export default function FixedAssets() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => { setEditingAsset(asset); setFormData({ ...asset, cost: asset.cost.toString() }); setShowModal(true); }}
+                    onClick={() => { 
+                      setEditingAsset(asset); 
+                      setFormData({ 
+                        ...asset, 
+                        cost: asset.cost.toString(),
+                        supplier_id: asset.supplier_id ? asset.supplier_id.toString() : '',
+                        quantity: (asset.quantity || 1).toString(),
+                        unit_price: asset.unit_price ? asset.unit_price.toString() : '',
+                        payment_method: asset.payment_method || 'cash'
+                      }); 
+                      setShowModal(true); 
+                    }}
                     className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                     title={t('common.edit')}
                   >
@@ -293,16 +326,84 @@ export default function FixedAssets() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.cost')} (₼)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.cost')} (Yekun ₼)</label>
                     <input
                       required
                       type="number"
                       step="0.01"
                       title={t('assets.cost')}
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-indigo-600"
                       value={formData.cost}
                       onChange={e => setFormData({ ...formData, cost: e.target.value })}
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.quantity')}</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      title={t('common.quantity')}
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.quantity}
+                      onChange={e => {
+                        const q = e.target.value;
+                        const up = formData.unit_price;
+                        setFormData({ 
+                          ...formData, 
+                          quantity: q,
+                          cost: (parseFloat(q || '0') * parseFloat(up || '0')).toFixed(2)
+                        });
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vahid Qiymət (₼)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      title="Vahid Qiymət"
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.unit_price}
+                      onChange={e => {
+                        const up = e.target.value;
+                        const q = formData.quantity;
+                        setFormData({ 
+                          ...formData, 
+                          unit_price: up,
+                          cost: (parseFloat(q || '0') * parseFloat(up || '0')).toFixed(2)
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>
+                    <select
+                      title={t('common.supplier')}
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.supplier_id}
+                      onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
+                    >
+                      <option value="">{t('common.select')}</option>
+                      {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ödəniş Hesabı</label>
+                    <select
+                      title="Ödəniş Hesabı"
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.payment_method}
+                      onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
+                    >
+                      <option value="cash">Kassa (Nağd)</option>
+                      <option value="bank">Bank Hesabı</option>
+                    </select>
                   </div>
                 </div>
 
