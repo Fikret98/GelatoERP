@@ -104,22 +104,36 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (shiftErr) throw shiftErr;
 
-      // 2. Handle discrepancy if verifier counted differently from UNIFIED SYSTEM BALANCE
-      const globalBalance = await getGlobalCashBalance();
-      const roundedGlobal = Math.round(globalBalance * 100) / 100;
-      const diff = Math.round((roundedOpening - roundedGlobal) * 100) / 100;
+      // 2. Mark the opener as the verified_by (receiver) for any pending discrepancy from the last shift
+      // This fills in the 'Təhvil Aldı' (received by) field on the existing discrepancy
+      const lastShift = await getLastShift();
+      if (lastShift?.id) {
+        await supabase
+          .from('shift_discrepancies')
+          .update({ verified_by_id: userIdInt })
+          .eq('shift_id', lastShift.id)
+          .eq('status', 'pending')
+          .is('verified_by_id', null);
+      }
 
-      if (Math.abs(diff) > 0.005) {
-        try {
-          const lastShift = await getLastShift();
+      // 3. Check if the opener's entered balance differs from what the closer physically counted
+      // This happens when the OPENER counts and gets a different number from the CLOSER
+      const lastShiftBalance = lastShift?.actual_cash_balance ?? null;
+      if (lastShiftBalance !== null) {
+        const roundedLastActual = Math.round(lastShiftBalance * 100) / 100;
+        const diff = Math.round((roundedOpening - roundedLastActual) * 100) / 100;
+
+        if (Math.abs(diff) > 0.005) {
+          // Only create a new discrepancy if the opener counts differently from the closer
+          // (meaning: opener disagreed with what the closer counted)
           const { data: discData, error: discErr } = await supabase
             .from('shift_discrepancies')
             .insert([{
-              shift_id: lastShift?.id || null,
-              reported_by_id: lastShift?.user_id || userIdInt,
+              shift_id: lastShift.id,
+              reported_by_id: lastShift.user_id,
               verified_by_id: userIdInt,
-              system_expected: roundedGlobal,
-              seller_reported: roundedGlobal,
+              system_expected: roundedLastActual,
+              seller_reported: roundedLastActual,
               verifier_counted: roundedOpening,
               difference: diff,
               status: 'pending'
@@ -128,22 +142,19 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
             .single();
 
           if (!discErr && discData) {
-            // Immediate Financial Impact
             if (diff < 0) {
               const { data: expData } = await supabase
                 .from('expenses')
                 .insert([{
                   category: 'Kassa Kəsiri',
                   amount: Math.abs(diff),
-                  description: 'Təhvil-təslim kəsiri (Araşdırılır)',
+                  description: 'Açılış-bağlanış fərqi (Araşdırılır)',
                   date: new Date().toISOString(),
                   payment_method: 'cash',
                   user_id: userIdInt,
                   shift_id: newShift.id
                 }])
-                .select()
-                .single();
-
+                .select().single();
               if (expData) {
                 await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
               }
@@ -153,23 +164,19 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
                 .insert([{
                   category: 'Kassa Artığı',
                   amount: Math.abs(diff),
-                  description: 'Təhvil-təslim artığı (Araşdırılır)',
+                  description: 'Açılış-bağlanış fərqi (Araşdırılır)',
                   date: new Date().toISOString(),
                   payment_method: 'cash',
                   user_id: userIdInt,
                   shift_id: newShift.id
                 }])
-                .select()
-                .single();
-
+                .select().single();
               if (incData) {
                 await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
               }
             }
+            toast('Açılış məbləği fərqi qeyd edildi.', { icon: '⚠️' });
           }
-          toast('Təhvil-təslimdə uyğunsuzluq qeyd edildi.', { icon: '⚠️' });
-        } catch (discE: any) {
-          console.error('Handover discrepancy error:', discE);
         }
       }
 
@@ -364,13 +371,15 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getLastShiftClosingBalance = async (): Promise<number> => {
-    // We prioritize the global system balance as the suggested opening balance
-    // This ensures all transactions (linked or unlinked) are accounted for
-    const globalBalance = await getGlobalCashBalance();
-    if (globalBalance > 0) return globalBalance;
-
+    // Prioritize the PHYSICAL amount the last cashier actually counted at close.
+    // This is stored in `actual_cash_balance` on the shift record.
+    // Using this avoids divergence from old discrepancies that inflate the system total.
     const lastShift = await getLastShift();
-    return lastShift?.actual_cash_balance || 0;
+    if (lastShift?.actual_cash_balance != null) {
+      return lastShift.actual_cash_balance;
+    }
+    // Fallback to mathematical system balance only if no closed shift exists
+    return await getGlobalCashBalance();
   };
 
   return (
