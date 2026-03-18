@@ -27,7 +27,9 @@ export default function FixedAssets() {
     supplier_id: '',
     quantity: '1',
     unit_price: '',
-    payment_method: 'cash'
+    payment_method: 'cash',
+    useful_life_months: '',
+    salvage_value: '0'
   });
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function FixedAssets() {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('fixed_assets')
+        .from('fixed_assets_valuation_view')
         .select('*')
         .order('purchase_date', { ascending: false });
 
@@ -101,6 +103,8 @@ export default function FixedAssets() {
         quantity: parseFloat(formData.quantity || '1'),
         unit_price: formData.unit_price ? parseFloat(formData.unit_price) : null,
         supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : null,
+        useful_life_months: formData.useful_life_months ? parseInt(formData.useful_life_months) : 0,
+        salvage_value: formData.salvage_value ? parseFloat(formData.salvage_value) : 0,
         created_by: authUser?.id ? parseInt(authUser.id) : null
       };
 
@@ -153,7 +157,9 @@ export default function FixedAssets() {
       supplier_id: '',
       quantity: '1',
       unit_price: '',
-      payment_method: 'cash'
+      payment_method: 'cash',
+      useful_life_months: '',
+      salvage_value: '0'
     });
     setEditingAsset(null);
   };
@@ -240,7 +246,9 @@ export default function FixedAssets() {
                         supplier_id: asset.supplier_id ? asset.supplier_id.toString() : '',
                         quantity: (asset.quantity || 1).toString(),
                         unit_price: asset.unit_price ? asset.unit_price.toString() : '',
-                        payment_method: asset.payment_method || 'cash'
+                        payment_method: asset.payment_method || 'cash',
+                        useful_life_months: (asset.useful_life_months || '').toString(),
+                        salvage_value: (asset.salvage_value || '0').toString()
                       }); 
                       setShowModal(true); 
                     }}
@@ -269,7 +277,32 @@ export default function FixedAssets() {
                 <div className="flex items-center text-sm font-bold text-gray-900 dark:text-white">
                   <DollarSign className="w-4 h-4 mr-2 text-green-500" />
                   {Number(asset.cost).toFixed(2)} ₼
+                  {asset.useful_life_months > 0 && (
+                    <span className="ml-2 text-[10px] text-gray-400 font-normal">
+                      (Cari: {Number(asset.current_value).toFixed(2)} ₼)
+                    </span>
+                  )}
                 </div>
+
+                {asset.useful_life_months > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      <span>Amortizasiya</span>
+                      <span>{Math.round(asset.depreciation_percentage)}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${asset.depreciation_percentage}%` }}
+                        className={cn(
+                          "h-full transition-all",
+                          asset.depreciation_percentage > 90 ? "bg-red-500" : 
+                          asset.depreciation_percentage > 70 ? "bg-orange-500" : "bg-indigo-500"
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="pt-2 flex justify-between items-center border-t border-gray-50 dark:border-gray-700 mt-4">
                   {getStatusBadge(asset.status)}
                   {asset.description && (
@@ -404,6 +437,31 @@ export default function FixedAssets() {
                       <option value="cash">Kassa (Nağd)</option>
                       <option value="bank">Bank Hesabı</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Faydalı Ömür (ay)</label>
+                    <input
+                      type="number"
+                      title="Faydalı Ömür"
+                      placeholder="Məs: 24"
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.useful_life_months}
+                      onChange={e => setFormData({ ...formData, useful_life_months: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qalıq Dəyəri (₼)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      title="Qalıq Dəyəri"
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.salvage_value}
+                      onChange={e => setFormData({ ...formData, salvage_value: e.target.value })}
+                    />
                   </div>
                 </div>
 
