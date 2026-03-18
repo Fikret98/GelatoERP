@@ -7,31 +7,16 @@ import { useEffect } from 'react';
 export function useScrollLock(lock: boolean) {
   useEffect(() => {
     if (lock) {
-      // Get the current scroll position to prevent jumps
-      const scrollY = window.scrollY;
-      
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflowY = 'scroll'; // Maintain scrollbar to prevent layout shift
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
-      const scrollY = document.body.style.top;
-      
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflowY = '';
-      
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     }
 
     return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflowY = '';
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     };
   }, [lock]);
 }

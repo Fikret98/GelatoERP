@@ -60,13 +60,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-[70] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
+          className="fixed inset-0 z-[950] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <div className={cn(
-        "fixed inset-y-0 left-0 z-[80] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-[1000] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -139,7 +139,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-[60] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+        <header className="sticky top-0 z-[900] backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-200">
           <button 
             onClick={() => setSidebarOpen(true)} 
             className="lg:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" 
@@ -179,7 +179,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[1000] bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)]">
         <nav className="flex justify-between items-center px-2 py-0 h-16 overflow-x-auto no-scrollbar">
           {mobileNavigation.map((item) => {
             const isActive = location.pathname === item.href;
