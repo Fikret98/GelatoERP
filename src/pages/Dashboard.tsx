@@ -328,6 +328,68 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Shift Management Section (Admin Only) */}
+      {discrepancies.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-[2rem] shadow-sm border-2 border-amber-100 dark:border-amber-900/20"
+        >
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              Növbə Uyğunsuzluqları (Dispute)
+            </h3>
+            <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+              {discrepancies.length} Gözləyən
+            </span>
+          </div>
+
+          <div className="grid gap-4">
+            {discrepancies.map((disc) => (
+              <div key={disc.id} className="bg-gray-50 dark:bg-gray-900/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Təhvil verdi:</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.reported_by?.name}</span>
+                    <span className="text-gray-300 mx-1">/</span>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Təhvil aldı:</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.verified_by?.name}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-4 mt-1">
+                    <div className="text-xs font-medium text-gray-500">Sistem: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.system_expected.toFixed(2)} ₼</span></div>
+                    <div className="text-xs font-medium text-gray-500">Satıcı: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.seller_reported.toFixed(2)} ₼</span></div>
+                    <div className="text-xs font-medium text-gray-500">Təsdiq: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.verifier_counted.toFixed(2)} ₼</span></div>
+                    <div className={cn(
+                      "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-lg",
+                      disc.difference < 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+                    )}>
+                      Fərq: {disc.difference.toFixed(2)} ₼
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    disabled={isResolving}
+                    onClick={() => {
+                      setResolutionModal({ show: true, discrepancy: disc });
+                      setResolutionForm({
+                        responsibleUserId: disc.reported_by_id?.toString() || '',
+                        adminNotes: ''
+                      });
+                    }}
+                    className="flex-1 md:flex-none px-6 py-2 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 dark:shadow-none"
+                  >
+                    Həll et
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -529,67 +591,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Shift Management Section (Admin Only - though here they are already in dashboard) */}
-      {discrepancies.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-[2rem] shadow-sm border-2 border-amber-100 dark:border-amber-900/20"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              Növbə Uyğunsuzluqları (Dispute)
-            </h3>
-            <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-              {discrepancies.length} Gözləyən
-            </span>
-          </div>
 
-          <div className="grid gap-4">
-            {discrepancies.map((disc) => (
-              <div key={disc.id} className="bg-gray-50 dark:bg-gray-900/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Təhvil verdi:</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.reported_by?.name}</span>
-                    <span className="text-gray-300 mx-1">/</span>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Təhvil aldı:</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{disc.verified_by?.name}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-4 mt-1">
-                    <div className="text-xs font-medium text-gray-500">Sistem: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.system_expected.toFixed(2)} ₼</span></div>
-                    <div className="text-xs font-medium text-gray-500">Satıcı: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.seller_reported.toFixed(2)} ₼</span></div>
-                    <div className="text-xs font-medium text-gray-500">Təsdiq: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.verifier_counted.toFixed(2)} ₼</span></div>
-                    <div className={cn(
-                      "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-lg",
-                      disc.difference < 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
-                    )}>
-                      Fərq: {disc.difference.toFixed(2)} ₼
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    disabled={isResolving}
-                    onClick={() => {
-                      setResolutionModal({ show: true, discrepancy: disc });
-                      setResolutionForm({
-                        responsibleUserId: disc.reported_by_id?.toString() || '',
-                        adminNotes: ''
-                      });
-                    }}
-                    className="flex-1 md:flex-none px-6 py-2 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 dark:shadow-none"
-                  >
-                    Həll et
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
 
       {/* Low Stock Modal */}
       <AnimatePresence>
