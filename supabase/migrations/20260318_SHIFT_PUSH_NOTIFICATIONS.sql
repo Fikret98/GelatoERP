@@ -1,4 +1,52 @@
--- Function to handle shift push notifications
+-- 1. Improved Push Notification Sender (Uses secrets table instead of pg settings)
+CREATE OR REPLACE FUNCTION public.fn_notify_user_push(
+    p_user_id BIGINT,
+    p_title TEXT,
+    p_body TEXT,
+    p_url TEXT DEFAULT '/',
+    p_icon TEXT DEFAULT NULL,
+    p_image TEXT DEFAULT NULL,
+    p_actions JSONB DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_url TEXT;
+    v_key TEXT;
+BEGIN
+    -- Fetch credentials securely from the secrets table
+    SELECT value INTO v_url FROM public.secrets WHERE name = 'SUPABASE_URL';
+    SELECT value INTO v_key FROM public.secrets WHERE name = 'SUPABASE_SERVICE_ROLE_KEY';
+
+    IF v_url IS NULL OR v_key IS NULL THEN
+        RAISE WARNING 'Push notification failed: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not found in secrets table';
+        RETURN;
+    END IF;
+
+    -- Call the Supabase Edge Function
+    PERFORM
+      net.http_post(
+        url := v_url || '/functions/v1/send-push',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || v_key
+        ),
+        body := jsonb_build_object(
+          'user_id', p_user_id,
+          'title', p_title,
+          'body', p_body,
+          'url', p_url,
+          'icon', COALESCE(p_icon, '/icon-192.png'),
+          'image', p_image,
+          'actions', p_actions
+        )
+      );
+END;
+$$;
+
+-- 2. Function to handle shift push notifications
 CREATE OR REPLACE FUNCTION public.fn_check_shift_notifications()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -28,8 +76,9 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Find users to notify (Admins who have notify_shifts = true, excluding the user doing the action)
-    FOR v_user IN (SELECT id FROM public.users WHERE role = 'admin' AND COALESCE(notify_shifts, true) = true AND id != NEW.user_id) LOOP
+    -- Find users to notify (Admins who have notify_shifts = true)
+    -- Intentionally omitting "AND id != NEW.user_id" so the admin testing gets their own notification!
+    FOR v_user IN (SELECT id FROM public.users WHERE role = 'admin' AND COALESCE(notify_shifts, true) = true) LOOP
         PERFORM public.fn_notify_user_push(
             v_user.id,
             v_title,
@@ -51,3 +100,4 @@ CREATE TRIGGER tr_shift_notifications
     AFTER INSERT OR UPDATE ON public.shifts
     FOR EACH ROW
     EXECUTE FUNCTION public.fn_check_shift_notifications();
+

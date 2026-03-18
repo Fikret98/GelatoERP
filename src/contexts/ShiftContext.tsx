@@ -174,7 +174,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       }
 
       setActiveShift(newShift);
-      toast.success('Növbə açıldı');
+      toast.success('Növbə açıldı və bildiriş göndərildi', { icon: '🟢' });
     } catch (e: any) {
       toast.error('Növbə açılarkən xəta: ' + e.message);
       throw e;
@@ -312,7 +312,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       }
 
       setActiveShift(null);
-      toast.success('Növbə bağlandı');
+      toast.success('Növbə bağlandı və bildiriş göndərildi', { icon: '🔴' });
     } catch (e: any) {
       toast.error('Növbə bağlanarkən xəta: ' + e.message);
     } finally {
