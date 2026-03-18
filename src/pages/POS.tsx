@@ -17,7 +17,7 @@ export default function POS() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<{ product: any, quantity: number }[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank'>('cash');
   const { toasts } = useToasterStore();
@@ -104,7 +104,7 @@ export default function POS() {
 
   // Body scroll lock for all modals
   useEffect(() => {
-    if (showMobileCart || showOpenModal || showCloseModal || inventoryError) {
+    if (showCartDrawer || showOpenModal || showCloseModal || inventoryError) {
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     } else {
@@ -115,7 +115,7 @@ export default function POS() {
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
     };
-  }, [showMobileCart, showOpenModal, showCloseModal, inventoryError]);
+  }, [showCartDrawer, showOpenModal, showCloseModal, inventoryError]);
 
   // Clear errors on shift status change
   useEffect(() => {
@@ -188,6 +188,7 @@ export default function POS() {
 
       setCart([]);
       setPaymentMethod('cash');
+      setShowCartDrawer(false); // Fix: Explicitly close cart to release scroll lock!
       toast.success(t('pos.success'));
     } catch (e: any) {
       console.error(e);
@@ -416,9 +417,9 @@ export default function POS() {
           <LoadingSpinner message="Satış ekranı yüklənir..." />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 h-full min-h-0 lg:overflow-hidden px-4 sm:px-6 lg:px-8 pb-4 lg:pb-8">
-          {/* Left Side: Products Grid */}
-          <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm lg:overflow-hidden">
+        <div className="flex-1 flex flex-col gap-4 h-full min-h-0 lg:overflow-hidden px-4 sm:px-6 lg:px-8 pb-4 lg:pb-8 max-w-7xl mx-auto w-full">
+          {/* Main Content: Products Grid */}
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-white dark:bg-gray-800/50 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm lg:overflow-hidden relative">
             <div className="p-5 flex items-center justify-between border-b border-gray-100/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none">
@@ -492,156 +493,167 @@ export default function POS() {
             </div>
           </div>
 
-          {/* Right Side: Cart Section - Sticky in Viewport */}
-          <div className={`
-            fixed lg:sticky lg:top-4 inset-x-0 bottom-0 z-[200] lg:z-auto
-            h-[85vh] lg:h-[calc(100vh-14rem)] lg:w-[380px] lg:min-w-[380px]
-            bg-white dark:bg-gray-800
-            rounded-t-[2.5rem] lg:rounded-[2.5rem] 
-            shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] lg:shadow-xl lg:shadow-indigo-500/5
-            border-t lg:border border-indigo-100/50 dark:border-gray-700
-            flex flex-col overflow-hidden
-            transition-all duration-500
-            ${showMobileCart ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
-          `}>
-            {/* Cart Header */}
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/30 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
-                  <ShoppingCart className="w-4 h-4" />
-                </div>
-                <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('pos.cart')}</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="bg-indigo-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black">
-                  {cart.reduce((sum, item) => sum + item.quantity, 0)} ədəd
-                </span>
-                <button onClick={() => setShowMobileCart(false)} className="lg:hidden p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg" title="Bağla">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+          {/* Cart Drawer */}
+          <AnimatePresence>
+            {showCartDrawer && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowCartDrawer(false)}
+                  className="fixed inset-0 bg-black/50 z-[250] backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="fixed top-0 right-0 bottom-0 z-[300] w-full sm:w-[400px] bg-white dark:bg-gray-800 shadow-2xl flex flex-col border-l border-gray-100 dark:border-gray-700"
+                >
+                  {/* Cart Header */}
+                  <div className="p-5 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/30 flex items-center justify-between pt-[max(env(safe-area-inset-top),1.25rem)]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <ShoppingCart className="w-4 h-4" />
+                      </div>
+                      <h2 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('pos.cart')}</h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                        {cart.reduce((sum, item) => sum + item.quantity, 0)} ədəd
+                      </span>
+                      <button onClick={() => setShowCartDrawer(false)} className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg" title="Bağla">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
 
-            {/* Cart Items List - Independent Scroll */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-none">
-              <AnimatePresence mode="popLayout" initial={false}>
-                {cart.length === 0 ? (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="h-full flex flex-col items-center justify-center text-gray-400 text-center opacity-50"
-                  >
-                    <ShoppingCart className="w-10 h-10 mb-2" />
-                    <p className="text-xs font-bold italic">{t('pos.emptyCart')}</p>
-                  </motion.div>
-                ) : (
-                  cart.map(item => (
-                    <motion.div 
-                      key={item.product.id}
-                      layout
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="group flex flex-col p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800"
+                  {/* Cart Items List - Independent Scroll */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-none custom-scrollbar pb-[max(env(safe-area-inset-bottom),1rem)]">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {cart.length === 0 ? (
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="h-full flex flex-col items-center justify-center text-gray-400 text-center opacity-50"
+                        >
+                          <ShoppingCart className="w-10 h-10 mb-2" />
+                          <p className="text-xs font-bold italic">{t('pos.emptyCart')}</p>
+                        </motion.div>
+                      ) : (
+                        cart.map(item => (
+                          <motion.div 
+                            key={item.product.id}
+                            layout
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="group flex flex-col p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1 min-w-0 pr-2">
+                                <h4 className="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-tight truncate">{item.product.name}</h4>
+                              </div>
+                              <div className="text-xs font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                                {(item.product.price * item.quantity).toFixed(2)} ₼
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Azalt">
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="font-black w-6 text-center text-gray-900 dark:text-white text-[11px]">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 text-gray-400 hover:text-indigo-500 transition-colors" title="Artır">
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <button onClick={() => removeFromCart(item.product.id)} className="p-1.5 text-red-400 hover:text-red-600 transition-colors" title="Sil">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Cart Footer */}
+                  <div className="p-5 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 space-y-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+                    <div className="flex bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                      <button
+                        onClick={() => setPaymentMethod('cash')}
+                        className={cn(
+                          "flex-1 flex items-center justify-center py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                          paymentMethod === 'cash' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400"
+                        )}
+                      >
+                        💵 Nağd
+                      </button>
+                      <button
+                        onClick={() => setPaymentMethod('bank')}
+                        className={cn(
+                          "flex-1 flex items-center justify-center py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                          paymentMethod === 'bank' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400"
+                        )}
+                      >
+                        💳 Kart
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-4">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">{t('pos.total')}</span>
+                        <span className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tighter">{total.toFixed(2)} ₼</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[9px] font-bold text-green-500 uppercase tracking-widest leading-none mb-1">Bonus</span>
+                        <span className="text-xs font-black text-green-500 leading-none">+{(total * 0.05).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleCheckout}
+                      disabled={cart.length === 0 || loading}
+                      className="group relative w-full h-14 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-xl shadow-indigo-500/20 overflow-hidden flex items-center justify-center gap-2"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0 pr-2">
-                          <h4 className="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-tight truncate">{item.product.name}</h4>
-                        </div>
-                        <div className="text-xs font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
-                          {(item.product.price * item.quantity).toFixed(2)} ₼
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                          <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Azalt">
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="font-black w-6 text-center text-gray-900 dark:text-white text-[11px]">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 text-gray-400 hover:text-indigo-500 transition-colors" title="Artır">
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <button onClick={() => removeFromCart(item.product.id)} className="p-1.5 text-red-400 hover:text-red-600 transition-colors" title="Sil">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Cart Footer - Pinned to bottom of sidebar */}
-            <div className="p-5 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 space-y-4">
-              <div className="flex bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <button
-                  onClick={() => setPaymentMethod('cash')}
-                  className={cn(
-                    "flex-1 flex items-center justify-center py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    paymentMethod === 'cash' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400"
-                  )}
-                >
-                  💵 Nağd
-                </button>
-                <button
-                  onClick={() => setPaymentMethod('bank')}
-                  className={cn(
-                    "flex-1 flex items-center justify-center py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    paymentMethod === 'bank' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400"
-                  )}
-                >
-                  💳 Kart
-                </button>
-              </div>
-
-              <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-4">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">{t('pos.total')}</span>
-                  <span className="text-2xl font-black text-gray-900 dark:text-white leading-none tracking-tighter">{total.toFixed(2)} ₼</span>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[9px] font-bold text-green-500 uppercase tracking-widest leading-none mb-1">Bonus</span>
-                  <span className="text-xs font-black text-green-500 leading-none">+{(total * 0.05).toFixed(2)}</span>
-                </div>
-              </div>
-              
-              <button
-                onClick={handleCheckout}
-                disabled={cart.length === 0 || loading}
-                className="group relative w-full h-14 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-xl shadow-indigo-500/20 overflow-hidden flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    <span>{t('pos.checkout')}</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+                      {loading ? (
+                        <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <CreditCard className="w-5 h-5" />
+                          <span>{t('pos.checkout')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
-      {/* Mobile Cart Floating Link */}
-      {cart.length > 0 && !showMobileCart && (
+      {/* Universal Cart Floating Link */}
+      {!showCartDrawer && (
         <motion.button
           initial={{ scale: 0, y: 50 }}
           animate={{ scale: 1, y: 0 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => setShowMobileCart(true)}
-          className="lg:hidden fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-6 z-[250] bg-indigo-600 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center gap-3 border-4 border-white dark:border-gray-800"
+          onClick={() => setShowCartDrawer(true)}
+          className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 sm:right-6 lg:bottom-10 lg:right-10 z-[200] bg-indigo-600 text-white px-4 sm:px-5 py-3 sm:py-4 rounded-full sm:rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center gap-3 border-4 border-white dark:border-gray-800 transition-all duration-300 hover:scale-105"
         >
           <div className="relative">
             <ShoppingCart className="w-5 h-5" />
-            <span className="absolute -top-3 -right-3 bg-red-500 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
-              {cart.reduce((sum, item) => sum + item.quantity, 0)}
-            </span>
+            {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+              <span className="absolute -top-3 -right-3 bg-red-500 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
+            )}
           </div>
-          <span className="font-black text-xs uppercase tracking-widest">Səbət</span>
+          <span className="font-black text-xs uppercase tracking-widest hidden sm:inline">Səbət</span>
         </motion.button>
       )}
       {/* Inventory Shortage Modal */}
