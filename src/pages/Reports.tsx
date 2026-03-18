@@ -520,8 +520,8 @@ export default function Reports() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ödəniş Üsulu</p>
-                        <p className="font-bold text-indigo-600 dark:text-indigo-400 uppercase text-xs tracking-tighter sm:text-base">
-                          {selectedTransaction.payment_method === 'card' ? '💳 Kassa' : '💵 Nağd'}
+                        <p className="font-bold text-indigo-600 dark:text-indigo-400 uppercase text-xs tracking-tighter sm:text-base whitespace-nowrap">
+                          {(selectedTransaction.payment_method === 'card' || selectedTransaction.payment_method === 'bank') ? '💳 Kassa' : '💵 Nağd'}
                         </p>
                       </div>
                       <div className="space-y-1">
