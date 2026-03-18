@@ -34,7 +34,7 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       {/* @ts-ignore */}
-      <Routes>
+      <Routes location={location} key={location.pathname}>
         {/* Admin only routes */}
         <Route path="/" element={isAdmin ? <Dashboard /> : <Navigate to="/pos" replace />} />
         <Route path="/inventory" element={isAdmin ? <Inventory /> : <Navigate to="/pos" replace />} />
