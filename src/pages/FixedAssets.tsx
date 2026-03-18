@@ -359,16 +359,16 @@ export default function FixedAssets() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.cost')} (Yekun ₼)</label>
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      title={t('assets.cost')}
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-indigo-600"
-                      value={formData.cost}
-                      onChange={e => setFormData({ ...formData, cost: e.target.value })}
-                    />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>
+                    <select
+                      title={t('common.supplier')}
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      value={formData.supplier_id}
+                      onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
+                    >
+                      <option value="">{t('common.select')}</option>
+                      {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
                   </div>
                 </div>
 
@@ -415,16 +415,14 @@ export default function FixedAssets() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>
-                    <select
-                      title={t('common.supplier')}
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.supplier_id}
-                      onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
-                    >
-                      <option value="">{t('common.select')}</option>
-                      {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.cost')} (Yekun ₼)</label>
+                    <input
+                      readOnly
+                      title={t('assets.cost')}
+                      placeholder="0.00"
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-indigo-50/30 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 rounded-xl px-4 py-2.5 outline-none font-black text-lg cursor-not-allowed"
+                      value={formData.cost}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ödəniş Hesabı</label>
