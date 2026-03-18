@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Calendar, DollarSign, Tag, MoreVertical, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Search, Calendar, DollarSign, Tag, MoreVertical, Edit2, Trash2, AlertCircle, TrendingUp, Box, Wallet, X, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -327,178 +327,190 @@ export default function FixedAssets() {
               initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto touch-pan-y pb-28 lg:pb-8 shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-t-3xl lg:rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden mb-[safe-area-inset-bottom]"
             >
-              <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-                {editingAsset ? t('common.edit') : t('assets.addTitle')}
-              </h2>
+              <div className="p-6 pb-4 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {editingAsset ? t('common.edit') : t('assets.addTitle')}
+                </h2>
+                <button 
+                  onClick={() => setShowModal(false)}
+                  title={t('common.close') || 'Close'}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors lg:hidden"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.assetName')}</label>
-                  <input
-                    required
-                    type="text"
-                    title={t('assets.assetName')}
-                    className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-6 overflow-y-auto space-y-4 flex-1 touch-pan-y">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.purchaseDate')}</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.assetName')}</label>
                     <input
                       required
-                      type="date"
-                      title={t('assets.purchaseDate')}
+                      type="text"
+                      title={t('assets.assetName')}
+                      placeholder={t('assets.assetName')}
                       className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.purchase_date}
-                      onChange={e => setFormData({ ...formData, purchase_date: e.target.value })}
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.purchaseDate')}</label>
+                      <input
+                        required
+                        type="date"
+                        title={t('assets.purchaseDate')}
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        value={formData.purchase_date}
+                        onChange={e => setFormData({ ...formData, purchase_date: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>
+                      <select
+                        title={t('common.supplier')}
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                        value={formData.supplier_id}
+                        onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
+                      >
+                        <option value="">{t('common.select')}</option>
+                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.quantity')}</label>
+                      <input
+                        type="number"
+                        step="1"
+                        min="1"
+                        title={t('common.quantity')}
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+                        value={formData.quantity}
+                        onChange={e => {
+                          const q = e.target.value;
+                          const up = formData.unit_price;
+                          setFormData({ 
+                            ...formData, 
+                            quantity: q,
+                            cost: (parseFloat(q || '0') * parseFloat(up || '0')).toFixed(2)
+                          });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vahid Qiymət (₼)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        title="Vahid Qiymət"
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+                        value={formData.unit_price}
+                        onChange={e => {
+                          const up = e.target.value;
+                          const q = formData.quantity;
+                          setFormData({ 
+                            ...formData, 
+                            unit_price: up,
+                            cost: (parseFloat(q || '0') * parseFloat(up || '0')).toFixed(2)
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.cost')} (Yekun ₼)</label>
+                      <div className="w-full border border-gray-100 dark:border-gray-700 bg-indigo-50/30 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 rounded-xl px-4 py-2.5 font-black text-lg flex items-center h-[46px]">
+                        {formData.cost}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ödəniş Hesabı</label>
+                      <select
+                        title="Ödəniş Hesabı"
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                        value={formData.payment_method}
+                        onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
+                      >
+                        <option value="cash">Kassa (Nağd)</option>
+                        <option value="bank">Bank Hesabı</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Faydalı Ömür (ay)</label>
+                      <input
+                        type="number"
+                        title="Faydalı Ömür"
+                        placeholder="Məs: 24"
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        value={formData.useful_life_months}
+                        onChange={e => setFormData({ ...formData, useful_life_months: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qalıq Dəyəri (₼)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        title="Qalıq Dəyəri"
+                        className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        value={formData.salvage_value}
+                        onChange={e => setFormData({ ...formData, salvage_value: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.supplier')}</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.status')}</label>
                     <select
-                      title={t('common.supplier')}
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.supplier_id}
-                      onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}
+                      title={t('assets.status')}
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                      value={formData.status}
+                      onChange={e => setFormData({ ...formData, status: e.target.value })}
                     >
-                      <option value="">{t('common.select')}</option>
-                      {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      <option value="active">{t('assets.active')}</option>
+                      <option value="maintenance">{t('assets.maintenance')}</option>
+                      <option value="disposed">{t('assets.disposed')}</option>
                     </select>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.quantity')}</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      title={t('common.quantity')}
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.quantity}
-                      onChange={e => {
-                        const q = e.target.value;
-                        const up = formData.unit_price;
-                        setFormData({ 
-                          ...formData, 
-                          quantity: q,
-                          cost: (parseFloat(q || '0') * parseFloat(up || '0')).toFixed(2)
-                        });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vahid Qiymət (₼)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      title="Vahid Qiymət"
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.unit_price}
-                      onChange={e => {
-                        const up = e.target.value;
-                        const q = formData.quantity;
-                        setFormData({ 
-                          ...formData, 
-                          unit_price: up,
-                          cost: (parseFloat(q || '0') * parseFloat(up || '0')).toFixed(2)
-                        });
-                      }}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
+                    <textarea
+                      title={t('reports.description')}
+                      placeholder={t('reports.description')}
+                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                      value={formData.description}
+                      onChange={e => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.cost')} (Yekun ₼)</label>
-                    <input
-                      readOnly
-                      title={t('assets.cost')}
-                      placeholder="0.00"
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-indigo-50/30 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 rounded-xl px-4 py-2.5 outline-none font-black text-lg cursor-not-allowed"
-                      value={formData.cost}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ödəniş Hesabı</label>
-                    <select
-                      title="Ödəniş Hesabı"
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.payment_method}
-                      onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
-                    >
-                      <option value="cash">Kassa (Nağd)</option>
-                      <option value="bank">Bank Hesabı</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Faydalı Ömür (ay)</label>
-                    <input
-                      type="number"
-                      title="Faydalı Ömür"
-                      placeholder="Məs: 24"
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.useful_life_months}
-                      onChange={e => setFormData({ ...formData, useful_life_months: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qalıq Dəyəri (₼)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      title="Qalıq Dəyəri"
-                      className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.salvage_value}
-                      onChange={e => setFormData({ ...formData, salvage_value: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('assets.status')}</label>
-                  <select
-                    title={t('assets.status')}
-                    className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                    value={formData.status}
-                    onChange={e => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    <option value="active">{t('assets.active')}</option>
-                    <option value="maintenance">{t('assets.maintenance')}</option>
-                    <option value="disposed">{t('assets.disposed')}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('reports.description')}</label>
-                  <textarea
-                    title={t('reports.description')}
-                    className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
-                    value={formData.description}
-                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-
-                <div className="flex flex-col-reverse lg:flex-row justify-end gap-3 mt-8">
+                <div className="p-6 border-t border-gray-50 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20 flex flex-col-reverse lg:flex-row justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="w-full lg:w-auto px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-bold transition-colors"
+                    className="w-full lg:w-auto px-8 py-3.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-bold transition-all active:scale-95"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="w-full lg:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all"
+                    className="w-full lg:w-auto px-8 py-3.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
+                    <Save className="w-5 h-5" />
                     {t('common.save')}
                   </button>
                 </div>
