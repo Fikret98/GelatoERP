@@ -23,7 +23,7 @@ BEGIN
     -- Shift Closed (UPDATE where closed_at IS NOT NULL)
     ELSIF TG_OP = 'UPDATE' AND OLD.closed_at IS NULL AND NEW.closed_at IS NOT NULL THEN
         v_title := '🔴 Növbə Bağlandı';
-        v_body := v_shift_user_name || ' növbəni təhvil verdi. Fərq: ' || (NEW.closing_actual - NEW.closing_expected) || ' ₼';
+        v_body := v_shift_user_name || ' növbəni təhvil verdi. Fərq: ' || (NEW.actual_cash_balance - NEW.expected_cash_balance) || ' ₼';
     ELSE
         RETURN NEW;
     END IF;
