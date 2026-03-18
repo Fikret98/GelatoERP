@@ -1,0 +1,1 @@
+curl -X GET "https://canoruljgackpmziotel.supabase.co/rest/v1/fixed_assets?cost=eq.600%26select=id,name,payment_method" -H "apikey: sb_publishable_mjPXgZBzTwl5b0XWAqALbw_Gpdv2LAF" -H "Authorization: Bearer sb_publishable_mjPXgZBzTwl5b0XWAqALbw_Gpdv2LAF"
