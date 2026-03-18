@@ -475,8 +475,8 @@ export default function Reports() {
                       {(t.type === 'expense' ? '-' : '+')}{t.amount.toFixed(2)} ₼
                     </p>
                     <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5 flex items-center justify-end gap-1">
-                      {t.payment_method === 'card' ? <Coins className="w-2.5 h-2.5" /> : <DollarSign className="w-2.5 h-2.5" />}
-                      {t.type === 'sale' ? (t.payment_method === 'card' ? 'Kassa' : 'Nağd Satış') : t.type === 'income' ? 'Mədaxil' : 'Məxaric'}
+                      { (t.payment_method === 'card' || t.payment_method === 'bank') ? <Coins className="w-2.5 h-2.5" /> : <DollarSign className="w-2.5 h-2.5" />}
+                      {t.type === 'sale' ? ((t.payment_method === 'card' || t.payment_method === 'bank') ? 'Kassa' : 'Nağd Satış') : t.type === 'income' ? 'Mədaxil' : 'Məxaric'}
                     </p>
                   </div>
                 </motion.div>

@@ -19,7 +19,7 @@ export default function POS() {
   const [loading, setLoading] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank'>('cash');
   const { toasts } = useToasterStore();
 
   // Limit toasts to max 2
@@ -600,10 +600,10 @@ export default function POS() {
                   💵 Nağd
                 </button>
                 <button
-                  onClick={() => setPaymentMethod('card')}
+                  onClick={() => setPaymentMethod('bank')}
                   className={cn(
                     "flex-1 flex items-center justify-center py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    paymentMethod === 'card' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400"
+                    paymentMethod === 'bank' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400"
                   )}
                 >
                   💳 Kart
