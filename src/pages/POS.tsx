@@ -102,20 +102,21 @@ export default function POS() {
     checkShiftStatus();
   }, []);
 
-  // Body scroll lock for all modals
+  // Body scroll lock for all modals - CSS class approach is more reliable than style mutation
+  // because the cleanup() runs guaranteed even on unmount (navigation away)
   useEffect(() => {
-    if (showCartDrawer || showOpenModal || showCloseModal || inventoryError) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+    const isModalOpen = showCartDrawer || showOpenModal || showCloseModal || !!inventoryError;
+    if (isModalOpen) {
+      document.documentElement.classList.add('scroll-locked');
     } else {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      document.documentElement.classList.remove('scroll-locked');
     }
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      // This runs when navigating away - ensures lock is always released
+      document.documentElement.classList.remove('scroll-locked');
     };
   }, [showCartDrawer, showOpenModal, showCloseModal, inventoryError]);
+
 
   // Clear errors on shift status change
   useEffect(() => {

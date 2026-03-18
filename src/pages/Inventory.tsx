@@ -33,32 +33,15 @@ export default function Inventory() {
 
   // Body scroll lock when modals are open
   useEffect(() => {
-    if (showModal || selectedItem || showPurchaseModal) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100vw';
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+    const isModalOpen = showModal || selectedItem || showPurchaseModal;
+    if (isModalOpen) {
+      document.documentElement.classList.add('scroll-locked');
     } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      document.documentElement.classList.remove('scroll-locked');
     }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '';
-    };
+    return () => { document.documentElement.classList.remove('scroll-locked'); };
   }, [showModal, selectedItem, showPurchaseModal]);
+
 
   const fetchData = async () => {
     try {

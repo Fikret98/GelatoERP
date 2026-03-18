@@ -231,29 +231,15 @@ export default function Dashboard() {
 
   // Body scroll lock when modals are open
   useEffect(() => {
-    if (showLowStockModal || infoModal?.show || resolutionModal?.show) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100vw';
-      document.body.style.overflow = 'hidden';
+    const isModalOpen = showLowStockModal || infoModal?.show || resolutionModal?.show;
+    if (isModalOpen) {
+      document.documentElement.classList.add('scroll-locked');
     } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      document.documentElement.classList.remove('scroll-locked');
     }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-    };
+    return () => { document.documentElement.classList.remove('scroll-locked'); };
   }, [showLowStockModal, infoModal, resolutionModal]);
+
 
   const aov = stats.transactions > 0 ? stats.revenue / stats.transactions : 0;
 

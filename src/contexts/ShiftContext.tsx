@@ -371,15 +371,15 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getLastShiftClosingBalance = async (): Promise<number> => {
-    // Prioritize the PHYSICAL amount the last cashier actually counted at close.
-    // This is stored in `actual_cash_balance` on the shift record.
-    // Using this avoids divergence from old discrepancies that inflate the system total.
+    // Use the global system cash balance as the primary suggestion.
+    // This is the most reliable number as it reflects ALL real transactions
+    // regardless of which user closed the shift.
+    const globalBalance = await getGlobalCashBalance();
+    if (globalBalance > 0) return globalBalance;
+
+    // Fallback: use last closed shift's actual physical count
     const lastShift = await getLastShift();
-    if (lastShift?.actual_cash_balance != null) {
-      return lastShift.actual_cash_balance;
-    }
-    // Fallback to mathematical system balance only if no closed shift exists
-    return await getGlobalCashBalance();
+    return lastShift?.actual_cash_balance ?? 0;
   };
 
   return (

@@ -32,3 +32,11 @@ html, body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Scroll lock for modals - applied via JS className toggle on <html> element.
+   This is more reliable than body.style.overflow mutation because:
+   - React cleanup() runs on unmount and removes this class
+   - Body style mutations can "leak" if cleanup doesn't run */
+html.scroll-locked {
+  overflow: hidden;
+}

@@ -255,27 +255,15 @@ export default function Reports() {
   };
 
   useEffect(() => {
-    if (selectedTransaction || showExpenseModal || showIncomeModal) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100vw';
-      document.body.style.overflow = 'hidden';
+    const isModalOpen = selectedTransaction || showExpenseModal || showIncomeModal;
+    if (isModalOpen) {
+      document.documentElement.classList.add('scroll-locked');
     } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-      if (scrollY) window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      document.documentElement.classList.remove('scroll-locked');
     }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = 'unset';
-    };
+    return () => { document.documentElement.classList.remove('scroll-locked'); };
   }, [selectedTransaction, showExpenseModal, showIncomeModal]);
+
 
   return (
     <motion.div
