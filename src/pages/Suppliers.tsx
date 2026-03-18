@@ -102,6 +102,19 @@ export default function Suppliers() {
     e.preventDefault();
     if (!selectedSupplier || !user) return;
     try {
+      // Balance check
+      const { data: balance, error: balanceErr } = await supabase.rpc(
+        paymentData.payment_method === 'cash' ? 'get_current_cash_balance' : 'get_current_bank_balance'
+      );
+      if (balanceErr) throw balanceErr;
+
+      const amountToPay = parseFloat(paymentData.amount);
+      if (amountToPay > (balance || 0)) {
+        const accountName = paymentData.payment_method === 'cash' ? 'Kassada' : 'Bank hesabında';
+        toast.error(`${accountName} kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼`);
+        return;
+      }
+
       const { error } = await supabase.from('supplier_payments').insert([{
         supplier_id: selectedSupplier.id,
         amount: parseFloat(paymentData.amount),

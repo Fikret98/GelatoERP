@@ -171,12 +171,13 @@ export default function Inventory() {
       );
       if (balanceErr) throw balanceErr;
 
-      /* Validation removed to allow 0 AZN or debt purchases as per user request */
-      /* if (totalCost > (balance || 0)) {
+      const amountToPay = purchaseForm.amount_paid ? parseFloat(purchaseForm.amount_paid) : totalCost;
+
+      if (amountToPay > (balance || 0)) {
         const accountName = purchaseForm.payment_method === 'cash' ? 'Kassada' : 'Bank hesabında';
-        toast.error(`${accountName} kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼. Lazım olan: ${totalCost.toFixed(2)} ₼`);
+        toast.error(`${accountName} kifayət qədər məbləğ yoxdur. Mövcud qalıq: ${Number(balance).toFixed(2)} ₼. Sizin ödədiyiniz: ${amountToPay.toFixed(2)} ₼`);
         return;
-      } */
+      }
 
       if (!purchaseForm.supplier_id) {
         toast.error('Zəhmət olmasa təchizatçı seçin');

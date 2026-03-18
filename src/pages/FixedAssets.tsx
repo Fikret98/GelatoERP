@@ -108,6 +108,18 @@ export default function FixedAssets() {
         created_by: authUser?.id ? parseInt(authUser.id) : null
       };
 
+      // Balance check
+      const { data: balanceData, error: balanceError } = await supabase.rpc(
+        formData.payment_method === 'cash' ? 'get_current_cash_balance' : 'get_current_bank_balance'
+      );
+
+      if (balanceError) throw balanceError;
+      
+      if (!editingAsset && balanceData < payload.cost) {
+        toast.error(`Kifayət qədər vəsait yoxdur (${formData.payment_method === 'cash' ? 'Nağd' : 'Bank'}). Cari balans: ${balanceData.toFixed(2)} ₼`);
+        return;
+      }
+
       if (editingAsset) {
         const { error } = await supabase
           .from('fixed_assets')
