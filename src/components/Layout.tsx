@@ -32,6 +32,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
+  const [pendingApprovals, setPendingApprovals] = React.useState(0);
+
+  React.useEffect(() => {
+    if (user?.role !== 'admin') return;
+
+    const fetchPending = async () => {
+      const { count, error } = await supabase
+        .from('shift_discrepancies')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      if (!error && count !== null) {
+        setPendingApprovals(count);
+      }
+    };
+
+    fetchPending();
+
+    const channel = supabase
+      .channel('public:shift_discrepancies:layout')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_discrepancies' }, () => {
+        fetchPending();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const navigation = [
     { nameKey: 'nav.dashboard', href: '/', icon: LayoutDashboard, adminOnly: true },
@@ -60,13 +89,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-[950] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
+          className="fixed inset-0 z-[1040] bg-black/50 lg:hidden transition-opacity animate-in fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <div className={cn(
-        "fixed inset-y-0 left-0 z-[1000] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-[1050] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -111,6 +140,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               >
                 <item.icon className={cn("w-5 h-5 mr-3", isActive ? "text-indigo-700 dark:text-indigo-400" : "text-gray-400 dark:text-gray-500")} />
                 {t(item.nameKey)}
+                {item.href === '/' && pendingApprovals > 0 && user?.role === 'admin' && (
+                  <span className="ml-auto bg-red-500 text-white text-[11px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-sm shadow-red-200 dark:shadow-red-900/20 flex items-center justify-center min-w-[20px] h-[20px]">
+                    {pendingApprovals}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -188,7 +222,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center min-w-[64px] p-2 rounded-xl transition-colors",
+                  "relative flex flex-col items-center justify-center min-w-[64px] p-2 rounded-xl transition-colors",
                   isActive
                     ? "text-indigo-600 dark:text-indigo-400"
                     : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -201,6 +235,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <item.icon className="w-6 h-6" />
                 </div>
                 <span className="text-[10px] font-medium text-center truncate w-full px-1">{t(item.nameKey)}</span>
+                {item.href === '/' && pendingApprovals > 0 && user?.role === 'admin' && (
+                  <div className="absolute top-1 right-2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-white dark:border-gray-800"></div>
+                )}
               </Link>
             );
           })}
