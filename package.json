@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "deploy:push": "supabase functions deploy send-push --no-verify-jwt"
+    "deploy:push": "npx supabase functions deploy send-push --no-verify-jwt"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
