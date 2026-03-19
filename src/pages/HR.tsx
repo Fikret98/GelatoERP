@@ -478,7 +478,7 @@ export default function HR() {
                     <p className="text-base font-bold text-gray-900 dark:text-white">{employee.salary.toFixed(2)} ₼</p>
                   </div>
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-3 rounded-2xl border border-indigo-100/50 dark:border-indigo-800/30">
-                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Cari Bonus</p>
+                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">{t('hr.currentBonus')}</p>
                     <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 uppercase">
                       {(bonuses.find(b => b.seller_name?.toLowerCase().trim() === employee.name?.toLowerCase().trim())?.total_bonus || 0).toFixed(2)} ₼
                     </p>
@@ -492,7 +492,7 @@ export default function HR() {
                         <TrendingDown className="w-4 h-4" />
                       </div>
                       <div className="text-left">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Borc Qalığı</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('hr.debtBalance')}</p>
                         <p className="text-sm font-bold text-gray-900 dark:text-white tabular-nums mt-0.5">{employee.total_debt.toFixed(2)} ₼</p>
                       </div>
                     </div>
@@ -505,8 +505,8 @@ export default function HR() {
                         <History className="w-4 h-4" />
                       </div>
                       <div className="text-left">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Tarixçə</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5 uppercase tracking-tighter">Maaş & Bonus</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{t('hr.history')}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5 uppercase tracking-tighter">{t('hr.salaryAndBonus')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-300" />
@@ -540,7 +540,7 @@ export default function HR() {
                       <div className="space-y-4">
                         <h3 className="text-xs font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
                           <User className="w-3 h-3" />
-                          Şəxsi Məlumatlar
+                          {t('hr.personalInfo')}
                         </h3>
                         <div>
                           <label htmlFor="emp-name" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.name')}</label>
@@ -551,43 +551,43 @@ export default function HR() {
                           <input id="emp-role" title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
                         </div>
                         <div>
-                          <label htmlFor="emp-schedule" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">İş Rejimi</label>
-                          <input id="emp-schedule" title="İş Rejimi" placeholder="Məs: 09:00 - 18:00 (6 gün)" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
+                          <label htmlFor="emp-schedule" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.workSchedule')}</label>
+                          <input id="emp-schedule" title={t('hr.workSchedule')} placeholder="Məs: 09:00 - 18:00 (6 gün)" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
                         </div>
                       </div>
 
                       <div className="space-y-4">
                         <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
                           <DollarSign className="w-3 h-3" />
-                          Maliyyə & Giriş
+                          {t('hr.financeAndAccess')}
                         </h3>
                         <div>
                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.salary')} (₼)</label>
                           <input id="emp-salary" title={t('hr.salary')} placeholder="0.00" required type="number" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Bonus Faizi (%)</label>
-                          <input id="emp-bonus" title="Bonus Faizi" placeholder="0.0" required type="number" step="0.1" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.bonus_percentage} onChange={e => setFormData({ ...formData, bonus_percentage: e.target.value })} />
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.bonusPercentage')} (%)</label>
+                          <input id="emp-bonus" title={t('hr.bonusPercentage')} placeholder="0.0" required type="number" step="0.1" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.bonus_percentage} onChange={e => setFormData({ ...formData, bonus_percentage: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           {!editingEmployee && (
                             <div>
-                              <label htmlFor="emp-username" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">İstifadəçi Adı</label>
-                              <input id="emp-username" title="İstifadəçi Adı" placeholder="istifadəçi_adı" required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
+                              <label htmlFor="emp-username" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.username')}</label>
+                              <input id="emp-username" title={t('hr.username')} placeholder={t('hr.username')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
                             </div>
                           )}
                           <div className={editingEmployee ? "col-span-2" : ""}>
-                            <label htmlFor="emp-password" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{editingEmployee ? 'Yeni Şifrə (Boş qalsın: dəyişmə)' : 'Şifrə'}</label>
-                            <input id="emp-password" title={editingEmployee ? 'Yeni Şifrə' : 'Şifrə'} placeholder="••••••••" required={!editingEmployee} type="password" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                            <label htmlFor="emp-password" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{editingEmployee ? t('hr.newPasswordHint') : t('hr.password')}</label>
+                            <input id="emp-password" title={editingEmployee ? t('hr.newPasswordHint') : t('hr.password')} placeholder="••••••••" required={!editingEmployee} type="password" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                           </div>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex gap-4 pt-4">
-                      <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">Ləğv Et</button>
+                      <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">{t('common.cancel')}</button>
                       <button type="submit" disabled={isSubmitting} className="flex-[2] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50">
-                        {isSubmitting ? 'Saxlanılır...' : (editingEmployee ? 'Yenilə' : 'Əlavə Et')}
+                        {isSubmitting ? t('hr.saving') : (editingEmployee ? t('hr.update') : t('common.add'))}
                       </button>
                     </div>
                   </form>
@@ -607,7 +607,7 @@ export default function HR() {
                 >
                   <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div>
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Maaş & Rol Tarixçəsi</p>
+                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{t('hr.salaryHistoryTitle')}</p>
                       <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase">{selectedHistoryEmployee.name}</h2>
                     </div>
                     <button onClick={() => setSelectedHistoryEmployee(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
@@ -618,7 +618,7 @@ export default function HR() {
                   {isLoadingHistory ? (
                     <div className="py-20 flex justify-center"><LoadingSpinner /></div>
                   ) : salaryHistory.length === 0 ? (
-                    <div className="py-20 text-center text-gray-400 font-bold italic">Heç bir tarixçə qeydə alınmayıb.</div>
+                    <div className="py-20 text-center text-gray-400 font-bold italic">{t('hr.noHistory')}</div>
                   ) : (
                     <div className="space-y-4">
                       {salaryHistory.map((log) => (
@@ -629,7 +629,7 @@ export default function HR() {
                               <div className="flex flex-wrap gap-4">
                                 {log.old_salary !== log.new_salary && (
                                   <div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Maaş Dəyişikliyi</p>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('hr.salaryChange')}</p>
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs font-bold text-gray-400 line-through tabular-nums">{log.old_salary.toFixed(2)} ₼</span>
                                       <ChevronRight className="w-3 h-3 text-gray-300" />
@@ -639,7 +639,7 @@ export default function HR() {
                                 )}
                                 {log.old_role !== log.new_role && (
                                   <div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Vəzifə Dəyişikliyi</p>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('hr.roleChange')}</p>
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{log.old_role}</span>
                                       <ChevronRight className="w-3 h-3 text-gray-300" />
@@ -679,7 +679,7 @@ export default function HR() {
                 >
                   <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div>
-                      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Borc Tarixçəsi & Ödəniş</p>
+                      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">{t('hr.debtHistoryTitle')}</p>
                       <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase">{selectedDebtEmployee.name}</h2>
                     </div>
                     <button onClick={() => setSelectedDebtEmployee(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
@@ -689,7 +689,7 @@ export default function HR() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-3xl border border-red-100 dark:border-red-900/20 text-center">
-                      <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Ümumi Borc Qalığı</p>
+                      <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">{t('hr.debtBalance')}</p>
                       <p className="text-4xl font-black text-red-600 tabular-nums">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</p>
                     </div>
                     
@@ -698,7 +698,7 @@ export default function HR() {
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Borc Ödənişi</p>
                         <div className="bg-gray-50/50 dark:bg-gray-900/30 p-6 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/30 space-y-6 flex-1">
                           <div>
-                            <label htmlFor="debt-payment" className="text-[10px] font-black text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-[0.2em] block mb-3 text-center">Ödəniş Məbləği</label>
+                            <label htmlFor="debt-payment" className="text-[10px] font-black text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-[0.2em] block mb-3 text-center">{t('hr.paymentAmount')}</label>
                             <div className="relative">
                               <input 
                                 id="debt-payment"
@@ -714,7 +714,7 @@ export default function HR() {
                           </div>
 
                           <div className="space-y-3">
-                            <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block text-center">Ödəniş Metodu</label>
+                            <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block text-center">{t('hr.paymentMethod')}</label>
                             <div className="grid grid-cols-2 gap-3">
                               {(['cash', 'bank'] as const).map((method) => (
                                 <button
@@ -734,7 +734,7 @@ export default function HR() {
                                   )}>
                                     {method === 'cash' ? <DollarSign className="w-5 h-5" /> : <Coins className="w-5 h-5" />}
                                   </div>
-                                  {method === 'cash' ? 'Nağd Kassa' : 'Bank Hesabı'}
+                                  {method === 'cash' ? t('dashboard.cash') : t('dashboard.bank')}
                                 </button>
                               ))}
                             </div>
@@ -744,24 +744,24 @@ export default function HR() {
                             onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
                             className="w-full bg-indigo-600 text-white px-8 py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-3 active:scale-[0.97]"
                           >
-                            TƏSDİQLƏ VƏ ÖDƏ
+                            {t('hr.confirmAndPay')}
                           </button>
                         </div>
                         <button 
                           onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
                           className="w-full text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-widest border border-indigo-200 dark:border-indigo-800 py-2 rounded-xl hover:bg-indigo-50 transition-all"
                         >
-                          Maaşdan çıxılsın
+                          {t('hr.salaryDeduction')}
                         </button>
                       </div>
                     )}
                   </div>
 
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Əməliyyatlar</h3>
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{t('hr.transactions')}</h3>
                   {isLoadingDebts ? (
                     <div className="py-20 flex justify-center"><LoadingSpinner /></div>
                   ) : debtRecords.length === 0 ? (
-                    <div className="py-12 text-center text-gray-400 font-bold italic">Borc hərəkəti yoxdur.</div>
+                    <div className="py-12 text-center text-gray-400 font-bold italic">{t('hr.noDebtHistory')}</div>
                   ) : (
                     <div className="space-y-3">
                       {debtRecords.map((log) => (
@@ -775,7 +775,7 @@ export default function HR() {
                             </div>
                             <div>
                               <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">
-                                {log.amount > 0 ? 'Kəsir/Borc yazıldı' : (log.type === 'salary_deduction' ? 'Maaşdan çıxıldı' : 'Nəğd ödənildi')}
+                                {log.amount > 0 ? t('hr.shortageDebited') : (log.type === 'salary_deduction' ? t('hr.deductedFromSalary') : t('hr.paidInCash'))}
                               </p>
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{format(new Date(log.created_at), 'dd.MM.yyyy HH:mm')}</p>
                             </div>
