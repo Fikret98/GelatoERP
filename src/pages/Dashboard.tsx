@@ -672,20 +672,19 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {resolutionModal.discrepancy.difference < 0 && (
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Məsul Şəxs (Borc yazılacaq)</label>
-                    <select
-                      title="Məsul Şəxs"
-                      className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
-                      value={resolutionForm.responsibleUserId}
-                      onChange={e => setResolutionForm({ ...resolutionForm, responsibleUserId: e.target.value })}
-                    >
-                      <option value={resolutionModal.discrepancy.reported_by_id}>{resolutionModal.discrepancy.reported_by?.name} (Təhvil verən)</option>
-                      <option value={resolutionModal.discrepancy.verified_by_id}>{resolutionModal.discrepancy.verified_by?.name} (Təhvil alan)</option>
-                    </select>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Məsul Şəxs</label>
+                  <select
+                    title="Məsul Şəxs"
+                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                    value={resolutionForm.responsibleUserId}
+                    onChange={e => setResolutionForm({ ...resolutionForm, responsibleUserId: e.target.value })}
+                  >
+                    <option value="">İstifadəçi seçin...</option>
+                    <option value={resolutionModal.discrepancy.reported_by_id}>{resolutionModal.discrepancy.reported_by?.name} (Təhvil verən)</option>
+                    <option value={resolutionModal.discrepancy.verified_by_id}>{resolutionModal.discrepancy.verified_by?.name} (Təhvil alan)</option>
+                  </select>
+                </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Admin Qeydi</label>
