@@ -118,9 +118,12 @@ export default function POS() {
   }, [showCartDrawer, showOpenModal, showCloseModal, inventoryError]);
 
 
-  // Clear errors on shift status change
+  // Clear errors and refresh suggested balance on shift status change
   useEffect(() => {
     setInventoryError(null);
+    if (!activeShift) {
+      checkShiftStatus();
+    }
   }, [activeShift?.id]);
 
   // 3. Shift Management Functions
@@ -238,7 +241,14 @@ export default function POS() {
         </div>
         
         <button
-          onClick={() => activeShift ? startClosingProcess() : setShowOpenModal(true)}
+          onClick={() => {
+            if (activeShift) {
+              startClosingProcess();
+            } else {
+              checkShiftStatus();
+              setShowOpenModal(true);
+            }
+          }}
           className={cn(
             "px-6 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-200 dark:shadow-none",
             activeShift 
