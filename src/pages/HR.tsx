@@ -520,50 +520,52 @@ export default function HR() {
             {showModal && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
                   onClick={e => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-5 w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-border pb-6 relative"
+                  className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl border border-border relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-center mb-5 pb-3 border-b">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 z-10">
+                    <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">
                       {editingEmployee ? t('hr.editEmployee') : t('hr.newEmployee')}
                     </h2>
-                    <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all" title="Bağla">
+                    <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all" title="Bağla">
                       <X className="w-5 h-5 text-gray-400" />
                     </button>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div className="space-y-3">
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{t('hr.personalInfo')}</label>
-                        <input title={t('hr.name')} placeholder={t('hr.name')} required className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                        <input title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
-                        <input title={t('hr.workSchedule')} placeholder={t('hr.schedulePlaceholder')} className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
-                      </div>
+                  <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-10" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-3">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{t('hr.personalInfo')}</label>
+                          <input title={t('hr.name')} placeholder={t('hr.name')} required className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                          <input title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
+                          <input title={t('hr.workSchedule')} placeholder={t('hr.schedulePlaceholder')} className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
+                        </div>
 
-                      <div className="space-y-3">
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{t('hr.financeAndAccess')}</label>
-                        <input title={t('hr.salary')} placeholder={t('hr.salary')} required type="number" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
-                        <input title={t('hr.bonusPercentage')} placeholder="Bonus %" required type="number" step="0.1" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.bonus_percentage} onChange={e => setFormData({ ...formData, bonus_percentage: e.target.value })} />
-                        <div className="grid grid-cols-2 gap-2">
-                          {!editingEmployee && (
-                            <input title={t('hr.username')} placeholder={t('hr.username')} required className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
-                          )}
-                          <input title={t('hr.password')} placeholder="••••" required={!editingEmployee} type="password" className={cn("w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20", editingEmployee && "col-span-2")} value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                        <div className="space-y-3">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{t('hr.financeAndAccess')}</label>
+                          <input title={t('hr.salary')} placeholder={t('hr.salary')} required type="number" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
+                          <input title={t('hr.bonusPercentage')} placeholder="Bonus %" required type="number" step="0.1" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.bonus_percentage} onChange={e => setFormData({ ...formData, bonus_percentage: e.target.value })} />
+                          <div className="grid grid-cols-2 gap-2">
+                            {!editingEmployee && (
+                              <input title={t('hr.username')} placeholder={t('hr.username')} required className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
+                            )}
+                            <input title={t('hr.password')} placeholder="••••" required={!editingEmployee} type="password" className={cn("w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20", editingEmployee && "col-span-2")} value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-3 pt-2">
-                      <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all">{t('common.cancel')}</button>
-                      <button type="submit" disabled={isSubmitting} className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-indigo-700 transition disabled:opacity-50">
-                        {isSubmitting ? t('hr.saving') : (editingEmployee ? t('hr.update') : t('common.add'))}
-                      </button>
-                    </div>
-                  </form>
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all">{t('common.cancel')}</button>
+                        <button type="submit" disabled={isSubmitting} className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-indigo-700 transition disabled:opacity-50">
+                          {isSubmitting ? t('hr.saving') : (editingEmployee ? t('hr.update') : t('common.add'))}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </motion.div>
               </div>
             )}
@@ -571,50 +573,67 @@ export default function HR() {
             {selectedHistoryEmployee && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setSelectedHistoryEmployee(null)}>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
                   onClick={e => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-5 w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-xl border border-border relative pb-6"
+                  className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-xl max-h-[80vh] flex flex-col shadow-xl border border-border relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-center mb-5 pb-3 border-b">
+                  {/* Header */}
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800 z-10">
                     <div>
-                      <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-wider mb-0.5">{t('hr.salaryHistoryTitle')}</p>
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase">{selectedHistoryEmployee.name}</h2>
+                      <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{selectedHistoryEmployee.name}</h2>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('hr.salaryHistoryTitle')}</p>
                     </div>
-                    <button onClick={() => setSelectedHistoryEmployee(null)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all">
+                    <button 
+                      onClick={() => setSelectedHistoryEmployee(null)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                    >
                       <X className="w-5 h-5 text-gray-400" />
                     </button>
                   </div>
 
-                  {isLoadingHistory ? (
-                    <div className="py-12 flex justify-center"><LoadingSpinner /></div>
-                  ) : salaryHistory.length === 0 ? (
-                    <div className="py-10 text-center text-gray-400 font-bold italic text-xs">{t('hr.noHistory')}</div>
-                  ) : (
-                    <div className="space-y-3">
-                      {salaryHistory.map((log) => (
-                        <div key={log.id} className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-lg border border-gray-100 dark:border-gray-700 flex justify-between items-center group">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                              {log.old_salary !== log.new_salary && (
-                                <span className="text-xs font-bold text-emerald-600">{log.new_salary.toFixed(2)} ₼</span>
-                              )}
-                              {log.old_role !== log.new_role && (
-                                <span className="text-[10px] font-bold text-indigo-600 uppercase">{log.new_role}</span>
-                              )}
+                  {/* Scrollable Content */}
+                  <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-10 space-y-3" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+                    {isLoadingHistory ? (
+                      <div className="py-12 flex justify-center"><LoadingSpinner /></div>
+                    ) : salaryHistory.length === 0 ? (
+                      <div className="py-10 text-center text-gray-400 font-bold italic text-xs">{t('hr.noHistory')}</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {salaryHistory.map((log) => (
+                          <div key={log.id} className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-lg border border-gray-100 dark:border-gray-700 flex justify-between items-center group">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-3">
+                                {log.old_salary !== log.new_salary && (
+                                  <span className="text-xs font-bold text-emerald-600">{log.new_salary.toFixed(2)} ₼</span>
+                                )}
+                                {log.old_role !== log.new_role && (
+                                  <span className="text-[10px] font-bold text-indigo-600 uppercase">{log.new_role}</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-3 h-3 text-gray-400" />
+                                <span className="text-[10px] text-gray-500 font-medium">{log.users?.name || 'Admin'}</span>
+                                <span className="text-gray-300 dark:text-gray-600 px-1">•</span>
+                                <span className="text-[10px] text-gray-400">{format(new Date(log.changed_at), 'dd.MM.yyyy HH:mm')}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3 text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-                              <span>{format(new Date(log.changed_at), 'dd.MM.yyyy HH:mm')}</span>
-                              <span className="opacity-50">•</span>
-                              <span>{log.users?.name || 'Sistem'}</span>
-                            </div>
+                            
+                            {(log.old_salary !== log.new_salary) && (
+                              <div className={cn(
+                                "flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase",
+                                log.new_salary > log.old_salary ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                              )}>
+                                {log.new_salary > log.old_salary ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                {Math.abs(log.new_salary - log.old_salary).toFixed(2)} ₼
+                              </div>
+                            )}
                           </div>
-                          {log.note && <div className="text-[9px] text-gray-400 italic bg-white dark:bg-gray-800 px-2 py-1 rounded-md border text-right max-w-[150px] truncate" title={log.note}>"{log.note}"</div>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               </div>
             )}
@@ -622,76 +641,75 @@ export default function HR() {
             {selectedDebtEmployee && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setSelectedDebtEmployee(null)}>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
                   onClick={e => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl border border-border relative pb-6"
+                  className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl border border-border relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-center mb-5 pb-3 border-b">
+                  {/* Header */}
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800 z-10">
                     <div>
-                      <p className="text-[9px] font-bold text-rose-500 uppercase tracking-wider mb-0.5">{t('hr.debtHistoryTitle')}</p>
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase">{selectedDebtEmployee.name}</h2>
+                      <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{selectedDebtEmployee.name}</h2>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('hr.debtBalance')}</p>
                     </div>
-                    <button onClick={() => setSelectedDebtEmployee(null)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all">
+                    <button 
+                      onClick={() => setSelectedDebtEmployee(null)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                    >
                       <X className="w-5 h-5 text-gray-400" />
                     </button>
                   </div>
 
-                  <div className="space-y-5">
-                    <div className="bg-rose-50/30 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100/50 text-center">
-                      <p className="text-[9px] font-bold text-rose-400 uppercase tracking-wider mb-1">{t('hr.debtBalance')}</p>
-                      <p className="text-2xl font-bold text-rose-600 tabular-nums">
-                        {selectedDebtEmployee.total_debt.toFixed(2)} <span className="text-sm font-bold ml-0.5">₼</span>
-                      </p>
-                    </div>
-
-                    {user?.role === 'admin' && selectedDebtEmployee.total_debt > 0 && (
-                      <div className="space-y-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 text-center">{t('hr.paymentAmount')}</label>
-                          <div className="flex items-center bg-white dark:bg-gray-900 px-4 py-2 rounded-lg border focus-within:ring-2 focus-within:ring-indigo-500/20">
-                            <span className="text-gray-400 font-bold mr-2">₼</span>
-                            <input 
-                              type="number" 
-                              step="0.01" 
-                              className="bg-transparent border-none py-1 font-bold text-xl text-gray-900 dark:text-white outline-none w-full text-center"
+                  {/* Scrollable Content */}
+                  <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-10 space-y-6" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+                    {selectedDebtEmployee.total_debt > 0 && (
+                      <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('hr.paymentAmount')}</span>
+                          <span className="text-xl font-bold text-rose-500 tabular-nums">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</span>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {(['cash', 'bank'] as const).map((method) => (
+                                <button
+                                  key={method}
+                                  onClick={() => setDebtPaymentMethod(method)}
+                                  className={cn(
+                                    "flex-1 py-2 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border",
+                                    debtPaymentMethod === method 
+                                      ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+                                      : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 hover:border-indigo-300"
+                                  )}
+                                >
+                                  {t(`pos.${method}`)}
+                                </button>
+                              ))}
+                            </div>
+                            <input
+                              type="number"
                               value={debtPaymentAmount}
-                              onChange={e => setDebtPaymentAmount(e.target.value)}
+                              onChange={(e) => setDebtPaymentAmount(e.target.value)}
+                              className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-lg font-bold text-gray-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-center"
                             />
                           </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          {(['cash', 'bank'] as const).map((method) => (
-                            <button
-                              key={method}
-                              onClick={() => setDebtPaymentMethod(method)}
-                              className={cn(
-                                "py-2 rounded-lg border font-bold text-[9px] uppercase tracking-wider transition-all",
-                                debtPaymentMethod === method
-                                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
-                                  : "border-gray-200 dark:border-gray-700 text-gray-400 bg-white dark:bg-gray-900 hover:bg-gray-50"
-                              )}
+                          <div className="grid grid-cols-1 gap-2">
+                            <button 
+                              onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
+                              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold text-[9px] uppercase tracking-widest hover:bg-indigo-700 transition"
                             >
-                              {method === 'cash' ? t('dashboard.cash') : t('dashboard.bank')}
+                              {t('hr.confirmAndPay')}
                             </button>
-                          ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-2 pt-2">
-                          <button 
-                            onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
-                            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold text-[9px] uppercase tracking-widest hover:bg-indigo-700 transition"
-                          >
-                            {t('hr.confirmAndPay')}
-                          </button>
-                          <button 
-                            onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
-                            className="w-full text-indigo-500 font-bold text-[9px] uppercase tracking-widest py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition rounded-lg"
-                          >
-                            {t('hr.salaryDeduction')}
-                          </button>
+                            <button 
+                              onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
+                              className="w-full text-indigo-500 font-bold text-[9px] uppercase tracking-widest py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition rounded-lg"
+                            >
+                              {t('hr.salaryDeduction')}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
