@@ -158,7 +158,7 @@ export default function POS() {
   const startClosingProcess = async () => {
     const expected = await getExpectedCash();
     setClosingExpected(expected);
-    setClosingActual(expected.toString());
+    setClosingActual(''); // Bug 1 fix: do NOT auto-fill. Force cashier to manually count and enter.
     setShowCloseModal(true);
   };
   const handleCheckout = async () => {

@@ -128,11 +128,10 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
         if (Math.abs(diff) > 0.005) {
           // Only create a new discrepancy if the opener counts differently from the closer
-          // (meaning: opener disagreed with what the closer counted)
           const { data: discData, error: discErr } = await supabase
             .from('shift_discrepancies')
             .insert([{
-              shift_id: lastShift.id,
+              shift_id: lastShift.id,   // Bug 3 fix: link to the OLD shift where the discrepancy occurred
               reported_by_id: lastShift.user_id,
               verified_by_id: userIdInt,
               system_expected: roundedLastActual,
@@ -155,7 +154,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
                   date: new Date().toISOString(),
                   payment_method: 'cash',
                   user_id: userIdInt,
-                  shift_id: newShift.id
+                  shift_id: lastShift.id  // Bug 3 fix: expense belongs to the OLD shift, not new
                 }])
                 .select().single();
               if (expData) {
@@ -171,7 +170,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
                   date: new Date().toISOString(),
                   payment_method: 'cash',
                   user_id: userIdInt,
-                  shift_id: newShift.id
+                  shift_id: lastShift.id  // Bug 3 fix: income belongs to the OLD shift, not new
                 }])
                 .select().single();
               if (incData) {
@@ -374,15 +373,14 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getLastShiftClosingBalance = async (): Promise<number> => {
-    // Use the global system cash balance as the primary suggestion.
-    // This is the most reliable number as it reflects ALL real transactions
-    // regardless of which user closed the shift.
-    const globalBalance = await getGlobalCashBalance();
-    if (globalBalance > 0) return globalBalance;
-
-    // Fallback: use last closed shift's actual physical count
+    // Bug 2 fix: Prioritize the last shift's physical count (actual_cash_balance)
+    // This is what the previous cashier physically counted in the drawer —
+    // the most relevant starting point for the next opener.
     const lastShift = await getLastShift();
-    return lastShift?.actual_cash_balance ?? 0;
+    if (lastShift?.actual_cash_balance != null) return lastShift.actual_cash_balance;
+
+    // Fallback: use global system cash balance if no prior shift exists
+    return await getGlobalCashBalance();
   };
 
   const value = useMemo(() => ({
