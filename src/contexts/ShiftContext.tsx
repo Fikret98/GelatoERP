@@ -110,7 +110,10 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
       if (lastShift?.id) {
         await supabase
           .from('shift_discrepancies')
-          .update({ verified_by_id: userIdInt })
+          .update({ 
+            verified_by_id: userIdInt,
+            verifier_counted: roundedOpening
+          })
           .eq('shift_id', lastShift.id)
           .eq('status', 'pending')
           .is('verified_by_id', null);
@@ -262,7 +265,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
               reported_by_id: parseInt(user.id),
               system_expected: roundedExpected,
               seller_reported: roundedActual,
-              verifier_counted: roundedActual, // Seller is Verifier at this stage
+              verifier_counted: null, // Left null until the next shift opens and verifies
               difference: difference,
               status: 'pending'
             }])

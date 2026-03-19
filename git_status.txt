@@ -4,29 +4,9 @@ Your branch is up to date with 'origin/main'.
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-	modified:   src/App.tsx
-	modified:   src/contexts/AuthContext.tsx
+	modified:   git_push.bat
+	modified:   git_status.txt
 	modified:   src/contexts/ShiftContext.tsx
 	modified:   src/pages/Dashboard.tsx
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	git_push.bat
-	git_status.txt
-
-no changes added to commit (use "git add" and/or "git commit -a")
-[main 803f11d] feat: performance optimizations - code splitting, context memoization, db debounce
- 6 files changed, 95 insertions(+), 49 deletions(-)
- create mode 100644 git_push.bat
- create mode 100644 git_status.txt
-To https://github.com/Fikret98/GelatoERP.git
-   72b2c0d..803f11d  main -> main
-On branch main
-Your branch is up to date with 'origin/main'.
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-	modified:   git_status.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")

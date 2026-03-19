@@ -355,7 +355,7 @@ export default function Dashboard() {
                   <div className="flex flex-wrap gap-4 mt-1">
                     <div className="text-xs font-medium text-gray-500">Sistem: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.system_expected.toFixed(2)} ₼</span></div>
                     <div className="text-xs font-medium text-gray-500">Satıcı: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.seller_reported.toFixed(2)} ₼</span></div>
-                    <div className="text-xs font-medium text-gray-500">Təsdiq: <span className="font-bold text-gray-700 dark:text-gray-300">{disc.verifier_counted.toFixed(2)} ₼</span></div>
+                    <div className="text-xs font-medium text-gray-500">Təsdiq: {disc.verifier_counted !== null ? <span className="font-bold text-gray-700 dark:text-gray-300">{disc.verifier_counted.toFixed(2)} ₼</span> : <span className="font-bold text-orange-500">Səhər açılışı gözlənilir</span>}</div>
                     <div className={cn(
                       "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-lg",
                       disc.difference < 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
