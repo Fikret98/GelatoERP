@@ -386,9 +386,8 @@ export default function HR() {
             )}
           </div>
 
-          {/* Employee Statistics Grid */}
           {user?.role === 'admin' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-2">
                   <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
@@ -409,6 +408,18 @@ export default function HR() {
                   </span>
                 </div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('hr.totalSalary')}</p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 bg-rose-50 dark:bg-rose-900/30 rounded-lg text-rose-600 dark:text-rose-400">
+                    <TrendingDown className="w-5 h-5" />
+                  </div>
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">
+                    {(employees || []).reduce((sum, emp) => sum + (emp.total_debt || 0), 0).toFixed(2)} ₼
+                  </span>
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('hr.totalDebt')}</p>
               </div>
             </div>
           )}
