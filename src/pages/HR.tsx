@@ -74,7 +74,7 @@ export default function HR() {
       setSalaryHistory(data || []);
     } catch (e: any) {
       console.error(e);
-      toast.error('Tarixçə yüklənərkən xəta');
+      toast.error(t('hr.errorHistory'));
     } finally {
       setIsLoadingHistory(false);
     }
@@ -94,7 +94,7 @@ export default function HR() {
       setDebtRecords(data || []);
     } catch (e: any) {
       console.error(e);
-      toast.error('Borc tarixçəsi yüklənərkən xəta');
+      toast.error(t('hr.errorDebtHistory'));
     } finally {
       setIsLoadingDebts(false);
       setDebtPaymentAmount(employee.total_debt?.toString() || '0');
@@ -104,12 +104,12 @@ export default function HR() {
   const handleSettleDebt = async (employee: any, type: 'salary_deduction' | 'manual_payment') => {
     const amount = parseFloat(debtPaymentAmount);
     if (!amount || amount <= 0) {
-      toast.error('Məbləğ düzgün daxil edilməyib');
+      toast.error(t('hr.errorInvalidAmount'));
       return;
     }
 
     if (amount > employee.total_debt) {
-      toast.error('Ödəniş məbləği borcdan böyük ola bilməz');
+      toast.error(t('hr.errorExceedsDebt'));
       return;
     }
 
@@ -118,7 +118,7 @@ export default function HR() {
       const totalPossible = (employee.salary || 0) + bonus;
       
       if (amount > totalPossible) {
-        toast.error(`Maaş/Bonus yetərli deyil. Max: ${totalPossible.toFixed(2)} ₼`);
+        toast.error(`${t('hr.errorInsufficientFunds')}. Max: ${totalPossible.toFixed(2)} ₼`);
         return;
       }
     }
@@ -130,7 +130,7 @@ export default function HR() {
           user_id: employee.id,
           amount: -amount,
           type: type,
-          notes: type === 'salary_deduction' ? 'Maaşdan çıxıldı' : 'Nəğd ödənildi',
+          notes: type === 'salary_deduction' ? t('hr.deductedFromSalary') : t('hr.paidInCash'),
           status: 'paid',
           shift_id: activeShift?.id
         }]);
@@ -141,9 +141,9 @@ export default function HR() {
         await supabase
           .from('incomes')
           .insert([{
-            category: 'İşçi Borcu Ödənişi',
+            category: t('hr.debtPaymentCategory'),
             amount: amount,
-            description: `İşçi borc ödənişi: ${employee.name}`,
+            description: t('hr.debtPaymentDesc').replace('{name}', employee.name),
             date: new Date().toISOString(),
             user_id: user?.id,
             payment_method: debtPaymentMethod,
@@ -151,7 +151,7 @@ export default function HR() {
           }]);
       }
 
-      toast.success('Ödəniş qeyd olundu');
+      toast.success(t('hr.paymentSuccess'));
       fetchData();
       if (selectedDebtEmployee) {
         const updatedEmployee = { ...selectedDebtEmployee, total_debt: selectedDebtEmployee.total_debt - amount };
@@ -199,7 +199,7 @@ export default function HR() {
           id: u.id,
           name: u.name,
           role_type: u.role,
-          job_title: emp?.job_title || 'İşçi',
+          job_title: emp?.job_title || t('hr.worker'),
           salary: emp?.salary || 0,
           hire_date: emp?.hire_date || null,
           work_schedule: emp?.work_schedule || '',
@@ -217,7 +217,7 @@ export default function HR() {
       setBonuses(bonusData || []);
     } catch (e) {
       console.error(e);
-      toast.error('Məlumatlar yüklənərkən xəta');
+      toast.error(t('hr.errorFetch'));
     } finally {
       setIsLoadingPage(false);
     }
@@ -267,7 +267,7 @@ export default function HR() {
             old_role: oldRole,
             new_role: newRole,
             change_type: oldSalary !== newSalary ? 'salary_change' : 'promotion',
-            note: 'Manual update from HR module',
+            note: t('hr.manualUpdateNote'),
             created_by: user?.id ? parseInt(user.id) : null,
             shift_id: activeShift?.id
           }]);
@@ -293,7 +293,7 @@ export default function HR() {
 
         if (empErr) throw empErr;
 
-        toast.success(t('hr.updateSuccess') || 'İşçi məlumatları yeniləndi');
+        toast.success(t('hr.updateSuccess'));
       } else {
         const { data: newUser, error: userErr } = await supabase.from('users').insert([{
           username: formData.username,
@@ -316,7 +316,7 @@ export default function HR() {
         }]);
 
         if (empErr) throw empErr;
-        toast.success(t('hr.addEmployee'));
+        toast.success(t('hr.addSuccess'));
       }
 
       setShowModal(false);
@@ -331,15 +331,15 @@ export default function HR() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bu işçini silmək istədiyinizə əminsiniz?')) return;
+    if (!window.confirm(t('hr.deleteConfirm'))) return;
     try {
       const { error } = await supabase.from('users').delete().eq('id', id);
       if (error) throw error;
-      toast.success(t('hr.deleteSuccess') || 'İşçi silindi');
+      toast.success(t('hr.deleteSuccess'));
       fetchData();
     } catch (e) {
       console.error(e);
-      toast.error('Silinmə zamanı xəta');
+      toast.error(t('hr.errorDelete'));
     }
   };
 
@@ -352,7 +352,7 @@ export default function HR() {
     >
       {isLoadingPage ? (
         <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner message="İşçi heyəti yüklənir..." />
+          <LoadingSpinner message={t('hr.loading')} />
         </div>
       ) : (
         <>
@@ -441,7 +441,7 @@ export default function HR() {
               >
                 {employee.total_debt > 1 && (
                   <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black px-4 py-3 rounded-bl-3xl rotate-12 shadow-md">
-                    BORCLU
+                    {t('hr.inDebt')}
                   </div>
                 )}
                 
@@ -552,7 +552,7 @@ export default function HR() {
                         </div>
                         <div>
                           <label htmlFor="emp-schedule" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.workSchedule')}</label>
-                          <input id="emp-schedule" title={t('hr.workSchedule')} placeholder="Məs: 09:00 - 18:00 (6 gün)" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
+                          <input id="emp-schedule" title={t('hr.workSchedule')} placeholder={t('hr.schedulePlaceholder')} className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
                         </div>
                       </div>
 
@@ -705,7 +705,7 @@ export default function HR() {
                                 type="number" 
                                 step="0.01" 
                                 placeholder="0.00"
-                                title="Ödəniş məbləği"
+                                title={t('hr.paymentAmountTitle')}
                                 className="w-full bg-white dark:bg-gray-800 border-2 border-indigo-50 dark:border-indigo-900/20 rounded-2xl px-6 py-5 font-black text-3xl text-indigo-600 dark:text-indigo-400 outline-none focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 transition-all text-center placeholder:opacity-20 shadow-inner"
                                 value={debtPaymentAmount}
                                 onChange={e => setDebtPaymentAmount(e.target.value)}
