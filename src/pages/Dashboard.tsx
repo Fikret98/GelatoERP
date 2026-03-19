@@ -672,19 +672,21 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Məsul Şəxs</label>
-                  <select
-                    title="Məsul Şəxs"
-                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
-                    value={resolutionForm.responsibleUserId}
-                    onChange={e => setResolutionForm({ ...resolutionForm, responsibleUserId: e.target.value })}
-                  >
-                    <option value="">İstifadəçi seçin...</option>
-                    <option value={resolutionModal.discrepancy.reported_by_id}>{resolutionModal.discrepancy.reported_by?.name} (Təhvil verən)</option>
-                    <option value={resolutionModal.discrepancy.verified_by_id}>{resolutionModal.discrepancy.verified_by?.name} (Təhvil alan)</option>
-                  </select>
-                </div>
+                {resolutionModal.discrepancy.difference < 0 && (
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Məsul Şəxs</label>
+                    <select
+                      title="Məsul Şəxs"
+                      className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                      value={resolutionForm.responsibleUserId}
+                      onChange={e => setResolutionForm({ ...resolutionForm, responsibleUserId: e.target.value })}
+                    >
+                      <option value="">İstifadəçi seçin...</option>
+                      <option value={resolutionModal.discrepancy.reported_by_id}>{resolutionModal.discrepancy.reported_by?.name} (Təhvil verən)</option>
+                      <option value={resolutionModal.discrepancy.verified_by_id}>{resolutionModal.discrepancy.verified_by?.name} (Təhvil alan)</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Admin Qeydi</label>
@@ -705,7 +707,7 @@ export default function Dashboard() {
                     disabled={isResolving}
                     className="flex-1 bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-50 hover:text-red-600 border border-gray-100 dark:border-gray-700 transition-all"
                   >
-                    Borc yazmadan ləğv et
+                    {resolutionModal.discrepancy.difference > 0 ? 'Səhv qeyd kimi sil' : 'Borc yazmadan ləğv et'}
                   </button>
                   <button
                     onClick={() => handleResolveDiscrepancy(
@@ -714,10 +716,12 @@ export default function Dashboard() {
                       'resolved',
                       resolutionForm.adminNotes
                     )}
-                    disabled={isResolving}
+                    disabled={isResolving || (resolutionModal.discrepancy.difference < 0 && !resolutionForm.responsibleUserId)}
                     className="flex-[1.5] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50"
                   >
-                    {isResolving ? 'İşlənilir...' : 'Təsdiqlə və Borc yaz'}
+                    {isResolving 
+                      ? 'İşlənilir...' 
+                      : (resolutionModal.discrepancy.difference > 0 ? 'Təsdiqlə və Gəlir kimi saxla' : 'Təsdiqlə və Borc yaz')}
                   </button>
                 </div>
 
