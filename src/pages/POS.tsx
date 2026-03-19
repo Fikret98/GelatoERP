@@ -303,10 +303,22 @@ export default function POS() {
                     placeholder="Məbləği daxil edin..."
                     autoFocus
                   />
-                  {Math.abs(parseFloat(openingBalance || '0') - suggestedBalance) > 0.01 && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400 font-bold mt-2 flex items-center gap-1">
-                      <X className="w-3 h-3" /> Fərq: {(parseFloat(openingBalance || '0') - suggestedBalance).toFixed(2)} ₼ (Dispute yaradılacaq)
-                    </p>
+                  {Math.abs(parseFloat(openingBalance || '0') - suggestedBalance) > 0.005 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-2xl"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="text-xs font-black text-amber-900 dark:text-amber-200 uppercase tracking-tight">DİQQƏT! FƏRQ AŞKARLANDI</p>
+                          <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                            Sizin daxil etdiyiniz məbləğ sistemin gözlədiyindən ({suggestedBalance.toFixed(2)} ₼) fərqlidir. Təsdiq etsəniz, açılış üçün {Math.abs(parseFloat(openingBalance || '0') - suggestedBalance).toFixed(2)} ₼ məbləğində {parseFloat(openingBalance || '0') < suggestedBalance ? 'KƏSİR' : 'ARTIQ'} qeydə alınacaq.
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
                   )}
                 </div>
 

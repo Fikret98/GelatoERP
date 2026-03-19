@@ -178,7 +178,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleResolveDiscrepancy = async (id: string, userId: number | null, status: 'resolved' | 'dismissed', notes: string = '') => {
+  const handleResolveDiscrepancy = async (id: string, userId: number | null, status: 'resolved' | 'dismissed' | 'enterprise_expense', notes: string = '') => {
     // Validate inputs
     if (status === 'resolved' && (userId === null || isNaN(userId))) {
       toast.error("Zəhmət olmasa məsul şəxsi seçin");
@@ -187,7 +187,7 @@ export default function Dashboard() {
 
     setIsResolving(true);
     try {
-      const { error } = await supabase.rpc('resolve_shift_discrepancy_v3', {
+      const { error } = await supabase.rpc('resolve_shift_discrepancy_v4', {
         p_discrepancy_id: id,
         p_responsible_user_id: userId,
         p_admin_notes: notes,
@@ -698,26 +698,43 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <button
-                  onClick={() => handleResolveDiscrepancy(resolutionModal.discrepancy.id, null, 'dismissed', resolutionForm.adminNotes)}
-                  disabled={isResolving}
-                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                >
-                  Borc yazmadan ləğv et
-                </button>
-                <button
-                  onClick={() => handleResolveDiscrepancy(
-                    resolutionModal.discrepancy.id,
-                    resolutionForm.responsibleUserId ? parseInt(resolutionForm.responsibleUserId) : null,
-                    'resolved',
-                    resolutionForm.adminNotes
-                  )}
-                  disabled={isResolving}
-                  className="flex-[1.5] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50"
-                >
-                  {isResolving ? 'İşlənilir...' : 'Təsdiqlə və Borc yaz'}
-                </button>
+              <div className="flex flex-col gap-3 pt-4">
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => handleResolveDiscrepancy(resolutionModal.discrepancy.id, null, 'dismissed', resolutionForm.adminNotes)}
+                    disabled={isResolving}
+                    className="flex-1 bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-50 hover:text-red-600 border border-gray-100 dark:border-gray-700 transition-all"
+                  >
+                    Borc yazmadan ləğv et
+                  </button>
+                  <button
+                    onClick={() => handleResolveDiscrepancy(
+                      resolutionModal.discrepancy.id,
+                      resolutionForm.responsibleUserId ? parseInt(resolutionForm.responsibleUserId) : null,
+                      'resolved',
+                      resolutionForm.adminNotes
+                    )}
+                    disabled={isResolving}
+                    className="flex-[1.5] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50"
+                  >
+                    {isResolving ? 'İşlənilir...' : 'Təsdiqlə və Borc yaz'}
+                  </button>
+                </div>
+
+                {resolutionModal.discrepancy.difference < 0 && (
+                  <button
+                    onClick={() => handleResolveDiscrepancy(
+                      resolutionModal.discrepancy.id,
+                      resolutionForm.responsibleUserId ? parseInt(resolutionForm.responsibleUserId) : null,
+                      'enterprise_expense',
+                      resolutionForm.adminNotes
+                    )}
+                    disabled={isResolving}
+                    className="w-full py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-100 dark:border-amber-800 hover:bg-amber-100 transition-all"
+                  >
+                    Müəssisə xərci kimi qeyd et (Bağışla)
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>

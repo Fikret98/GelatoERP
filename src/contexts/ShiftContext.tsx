@@ -104,80 +104,67 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (shiftErr) throw shiftErr;
 
-      // 2. Mark the opener as the verified_by (receiver) for any pending discrepancy from the last shift
-      // This fills in the 'Təhvil Aldı' (received by) field on the existing discrepancy
-      const lastShift = await getLastShift();
-      if (lastShift?.id) {
-        await supabase
+      // 2. Check for "Opening Gap" (Scenario 2)
+      // Compare what the user counted vs what the System (Global Cash) expects
+      const globalBalance = await getGlobalCashBalance();
+      const roundedGlobal = Math.round(globalBalance * 100) / 100;
+      const openingDiff = Math.round((roundedOpening - roundedGlobal) * 100) / 100;
+
+      if (Math.abs(openingDiff) > 0.005) {
+        // Create an "Opening Gap" discrepancy linked to the LAST shift for accountability
+        const lastShift = await getLastShift();
+        const { data: discData, error: discErr } = await supabase
           .from('shift_discrepancies')
-          .update({ 
+          .insert([{
+            shift_id: lastShift?.id || null, // Best effort link to previous shift
+            reported_by_id: lastShift?.user_id || null,
             verified_by_id: userIdInt,
-            verifier_counted: roundedOpening
-          })
-          .eq('shift_id', lastShift.id)
-          .eq('status', 'pending')
-          .is('verified_by_id', null);
-      }
+            system_expected: roundedGlobal,
+            seller_reported: roundedGlobal,
+            verifier_counted: roundedOpening,
+            difference: openingDiff,
+            status: 'pending',
+            type: 'opening_gap'
+          }])
+          .select()
+          .single();
 
-      // 3. Check if the opener's entered balance differs from what the closer physically counted
-      // This happens when the OPENER counts and gets a different number from the CLOSER
-      const lastShiftBalance = lastShift?.actual_cash_balance ?? null;
-      if (lastShiftBalance !== null) {
-        const roundedLastActual = Math.round(lastShiftBalance * 100) / 100;
-        const diff = Math.round((roundedOpening - roundedLastActual) * 100) / 100;
-
-        if (Math.abs(diff) > 0.005) {
-          // Only create a new discrepancy if the opener counts differently from the closer
-          const { data: discData, error: discErr } = await supabase
-            .from('shift_discrepancies')
-            .insert([{
-              shift_id: lastShift.id,   // Bug 3 fix: link to the OLD shift where the discrepancy occurred
-              reported_by_id: lastShift.user_id,
-              verified_by_id: userIdInt,
-              system_expected: roundedLastActual,
-              seller_reported: roundedLastActual,
-              verifier_counted: roundedOpening,
-              difference: diff,
-              status: 'pending'
-            }])
-            .select()
-            .single();
-
-          if (!discErr && discData) {
-            if (diff < 0) {
-              const { data: expData } = await supabase
-                .from('expenses')
-                .insert([{
-                  category: 'Kassa Kəsiri',
-                  amount: Math.abs(diff),
-                  description: 'Açılış-bağlanış fərqi (Araşdırılır)',
-                  date: new Date().toISOString(),
-                  payment_method: 'cash',
-                  user_id: userIdInt,
-                  shift_id: lastShift.id  // Bug 3 fix: expense belongs to the OLD shift, not new
-                }])
-                .select().single();
-              if (expData) {
-                await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
-              }
-            } else {
-              const { data: incData } = await supabase
-                .from('incomes')
-                .insert([{
-                  category: 'Kassa Artığı',
-                  amount: Math.abs(diff),
-                  description: 'Açılış-bağlanış fərqi (Araşdırılır)',
-                  date: new Date().toISOString(),
-                  payment_method: 'cash',
-                  user_id: userIdInt,
-                  shift_id: lastShift.id  // Bug 3 fix: income belongs to the OLD shift, not new
-                }])
-                .select().single();
-              if (incData) {
-                await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
-              }
+        if (!discErr && discData) {
+          // Create automated financial adjustment (Scenario 6)
+          if (openingDiff < 0) {
+            const { data: expData } = await supabase
+              .from('expenses')
+              .insert([{
+                category: 'Kassa Kəsiri (Açılış)',
+                amount: Math.abs(openingDiff),
+                description: 'Növbə açılışında aşkar edilən fərq.',
+                date: new Date().toISOString(),
+                payment_method: 'cash',
+                user_id: userIdInt,
+                shift_id: lastShift?.id || null,
+                is_system_generated: true
+              }])
+              .select().single();
+            if (expData) {
+              await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
             }
-            toast('Açılış məbləği fərqi qeyd edildi.', { icon: '⚠️' });
+          } else {
+            const { data: incData } = await supabase
+              .from('incomes')
+              .insert([{
+                category: 'Kassa Artığı (Açılış)',
+                amount: openingDiff,
+                description: 'Növbə açılışında aşkar edilən fərq.',
+                date: new Date().toISOString(),
+                payment_method: 'cash',
+                user_id: userIdInt,
+                shift_id: lastShift?.id || null,
+                is_system_generated: true
+              }])
+              .select().single();
+            if (incData) {
+              await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
+            }
           }
         }
       }
@@ -252,8 +239,8 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
-      // 3. Handle Discrepancy immediately if it exists
-      const difference = Math.round((roundedActual - expectedCash) * 100) / 100;
+      // 3. Handle "Closing Gap" (Scenario 3)
+      const difference = Math.round((roundedActual - roundedExpected) * 100) / 100;
       if (Math.abs(difference) > 0.005) {
         try {
           // Insert Discrepancy record
@@ -264,59 +251,57 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
               reported_by_id: parseInt(user.id),
               system_expected: roundedExpected,
               seller_reported: roundedActual,
-              verifier_counted: null, // Left null until the next shift opens and verifies
+              verifier_counted: null,
               difference: difference,
-              status: 'pending'
+              status: 'pending',
+              type: 'closing_gap'
             }])
             .select()
             .single();
 
           if (discErr) throw discErr;
 
-          // Create Financial Transaction
+          // Create Financial Transaction (is_system_generated = true)
           if (difference < 0) {
-            // Shortage -> Expense
             const { data: expData, error: expErr } = await supabase
               .from('expenses')
               .insert([{
-                category: 'Kassa Kəsiri',
+                category: 'Kassa Kəsiri (Bağlanış)',
                 amount: Math.abs(difference),
-                description: 'Növbə kəsiri (Araşdırılır)',
+                description: 'Növbə qapanışında kəsir müəyyən edildi.',
                 date: new Date().toISOString(),
                 payment_method: 'cash',
                 user_id: parseInt(user.id),
-                shift_id: activeShift.id
+                shift_id: activeShift.id,
+                is_system_generated: true
               }])
               .select()
               .single();
-
             if (!expErr && expData) {
               await supabase.from('shift_discrepancies').update({ related_expense_id: expData.id }).eq('id', discData.id);
             }
           } else {
-            // Surplus -> Income
             const { data: incData, error: incErr } = await supabase
               .from('incomes')
               .insert([{
-                category: 'Kassa Artığı',
+                category: 'Kassa Artığı (Bağlanış)',
                 amount: difference,
-                description: 'Növbə artığı (Araşdırılır)',
+                description: 'Növbə qapanışında artıq müəyyən edildi.',
                 date: new Date().toISOString(),
                 payment_method: 'cash',
                 user_id: parseInt(user.id),
-                shift_id: activeShift.id
+                shift_id: activeShift.id,
+                is_system_generated: true
               }])
               .select()
               .single();
-
             if (!incErr && incData) {
               await supabase.from('shift_discrepancies').update({ related_income_id: incData.id }).eq('id', discData.id);
             }
           }
-          toast('Növbə kəsiri/artığı qeydə alındı.', { icon: '⚠️' });
+          toast('Növbə fərqi qeydə alındı.', { icon: '⚠️' });
         } catch (discE: any) {
           console.error('Discrepancy recording error:', discE);
-          toast.error('Uyğunsuzluq qeyd edilərkən xəta: ' + discE.message);
         }
       }
 
