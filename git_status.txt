@@ -10,3 +10,16 @@ Changes not staged for commit:
 	modified:   src/pages/Dashboard.tsx
 
 no changes added to commit (use "git add" and/or "git commit -a")
+[main 3442116] fix(shift): resolved double discrepancy verification bug & enhanced HR admin UI
+ 4 files changed, 9 insertions(+), 26 deletions(-)
+To https://github.com/Fikret98/GelatoERP.git
+   3be930d..3442116  main -> main
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   git_status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
