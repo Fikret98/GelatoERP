@@ -709,7 +709,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => handleResolveDiscrepancy(
                     resolutionModal.discrepancy.id,
-                    resolutionModal.discrepancy.difference < 0 ? parseInt(resolutionForm.responsibleUserId) : null,
+                    resolutionForm.responsibleUserId ? parseInt(resolutionForm.responsibleUserId) : null,
                     'resolved',
                     resolutionForm.adminNotes
                   )}
