@@ -516,94 +516,94 @@ export default function HR() {
             ))}
           </motion.div>
 
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {showModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  onClick={e => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar"
-                >
-                  <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                      {editingEmployee ? t('hr.editEmployee') : t('hr.newEmployee')}
-                    </h2>
-                    <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
-                      <X className="w-6 h-6 text-gray-400" />
-                    </button>
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 sm:p-6 backdrop-blur-md" onClick={() => setShowModal(false)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 sm:p-10 w-full max-w-2xl max-h-[min(90vh,calc(100vh-100px))] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar relative"
+              >
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                    {editingEmployee ? t('hr.editEmployee') : t('hr.newEmployee')}
+                  </h2>
+                  <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
+                    <X className="w-6 h-6 text-gray-400" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
+                        <User className="w-3 h-3" />
+                        {t('hr.personalInfo')}
+                      </h3>
+                      <div>
+                        <label htmlFor="emp-name" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.name')}</label>
+                        <input id="emp-name" title={t('hr.name')} placeholder={t('hr.name')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                      </div>
+                      <div>
+                        <label htmlFor="emp-role" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.role')}</label>
+                        <input id="emp-role" title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
+                      </div>
+                      <div>
+                        <label htmlFor="emp-schedule" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.workSchedule')}</label>
+                        <input id="emp-schedule" title={t('hr.workSchedule')} placeholder={t('hr.schedulePlaceholder')} className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                        <DollarSign className="w-3 h-3" />
+                        {t('hr.financeAndAccess')}
+                      </h3>
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.salary')} (₼)</label>
+                        <input id="emp-salary" title={t('hr.salary')} placeholder="0.00" required type="number" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.bonusPercentage')} (%)</label>
+                        <input id="emp-bonus" title={t('hr.bonusPercentage')} placeholder="0.0" required type="number" step="0.1" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.bonus_percentage} onChange={e => setFormData({ ...formData, bonus_percentage: e.target.value })} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {!editingEmployee && (
+                          <div>
+                            <label htmlFor="emp-username" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.username')}</label>
+                            <input id="emp-username" title={t('hr.username')} placeholder={t('hr.username')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
+                          </div>
+                        )}
+                        <div className={editingEmployee ? "col-span-2" : ""}>
+                          <label htmlFor="emp-password" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{editingEmployee ? t('hr.newPasswordHint') : t('hr.password')}</label>
+                          <input id="emp-password" title={editingEmployee ? t('hr.newPasswordHint') : t('hr.password')} placeholder="••••••••" required={!editingEmployee} type="password" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h3 className="text-xs font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
-                          <User className="w-3 h-3" />
-                          {t('hr.personalInfo')}
-                        </h3>
-                        <div>
-                          <label htmlFor="emp-name" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.name')}</label>
-                          <input id="emp-name" title={t('hr.name')} placeholder={t('hr.name')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                        </div>
-                        <div>
-                          <label htmlFor="emp-role" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.role')}</label>
-                          <input id="emp-role" title={t('hr.role')} placeholder={t('hr.role')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
-                        </div>
-                        <div>
-                          <label htmlFor="emp-schedule" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.workSchedule')}</label>
-                          <input id="emp-schedule" title={t('hr.workSchedule')} placeholder={t('hr.schedulePlaceholder')} className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.work_schedule} onChange={e => setFormData({ ...formData, work_schedule: e.target.value })} />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
-                          <DollarSign className="w-3 h-3" />
-                          {t('hr.financeAndAccess')}
-                        </h3>
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.salary')} (₼)</label>
-                          <input id="emp-salary" title={t('hr.salary')} placeholder="0.00" required type="number" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.bonusPercentage')} (%)</label>
-                          <input id="emp-bonus" title={t('hr.bonusPercentage')} placeholder="0.0" required type="number" step="0.1" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.bonus_percentage} onChange={e => setFormData({ ...formData, bonus_percentage: e.target.value })} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {!editingEmployee && (
-                            <div>
-                              <label htmlFor="emp-username" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('hr.username')}</label>
-                              <input id="emp-username" title={t('hr.username')} placeholder={t('hr.username')} required className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
-                            </div>
-                          )}
-                          <div className={editingEmployee ? "col-span-2" : ""}>
-                            <label htmlFor="emp-password" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{editingEmployee ? t('hr.newPasswordHint') : t('hr.password')}</label>
-                            <input id="emp-password" title={editingEmployee ? t('hr.newPasswordHint') : t('hr.password')} placeholder="••••••••" required={!editingEmployee} type="password" className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4 pt-4">
-                      <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">{t('common.cancel')}</button>
-                      <button type="submit" disabled={isSubmitting} className="flex-[2] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50">
-                        {isSubmitting ? t('hr.saving') : (editingEmployee ? t('hr.update') : t('common.add'))}
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </div>
-            )}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-6 pb-4">
+                    <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700 transition-all">{t('common.cancel')}</button>
+                    <button type="submit" disabled={isSubmitting} className="flex-[2] bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50">
+                      {isSubmitting ? t('hr.saving') : (editingEmployee ? t('hr.update') : t('common.add'))}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
 
             {/* Salary History Modal */}
             {selectedHistoryEmployee && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setSelectedHistoryEmployee(null)}>
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 sm:p-6 backdrop-blur-md" onClick={() => setSelectedHistoryEmployee(null)}>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 30 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 30 }}
                   onClick={e => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar"
+                  className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 sm:p-10 w-full max-w-2xl max-h-[min(90vh,calc(100vh-100px))] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar relative"
                 >
                   <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div>
@@ -667,19 +667,18 @@ export default function HR() {
               </div>
             )}
 
-            {/* Debt History & Payment Modal */}
             {selectedDebtEmployee && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm" onClick={() => setSelectedDebtEmployee(null)}>
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 sm:p-6 backdrop-blur-md" onClick={() => setSelectedDebtEmployee(null)}>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 30 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 30 }}
                   onClick={e => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar"
+                  className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 sm:p-10 w-full max-w-3xl max-h-[min(92vh,calc(100vh-60px))] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-700 custom-scrollbar relative"
                 >
                   <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div>
-                      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">{t('hr.debtHistoryTitle')}</p>
+                      <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">{t('hr.debtHistoryTitle')}</p>
                       <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase">{selectedDebtEmployee.name}</h2>
                     </div>
                     <button onClick={() => setSelectedDebtEmployee(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all" title="Bağla">
@@ -688,73 +687,79 @@ export default function HR() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-3xl border border-red-100 dark:border-red-900/20 text-center">
-                      <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">{t('hr.debtBalance')}</p>
-                      <p className="text-4xl font-black text-red-600 tabular-nums">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</p>
-                    </div>
-                    
-                    {user?.role === 'admin' && selectedDebtEmployee.total_debt > 0 && (
-                      <div className="space-y-4">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Borc Ödənişi</p>
-                        <div className="bg-gray-50/50 dark:bg-gray-900/30 p-6 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/30 space-y-6 flex-1">
-                          <div>
-                            <label htmlFor="debt-payment" className="text-[10px] font-black text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-[0.2em] block mb-3 text-center">{t('hr.paymentAmount')}</label>
-                            <div className="relative">
-                              <input 
-                                id="debt-payment"
-                                type="number" 
-                                step="0.01" 
-                                placeholder="0.00"
-                                title={t('hr.paymentAmountTitle')}
-                                className="w-full bg-white dark:bg-gray-800 border-2 border-indigo-50 dark:border-indigo-900/20 rounded-2xl px-6 py-5 font-black text-3xl text-indigo-600 dark:text-indigo-400 outline-none focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 transition-all text-center placeholder:opacity-20 shadow-inner"
-                                value={debtPaymentAmount}
-                                onChange={e => setDebtPaymentAmount(e.target.value)}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block text-center">{t('hr.paymentMethod')}</label>
-                            <div className="grid grid-cols-2 gap-3">
-                              {(['cash', 'bank'] as const).map((method) => (
-                                <button
-                                  key={method}
-                                  type="button"
-                                  onClick={() => setDebtPaymentMethod(method)}
-                                  className={cn(
-                                    "py-4 rounded-2xl border-2 font-black text-[11px] uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden group",
-                                    debtPaymentMethod === method
-                                      ? "border-indigo-600 bg-indigo-600 text-white shadow-xl shadow-indigo-200 dark:shadow-none translate-y-[-2px]"
-                                      : "border-gray-100 dark:border-gray-700 text-gray-500 hover:border-indigo-200 dark:hover:border-indigo-800 bg-white dark:bg-gray-800"
-                                  )}
-                                >
-                                  <div className={cn(
-                                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                                    debtPaymentMethod === method ? "bg-white/20" : "bg-gray-50 dark:bg-gray-900"
-                                  )}>
-                                    {method === 'cash' ? <DollarSign className="w-5 h-5" /> : <Coins className="w-5 h-5" />}
-                                  </div>
-                                  {method === 'cash' ? t('dashboard.cash') : t('dashboard.bank')}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <button 
-                            onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
-                            className="w-full bg-indigo-600 text-white px-8 py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-3 active:scale-[0.97]"
-                          >
-                            {t('hr.confirmAndPay')}
-                          </button>
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-900/10 dark:to-orange-900/10 p-8 rounded-[2rem] border border-rose-100 dark:border-rose-900/20 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                          <TrendingDown className="w-20 h-20" />
                         </div>
-                        <button 
-                          onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
-                          className="w-full text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-widest border border-indigo-200 dark:border-indigo-800 py-2 rounded-xl hover:bg-indigo-50 transition-all"
-                        >
-                          {t('hr.salaryDeduction')}
-                        </button>
+                        <p className="text-[10px] font-black text-rose-400 uppercase tracking-[0.3em] mb-3">{t('hr.debtBalance')}</p>
+                        <p className="text-5xl font-black text-rose-600 tabular-nums tracking-tighter drop-shadow-sm">
+                          {selectedDebtEmployee.total_debt.toFixed(2)} <span className="text-2xl opacity-50 font-bold ml-1">₼</span>
+                        </p>
                       </div>
-                    )}
+                      
+                      {user?.role === 'admin' && selectedDebtEmployee.total_debt > 0 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+                          <div className="bg-white dark:bg-gray-900/40 p-1 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700/50">
+                            <div className="bg-white dark:bg-gray-800 rounded-[2.4rem] p-6 sm:p-8 space-y-8">
+                              <div className="text-center">
+                                <label htmlFor="debt-payment" className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] block mb-6">{t('hr.paymentAmount')}</label>
+                                <div className="inline-flex items-center justify-center gap-4 bg-gray-50/50 dark:bg-gray-900/50 px-8 py-6 rounded-3xl border-2 border-dashed border-indigo-100 dark:border-indigo-900/30 w-full group/input focus-within:border-indigo-500 focus-within:ring-8 focus-within:ring-indigo-500/5 transition-all">
+                                  <span className="text-2xl font-black text-indigo-300">₼</span>
+                                  <input 
+                                    id="debt-payment"
+                                    type="number" 
+                                    step="0.01" 
+                                    placeholder="0.00"
+                                    title={t('hr.paymentAmountTitle')}
+                                    className="bg-transparent border-none py-0 font-black text-4xl text-indigo-600 dark:text-indigo-400 outline-none w-full text-center tabular-nums placeholder:opacity-10"
+                                    value={debtPaymentAmount}
+                                    onChange={e => setDebtPaymentAmount(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center opacity-50">{t('hr.paymentMethod')}</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                  {(['cash', 'bank'] as const).map((method) => (
+                                    <button
+                                      key={method}
+                                      type="button"
+                                      onClick={() => setDebtPaymentMethod(method)}
+                                      className={cn(
+                                        "py-5 rounded-3xl border-2 font-black text-[10px] uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 relative overflow-hidden",
+                                        debtPaymentMethod === method
+                                          ? "border-indigo-600 bg-indigo-600 text-white shadow-xl shadow-indigo-200 dark:shadow-none scale-[1.02]"
+                                          : "border-gray-50 dark:border-gray-900 text-gray-400 hover:border-indigo-100 dark:hover:border-indigo-800 bg-gray-50/50 dark:bg-gray-900/20"
+                                      )}
+                                    >
+                                      {method === 'cash' ? <DollarSign className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
+                                      {method === 'cash' ? t('dashboard.cash') : t('dashboard.bank')}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-col gap-3 pt-4">
+                                <button 
+                                  onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
+                                  className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-8 py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:from-indigo-700 hover:to-violet-700 transition-all shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-3 active:scale-[0.98]"
+                                >
+                                  {t('hr.confirmAndPay')}
+                                </button>
+                                <button 
+                                  onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
+                                  className="w-full text-indigo-500 dark:text-indigo-400 font-black text-[10px] uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all border border-transparent hover:border-indigo-100"
+                                >
+                                  {t('hr.salaryDeduction')}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{t('hr.transactions')}</h3>
