@@ -135,10 +135,14 @@ export default function POS() {
         toast.error('Düzgün məbləğ daxil edin');
         return;
       }
+      setLoading(true);
       await openShift(balance);
       setShowOpenModal(false);
+      setOpeningBalance('');
     } catch (e) {
-      // Error handled in ShiftContext
+      console.error('Open shift failed:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,20 +153,31 @@ export default function POS() {
         toast.error('Düzgün məbləğ daxil edin');
         return;
       }
+      setLoading(true);
       await closeShift(balance, shiftNotes);
       setShowCloseModal(false);
       setClosingActual('');
       setShiftNotes('');
     } catch (e) {
-      // Error handled in ShiftContext
+      console.error('Close shift failed:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
   const startClosingProcess = async () => {
-    const expected = await getExpectedCash();
-    setClosingExpected(expected);
-    setClosingActual(''); // Bug 1 fix: do NOT auto-fill. Force cashier to manually count and enter.
-    setShowCloseModal(true);
+    try {
+      setLoading(true);
+      const expected = await getExpectedCash();
+      setClosingExpected(expected);
+      setClosingActual('');
+      setShowCloseModal(true);
+    } catch (e) {
+      console.error('Starting closing process failed:', e);
+      toast.error('Gözlənilən kassa balansını hesablamaq mümkün olmadı');
+    } finally {
+      setLoading(false);
+    }
   };
   const handleCheckout = async () => {
     if (!activeShift) {

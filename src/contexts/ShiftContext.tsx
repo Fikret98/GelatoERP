@@ -269,7 +269,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
               reported_by_id: parseInt(user.id),
               system_expected: roundedExpected,
               seller_reported: roundedActual,
-              verifier_counted: null,
+              verifier_counted: roundedActual, // Fill with seller's count to satisfy NOT NULL until next shift verifies
               difference: difference,
               status: 'pending',
               type: 'closing_gap'
