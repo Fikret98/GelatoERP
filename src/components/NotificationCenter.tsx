@@ -44,7 +44,8 @@ export default function NotificationCenter() {
 
     const playNotificationSound = () => {
       try {
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+        // High quality Success/Notice Chine
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2361/2361-preview.mp3');
         audio.volume = 0.5;
         audio.play().catch(e => console.warn('Audio play blocked by browser:', e));
       } catch (e) {

@@ -373,13 +373,7 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getLastShiftClosingBalance = async (): Promise<number> => {
-    // Bug 2 fix: Prioritize the last shift's physical count (actual_cash_balance)
-    // This is what the previous cashier physically counted in the drawer —
-    // the most relevant starting point for the next opener.
-    const lastShift = await getLastShift();
-    if (lastShift?.actual_cash_balance != null) return lastShift.actual_cash_balance;
-
-    // Fallback: use global system cash balance if no prior shift exists
+    // Sync with Global Cash Balance as per user request to avoid discrepancy between "Nağd Kassa" and Open Modal
     return await getGlobalCashBalance();
   };
 
