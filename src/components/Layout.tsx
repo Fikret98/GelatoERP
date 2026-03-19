@@ -95,7 +95,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       <div className={cn(
-        "fixed inset-y-0 left-0 z-[1050] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-[2000] w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">

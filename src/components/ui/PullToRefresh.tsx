@@ -170,7 +170,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
 
       {/* Content Wrapper */}
       <motion.div
-        style={{ y: pullDistance }}
+        style={{ y: pullDistance === 0 ? undefined : pullDistance }}
         transition={isPulling ? { type: "just" } : { type: "spring", stiffness: 400, damping: 30 }}
         className="w-full h-full bg-gray-50 dark:bg-gray-900 flex flex-col min-h-0 min-w-0"
       >
