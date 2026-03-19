@@ -503,14 +503,14 @@ export default function POS() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowCartDrawer(false)}
-                  className="fixed inset-0 bg-black/50 z-[250] backdrop-blur-sm"
+                  className="fixed inset-0 bg-black/50 z-[1040] backdrop-blur-sm"
                 />
                 <motion.div
                   initial={{ x: '100%' }}
                   animate={{ x: 0 }}
                   exit={{ x: '100%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="fixed top-0 right-0 bottom-0 z-[300] w-full sm:w-[400px] bg-white dark:bg-gray-800 shadow-2xl flex flex-col border-l border-gray-100 dark:border-gray-700"
+                  className="fixed top-0 right-0 bottom-0 z-[1050] w-full sm:w-[400px] bg-white dark:bg-gray-800 shadow-2xl flex flex-col border-l border-gray-100 dark:border-gray-700"
                 >
                   {/* Cart Header */}
                   <div className="p-5 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/30 flex items-center justify-between pt-[max(env(safe-area-inset-top),1.25rem)]">
@@ -535,11 +535,17 @@ export default function POS() {
                     <AnimatePresence mode="popLayout" initial={false}>
                       {cart.length === 0 ? (
                         <motion.div 
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="h-full flex flex-col items-center justify-center text-gray-400 text-center opacity-50"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="h-full flex flex-col items-center justify-center text-gray-400 text-center opacity-70"
                         >
-                          <ShoppingCart className="w-10 h-10 mb-2" />
+                          <motion.div
+                            animate={{ y: [0, -10, 0], rotate: [0, -5, 5, 0] }}
+                            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                          >
+                            <ShoppingCart className="w-12 h-12 mb-3 text-indigo-300 dark:text-indigo-800" />
+                          </motion.div>
                           <p className="text-xs font-bold italic">{t('pos.emptyCart')}</p>
                         </motion.div>
                       ) : (
@@ -566,7 +572,14 @@ export default function POS() {
                                 <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Azalt">
                                   <Minus className="w-3 h-3" />
                                 </button>
-                                <span className="font-black w-6 text-center text-gray-900 dark:text-white text-[11px]">{item.quantity}</span>
+                                <motion.span 
+                                  key={item.quantity}
+                                  initial={{ scale: 1.5, color: '#4f46e5' }}
+                                  animate={{ scale: 1, color: 'inherit' }}
+                                  className="font-black w-6 text-center text-gray-900 dark:text-white text-[11px]"
+                                >
+                                  {item.quantity}
+                                </motion.span>
                                 <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 text-gray-400 hover:text-indigo-500 transition-colors" title="Artır">
                                   <Plus className="w-3 h-3" />
                                 </button>
@@ -638,25 +651,44 @@ export default function POS() {
       )}
 
       {/* Universal Cart Floating Link */}
-      {!showCartDrawer && (
-        <motion.button
-          initial={{ scale: 0, y: 50 }}
-          animate={{ scale: 1, y: 0 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setShowCartDrawer(true)}
-          className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 sm:right-6 lg:bottom-10 lg:right-10 z-[200] bg-indigo-600 text-white px-4 sm:px-5 py-3 sm:py-4 rounded-full sm:rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center gap-3 border-4 border-white dark:border-gray-800 transition-all duration-300 hover:scale-105"
-        >
-          <div className="relative">
-            <ShoppingCart className="w-5 h-5" />
-            {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
-              <span className="absolute -top-3 -right-3 bg-red-500 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
-                {cart.reduce((sum, item) => sum + item.quantity, 0)}
-              </span>
-            )}
-          </div>
-          <span className="font-black text-xs uppercase tracking-widest hidden sm:inline">Səbət</span>
-        </motion.button>
-      )}
+      <AnimatePresence>
+        {!showCartDrawer && (
+          <motion.button
+            initial={{ scale: 0, y: 50, rotate: -10 }}
+            animate={{ 
+              scale: 1, 
+              y: [0, -8, 0], 
+              rotate: 0,
+              transition: { 
+                y: { repeat: Infinity, duration: 2.5, ease: "easeInOut" } 
+              }
+            }}
+            exit={{ scale: 0, y: 50, rotate: 10 }}
+            whileHover={{ scale: 1.05, rotate: -3 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCartDrawer(true)}
+            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 sm:right-6 lg:bottom-10 lg:right-10 z-[200] bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] text-white px-4 sm:px-5 py-3 sm:py-4 rounded-full sm:rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center gap-3 border-4 border-white dark:border-gray-800 transition-all hover:animate-[gradient_2s_linear_infinite]"
+          >
+            <div className="relative">
+              <ShoppingCart className="w-5 h-5" />
+              <AnimatePresence>
+                {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+                  <motion.span 
+                    key={cart.reduce((sum, item) => sum + item.quantity, 0)}
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -top-3 -right-3 bg-red-500 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600 shadow-md shadow-red-500/50"
+                  >
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+            <span className="font-black text-xs uppercase tracking-widest hidden sm:inline">Səbət</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
       {/* Inventory Shortage Modal */}
       <AnimatePresence>
         {inventoryError && (
