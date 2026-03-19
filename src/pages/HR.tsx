@@ -432,7 +432,12 @@ export default function HR() {
                   hidden: { opacity: 0, y: 20 },
                   show: { opacity: 1, y: 0 }
                 }}
-                className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all group relative overflow-hidden"
+                className={cn(
+                  "rounded-3xl p-6 transition-all group relative overflow-hidden shadow-sm hover:shadow-xl",
+                  employee.role_type === 'admin' 
+                    ? "bg-gradient-to-b from-indigo-50/50 to-white dark:from-indigo-900/10 dark:to-gray-800 border-2 border-indigo-200 dark:border-indigo-800/50"
+                    : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
+                )}
               >
                 {employee.total_debt > 1 && (
                   <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black px-4 py-3 rounded-bl-3xl rotate-12 shadow-md">
@@ -446,7 +451,12 @@ export default function HR() {
                       {employee.name.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="font-black text-gray-900 dark:text-white text-lg leading-tight">{employee.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-gray-900 dark:text-white text-lg leading-tight">{employee.name}</h3>
+                        {employee.role_type === 'admin' && (
+                          <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-800/50">Admin</span>
+                        )}
+                      </div>
                       <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mt-0.5">{employee.job_title}</p>
                     </div>
                   </div>
