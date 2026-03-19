@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
@@ -382,19 +382,21 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     return lastShift?.actual_cash_balance ?? 0;
   };
 
+  const value = useMemo(() => ({
+    activeShift,
+    loading,
+    openShift,
+    closeShift,
+    refreshShift,
+    getExpectedCash,
+    getLastShift,
+    getLastShiftClosingBalance,
+    getGlobalCashBalance,
+    checkSecurityBlock
+  }), [activeShift, loading]);
+
   return (
-    <ShiftContext.Provider value={{
-      activeShift,
-      loading,
-      openShift,
-      closeShift,
-      refreshShift,
-      getExpectedCash,
-      getLastShift,
-      getLastShiftClosingBalance,
-      getGlobalCashBalance,
-      checkSecurityBlock
-    }}>
+    <ShiftContext.Provider value={value}>
       {children}
     </ShiftContext.Provider>
   );

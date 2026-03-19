@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -56,8 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('erp_user');
     };
 
+    const value = useMemo(() => ({ user, loading, login, logout }), [user, loading]);
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

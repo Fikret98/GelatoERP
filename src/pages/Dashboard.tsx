@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { TrendingUp, TrendingDown, Package, Users, DollarSign, X, AlertTriangle, ShoppingBag, PieChart, BarChart3, Calendar, Coins, Percent, ArrowUpRight, ArrowDownLeft, Wallet, Info, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -155,7 +155,7 @@ export default function Dashboard() {
 
         const { data: inventoryData, error: invError } = await supabase
           .from('inventory')
-          .select('*');
+          .select('id, name, stock_quantity, critical_limit, unit');
 
         if (invError) throw invError;
         if (inventoryData) {
@@ -211,21 +211,31 @@ export default function Dashboard() {
   };
 
   // 2. Lifecycle Effects
+  const fetchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const debouncedFetch = useCallback(() => {
+    if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchDashboardData();
+    }, 2000);
+  }, [dateRange, customRange]);
+
   useEffect(() => {
     fetchDashboardData();
 
     const channel = supabase
       .channel('dashboard-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sale_items' }, fetchDashboardData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_discrepancies' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sale_items' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_discrepancies' }, debouncedFetch)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
     };
   }, [dateRange, customRange]);
 

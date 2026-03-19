@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -14,16 +14,19 @@ import { ShiftProvider } from './contexts/ShiftContext';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import SplashScreen from './components/SplashScreen';
-import Dashboard from './pages/Dashboard';
-import Inventory from './pages/Inventory';
-import Suppliers from './pages/Suppliers';
-import Products from './pages/Products';
-import POS from './pages/POS';
-import HR from './pages/HR';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import FixedAssets from './pages/FixedAssets';
+import LoadingSpinner from './components/ui/LoadingSpinner';
 import { Navigate } from 'react-router-dom';
+
+// Lazy load pages for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const Suppliers = lazy(() => import('./pages/Suppliers'));
+const Products = lazy(() => import('./pages/Products'));
+const POS = lazy(() => import('./pages/POS'));
+const HR = lazy(() => import('./pages/HR'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const FixedAssets = lazy(() => import('./pages/FixedAssets'));
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -33,24 +36,30 @@ function AnimatedRoutes() {
 
   return (
     <AnimatePresence mode="wait">
-      {/* @ts-ignore */}
-      <Routes location={location} key={location.pathname}>
-        {/* Admin only routes */}
-        <Route path="/" element={isAdmin ? <Dashboard /> : <Navigate to="/pos" replace />} />
-        <Route path="/inventory" element={isAdmin ? <Inventory /> : <Navigate to="/pos" replace />} />
-        <Route path="/suppliers" element={isAdmin ? <Suppliers /> : <Navigate to="/pos" replace />} />
-        <Route path="/products" element={isAdmin ? <Products /> : <Navigate to="/pos" replace />} />
-        <Route path="/hr" element={isAdmin ? <HR /> : <Navigate to="/pos" replace />} />
-        <Route path="/assets" element={isAdmin ? <FixedAssets /> : <Navigate to="/pos" replace />} />
+      <Suspense fallback={
+        <div className="flex-1 flex items-center justify-center min-h-[60vh] h-full w-full">
+          <LoadingSpinner message="Səhifə yüklənir..." />
+        </div>
+      }>
+        {/* @ts-ignore */}
+        <Routes location={location} key={location.pathname}>
+          {/* Admin only routes */}
+          <Route path="/" element={isAdmin ? <Dashboard /> : <Navigate to="/pos" replace />} />
+          <Route path="/inventory" element={isAdmin ? <Inventory /> : <Navigate to="/pos" replace />} />
+          <Route path="/suppliers" element={isAdmin ? <Suppliers /> : <Navigate to="/pos" replace />} />
+          <Route path="/products" element={isAdmin ? <Products /> : <Navigate to="/pos" replace />} />
+          <Route path="/hr" element={isAdmin ? <HR /> : <Navigate to="/pos" replace />} />
+          <Route path="/assets" element={isAdmin ? <FixedAssets /> : <Navigate to="/pos" replace />} />
 
-        {/* Common routes (Admin & Employee) */}
-        <Route path="/pos" element={<POS />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
+          {/* Common routes (Admin & Employee) */}
+          <Route path="/pos" element={<POS />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Catch-all redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 }
