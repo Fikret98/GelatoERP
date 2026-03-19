@@ -39,7 +39,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
         // Apply resistance
         const newDistance = Math.min(diff * 0.4, maxPull);
         setPullDistance(newDistance);
-        
+
         // Prevent default only when pulling down at the top
         if (newDistance > 5 && e.cancelable) {
           e.preventDefault();
@@ -56,7 +56,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
       if (pullDistance >= threshold) {
         setIsRefreshing(true);
         setPullDistance(80); // Snap to loading position
-        
+
         try {
           await onRefresh();
         } finally {
@@ -87,7 +87,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   return (
     <div ref={containerRef} className="relative flex-1 flex flex-col min-h-0 min-w-0">
       {/* Animation Area */}
-      <div 
+      <div
         className="absolute top-0 left-0 right-0 flex items-center justify-center overflow-hidden pointer-events-none"
         style={{ height: pullDistance }}
       >
@@ -101,12 +101,12 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
             >
               {/* Background Glass Plate */}
               <div className="absolute inset-x-8 top-4 bottom-4 bg-indigo-500/10 dark:bg-indigo-400/5 backdrop-blur-md rounded-3xl border border-indigo-500/20 dark:border-indigo-400/10 flex items-center justify-center">
-                
+
                 {/* Visual Indicators */}
                 {!isRefreshing ? (
                   <div className="flex flex-col items-center">
                     <motion.div
-                      style={{ 
+                      style={{
                         rotate: pullDistance >= threshold ? 180 : 0,
                         color: pullDistance >= threshold ? '#10b981' : '#6366f1'
                       }}
@@ -126,7 +126,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
                     {/* Professional Coin Animation */}
                     <div className="relative w-16 h-16 flex items-center justify-center">
                       <motion.div
-                        animate={{ 
+                        animate={{
                           scale: [1, 1.2, 1],
                           rotate: [0, 360]
                         }}
@@ -135,21 +135,21 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
                       >
                         <TrendingUp className="w-8 h-8" />
                       </motion.div>
-                      
+
                       {/* Falling Coins */}
                       {[...Array(6)].map((_, i) => (
                         <motion.div
                           key={i}
                           initial={{ y: -40, opacity: 0, x: (i - 2.5) * 15 }}
-                          animate={{ 
+                          animate={{
                             y: [null, 40],
                             opacity: [0, 1, 0],
                           }}
-                          transition={{ 
-                            repeat: Infinity, 
-                            duration: 1.5, 
+                          transition={{
+                            repeat: Infinity,
+                            duration: 1.5,
                             delay: i * 0.2,
-                            ease: "easeIn" 
+                            ease: "easeIn"
                           }}
                           className="absolute text-emerald-500"
                         >

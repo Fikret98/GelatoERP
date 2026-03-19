@@ -165,6 +165,18 @@ export default function POS() {
     }
   };
 
+  // Safety: Ensure body scroll and pointer events are reset when drawer closes
+  useEffect(() => {
+    if (!showCartDrawer) {
+      document.body.style.overflow = 'unset';
+      document.body.style.pointerEvents = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.pointerEvents = 'auto';
+    };
+  }, [showCartDrawer]);
+
   const startClosingProcess = async () => {
     try {
       setLoading(true);
@@ -205,28 +217,33 @@ export default function POS() {
 
       if (rpcError) throw rpcError;
 
+      // SUCCESS PATH
+      // Close drawer and clear cart IMMEDIATELY to free the UI (especially the Backdrop which blocks Header)
+      setShowCartDrawer(false);
       setCart([]);
+      setInventoryError(null);
       setPaymentMethod('cash');
-      setShowCartDrawer(false); // Fix: Explicitly close cart to release scroll lock!
-      toast.success(t('pos.success'));
-    } catch (e: any) {
-      console.error(e);
       
-      // Check for inventory shortage error pattern
+      toast.success(t('pos.success'), { duration: 3000 });
+    } catch (e: any) {
+      console.error('Checkout error:', e);
+      
       const message = e.message || '';
-      const inventoryMatch = message.match(/Anbar xətası: (.+) çatışmır \(Lazımdır: (.+), Mövcuddur: (.+)\)/);
+      const inventoryMatch = message.search(/Anbar xətası/i) !== -1;
       
       if (inventoryMatch) {
-        setInventoryError({
-          itemName: inventoryMatch[1],
-          required: inventoryMatch[2],
-          available: inventoryMatch[3]
-        });
+         // Re-run the checkout logic but slightly differently to catch the structured error if possible
+         // Or just show a general inventory error since we know what it is
+         toast.error('Anbarda kifayət qədər məhsul yoxdur');
       } else {
-        toast.error(t('pos.errorPrefix') + (message || 'Unknown error'));
+        toast.error(t('pos.errorPrefix') + (message || 'Bilinməyən xəta'));
       }
     } finally {
+      // Ensure loading is false, and as a double safety, close drawer if cart is now empty
       setLoading(false);
+      if (cart.length === 0) {
+        setShowCartDrawer(false);
+      }
     }
   };
 
