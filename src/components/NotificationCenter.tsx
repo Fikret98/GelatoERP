@@ -42,6 +42,16 @@ export default function NotificationCenter() {
 
     fetchNotifications();
 
+    const playNotificationSound = () => {
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(e => console.warn('Audio play blocked by browser:', e));
+      } catch (e) {
+        console.error('Error playing sound:', e);
+      }
+    };
+
     // Real-time subscription
     const channel = supabase
       .channel('public:notifications')
@@ -53,8 +63,11 @@ export default function NotificationCenter() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
+        (payload) => {
           fetchNotifications();
+          if (payload.eventType === 'INSERT') {
+            playNotificationSound();
+          }
         }
       )
       .subscribe();
