@@ -16,10 +16,16 @@ BEGIN
     EXCEPTION WHEN duplicate_column THEN NULL;
     END;
 
-    -- Add is_system_generated to incomes
+    -- Make verifier_counted and verified_by_id nullable
+    -- Because at closeShift time, we don't have the next person to verify yet.
     BEGIN
-        ALTER TABLE public.incomes ADD COLUMN is_system_generated BOOLEAN DEFAULT FALSE;
-    EXCEPTION WHEN duplicate_column THEN NULL;
+        ALTER TABLE public.shift_discrepancies ALTER COLUMN verifier_counted DROP NOT NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+
+    BEGIN
+        ALTER TABLE public.shift_discrepancies ALTER COLUMN verified_by_id DROP NOT NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
 END $$;
 

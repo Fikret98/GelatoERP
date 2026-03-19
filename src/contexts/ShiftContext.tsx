@@ -104,20 +104,38 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
 
       if (shiftErr) throw shiftErr;
 
-      // 2. Check for "Opening Gap" (Scenario 2)
+      // 2. Finalize any PENDING discrepancy from the last shift (Scenario 3 -> Outcome)
+      // This happens when the closer reported a gap, and now the opener is verifying it.
+      const lastShift = await getLastShift();
+      if (lastShift?.id) {
+        await supabase
+          .from('shift_discrepancies')
+          .update({ 
+            verified_by_id: userIdInt,
+            verifier_counted: roundedOpening,
+            status: 'pending' // Still pending until admin resolves, but we found the verifier
+          })
+          .eq('shift_id', lastShift.id)
+          .eq('type', 'closing_gap')
+          .eq('status', 'pending')
+          .is('verified_by_id', null);
+      }
+
+      // 3. Check for NEW "Opening Gap" (Scenario 2)
       // Compare what the user counted vs what the System (Global Cash) expects
       const globalBalance = await getGlobalCashBalance();
       const roundedGlobal = Math.round(globalBalance * 100) / 100;
       const openingDiff = Math.round((roundedOpening - roundedGlobal) * 100) / 100;
 
       if (Math.abs(openingDiff) > 0.005) {
-        // Create an "Opening Gap" discrepancy linked to the LAST shift for accountability
-        const lastShift = await getLastShift();
+        // Create an "Opening Gap" discrepancy
+        // Sender (Reported) = The person who left the money (last closer)
+        // Receiver (Verified) = The person who just opened (current user)
         const { data: discData, error: discErr } = await supabase
           .from('shift_discrepancies')
           .insert([{
-            shift_id: lastShift?.id || null, // Best effort link to previous shift
-            reported_by_id: lastShift?.user_id || null,
+            shift_id: lastShift?.id || null,
+            reported_by_id: lastShift?.user_id || userIdInt, // If no last shift, reporter is self (edge case)
             verified_by_id: userIdInt,
             system_expected: roundedGlobal,
             seller_reported: roundedGlobal,
