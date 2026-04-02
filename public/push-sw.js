@@ -6,7 +6,8 @@ self.addEventListener('push', function(event) {
       icon: data.icon || '/icon-192.png',
       badge: '/icon-192.png',
       image: data.image || null, // Rich media support
-      vibrate: [100, 50, 100],
+      sound: '/notification.wav', // Creative sparkle sound
+      vibrate: [200, 100, 50, 50, 200, 50, 100], // Creative rhythmic vibration
       data: {
         url: data.url || '/'
       },

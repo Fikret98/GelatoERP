@@ -69,7 +69,7 @@ export default function HR() {
         .select('*, users!changed_by(name)')
         .eq('user_id', employee.id)
         .order('changed_at', { ascending: false });
-      
+
       if (error) throw error;
       setSalaryHistory(data || []);
     } catch (e: any) {
@@ -89,7 +89,7 @@ export default function HR() {
         .select('*')
         .eq('user_id', employee.id)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setDebtRecords(data || []);
     } catch (e: any) {
@@ -116,7 +116,7 @@ export default function HR() {
     if (type === 'salary_deduction') {
       const bonus = bonuses.find(b => b.seller_name?.toLowerCase().trim() === employee.name?.toLowerCase().trim())?.total_bonus || 0;
       const totalPossible = (employee.salary || 0) + bonus;
-      
+
       if (amount > totalPossible) {
         toast.error(`${t('hr.errorInsufficientFunds')}. Max: ${totalPossible.toFixed(2)} ₼`);
         return;
@@ -209,8 +209,8 @@ export default function HR() {
         };
       });
 
-      const filtered = user?.role === 'admin' 
-        ? merged 
+      const filtered = user?.role === 'admin'
+        ? merged
         : merged.filter(emp => emp.id === (user?.id ? user.id : ''));
 
       setEmployees(filtered);
@@ -245,10 +245,10 @@ export default function HR() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       if (editingEmployee) {
         const oldSalary = editingEmployee.salary;
         const newSalary = parseFloat(formData.salary);
@@ -424,7 +424,7 @@ export default function HR() {
             </div>
           )}
 
-          <motion.div 
+          <motion.div
             variants={{
               hidden: { opacity: 0 },
               show: {
@@ -445,7 +445,7 @@ export default function HR() {
                 }}
                 className={cn(
                   "rounded-3xl p-6 transition-all group relative overflow-hidden shadow-sm hover:shadow-xl",
-                  employee.role_type === 'admin' 
+                  employee.role_type === 'admin'
                     ? "bg-gradient-to-b from-indigo-50/50 to-white dark:from-indigo-900/10 dark:to-gray-800 border-2 border-indigo-200 dark:border-indigo-800/50"
                     : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
                 )}
@@ -455,7 +455,7 @@ export default function HR() {
                     {t('hr.inDebt')}
                   </div>
                 )}
-                
+
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none font-black text-xl">
@@ -596,7 +596,7 @@ export default function HR() {
                       <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{selectedHistoryEmployee.name}</h2>
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('hr.salaryHistoryTitle')}</p>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setSelectedHistoryEmployee(null)}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                     >
@@ -630,7 +630,7 @@ export default function HR() {
                                 <span className="text-[10px] text-gray-400">{format(new Date(log.changed_at), 'dd.MM.yyyy HH:mm')}</span>
                               </div>
                             </div>
-                            
+
                             {(log.old_salary !== log.new_salary) && (
                               <div className={cn(
                                 "flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase",
@@ -664,7 +664,7 @@ export default function HR() {
                       <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{selectedDebtEmployee.name}</h2>
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{t('hr.debtBalance')}</p>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setSelectedDebtEmployee(null)}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                     >
@@ -680,7 +680,7 @@ export default function HR() {
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('hr.paymentAmount')}</span>
                           <span className="text-xl font-bold text-rose-500 tabular-nums">{selectedDebtEmployee.total_debt.toFixed(2)} ₼</span>
                         </div>
-                        
+
                         <div className="space-y-4">
                           <div>
                             <div className="flex flex-wrap gap-2 mb-3">
@@ -690,7 +690,7 @@ export default function HR() {
                                   onClick={() => setDebtPaymentMethod(method)}
                                   className={cn(
                                     "flex-1 py-2 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border",
-                                    debtPaymentMethod === method 
+                                    debtPaymentMethod === method
                                       ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
                                       : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 hover:border-indigo-300"
                                   )}
@@ -708,13 +708,13 @@ export default function HR() {
                           </div>
 
                           <div className="grid grid-cols-1 gap-2">
-                            <button 
+                            <button
                               onClick={() => handleSettleDebt(selectedDebtEmployee, 'manual_payment')}
                               className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold text-[9px] uppercase tracking-widest hover:bg-indigo-700 transition"
                             >
                               {t('hr.confirmAndPay')}
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleSettleDebt(selectedDebtEmployee, 'salary_deduction')}
                               className="w-full text-indigo-500 font-bold text-[9px] uppercase tracking-widest py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition rounded-lg"
                             >
